@@ -1,0 +1,34 @@
+//定义版本
+syntax = "proto3";
+
+package net.hserver.hp.common.protocol;
+
+option java_outer_classname="CmdMessageData";
+option go_package = "./CmdMessage";
+
+message CmdMessage{
+
+  //枚举消息类型
+  enum CmdMessageType
+  {
+    //连接设备
+    CONNECT=0;
+    //断开设备
+    DISCONNECT=1;
+    //本地内穿
+    LOCAL_INNER_WEAR=2;
+    //提示信息
+    TIPS=3;
+  }
+
+
+  //消息类型
+  CmdMessageType type = 1;
+  //用户key
+  string key = 2;
+  //交互数据
+  string data=3;
+  //程序版本
+  string version=4;
+}
+

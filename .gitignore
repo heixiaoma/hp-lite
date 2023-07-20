@@ -1,0 +1,11 @@
+# idea ignore
+.idea/
+*.ipr
+*.iml
+*.iws
+/target
+/log
+node_modules
+/dist
+*.db
+/queue

@@ -1,0 +1,253 @@
+<template>
+  <div>
+
+    <div style="display: flex;justify-content: flex-end">
+      <left-circle-two-tone style="font-size: 30px" @click="router.push({name:'package'})"/>
+    </div>
+
+    <a-button type="primary" style="margin-bottom: 10px;margin-left: 10px" @click="addConfigModal">添加穿透</a-button>
+    <a-button type="primary" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
+    <a-table :loading="configLoading" :columns="columns" rowKey="id" :data-source="currentConfigList"
+             :locale="{emptyText: '暂无配置,添加一个试试看看'}"
+             :scroll="{ x: 10 }" :pagination='false'>
+      <template #bodyCell="{ column ,record}">
+        <template v-if="column.key === 'action'">
+          <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px"  @click="removeConfigData(record)">删除</a-button>
+          <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="refConfigData(record)">重连配置</a-button>
+        </template>
+      </template>
+      <template #expandedRowRender="{ record }">
+
+        <div class="text-detail">
+          <div>备注：{{ record.remarks }}</div>
+
+
+          <div v-if="record.connectType==='TCP'">
+            <div v-if="record.port">外网TCP地址: <span class="text-tips">{{ record.serverIp }}:{{ record.port }}</span>
+            </div>
+            <div>外网HTTP地址: <span class="text-tips">http(s)://{{ record.domain }}</span></div>
+          </div>
+
+          <div v-if="record.connectType==='UDP'">
+            <div v-if="record.port">外网UDP地址: <span class="text-tips">{{ record.serverIp }}:{{ record.port }}</span>
+            </div>
+          </div>
+
+          <div v-if="record.connectType==='TCP_UDP'">
+            <div v-if="record.port">外网UDP地址: <span class="text-tips">{{ record.serverIp }}:{{ record.port }}</span>
+            </div>
+            <div v-if="record.port">外网TCP地址: <span class="text-tips">{{ record.serverIp }}:{{ record.port }}</span>
+            </div>
+            <div>外网HTTP地址: <span class="text-tips">http(s)://{{ record.domain }}</span></div>
+          </div>
+
+          <div  v-if="record.statusMsg">
+            最近一条穿透服务日志：<span class="text-tips">{{record.statusMsg}}</span>
+          </div>
+
+          <div  v-if="!record.port">
+            随机端口不支持TCP和UDP协议使用
+          </div>
+        </div>
+      </template>
+    </a-table>
+
+
+    <div>
+      <a-modal okText="确定" cancelText="取消" v-model:visible="addConfigVisible" title="添加内网穿透配置"
+               @ok="addConfigOk">
+        <a-form :model="formState" ref="formTable">
+          <a-form-item label="穿透设备" name="deviceKey" :rules="[{ required: true, message: '穿透设备必填'}]">
+            <a-select
+                v-model:value="formState.deviceKey"
+                :options="currentUserKeyList"
+            ></a-select>
+          </a-form-item>
+
+          <a-form-item label="穿透备注" name="remarks" :rules="[{ required: true, message: '穿透备注必填'}]">
+            <a-input v-model:value="formState.remarks" placeholder="备注如：个人博客"/>
+          </a-form-item>
+          <a-form-item label="穿透协议"  name="connectType" :rules="[{ required: true, message: '穿透协议必填'}]">
+            <a-select
+                v-model:value="formState.connectType"
+            >
+              <a-select-option value="TCP">TCP</a-select-option>
+              <a-select-option value="UDP">UDP</a-select-option>
+              <a-select-option value="TCP_UDP">TCP_UDP</a-select-option>
+            </a-select>
+          </a-form-item>
+          <!--    套餐选择      -->
+          <a-form-item label="外网端口" name="port" :rules="[{ required: true, message: '外网端口必填'}]">
+            <a-input v-model:value="formState.port" placeholder="8084"/>
+          </a-form-item>
+
+          <a-form-item label="穿透域名"  name="domain" :rules="[{ required: true, message: '穿透域名必填'}]">
+            <a-input v-model:value="formState.domain" placeholder="xxx.com"/>
+          </a-form-item>
+
+          <a-form-item label="内网地址"  name="localIp" :rules="[{ required: true, message: '内网地址必填'}]">
+            <a-input v-model:value="formState.localIp" placeholder="内网IP如：127.0.0.1"/>
+          </a-form-item>
+
+          <a-form-item label="内网端口" name="localPort" :rules="[{ required: true, message: '内网端口必填'}]">
+            <a-input v-model:value="formState.localPort" placeholder="内网端口如：8080"/>
+          </a-form-item>
+        </a-form>
+      </a-modal>
+    </div>
+
+  </div>
+</template>
+
+<script setup>
+import {LeftCircleTwoTone} from '@ant-design/icons-vue';
+import {onMounted, reactive, ref} from "vue";
+import {removeConfig, getConfigList, getDeviceKey, addConfig,refConfig} from "../../api/client/config";
+import {useRoute, useRouter} from 'vue-router'
+
+const route = useRoute()
+const router = useRouter()
+
+const formTable = ref()
+const addConfigVisible = ref(false)
+const configLoading = ref(false)
+
+const formState = reactive({
+  deviceKey: "",
+  remarks: "",
+  port: "",
+  domain: "",
+  localIp: "",
+  localPort: "",
+  connectType: ""
+})
+
+const currentConfigList = ref()
+
+const currentUserKeyList = ref()
+
+const loadDeviceKey = () => {
+  getDeviceKey().then(res => {
+    let data = []
+    for (let k of res.data) {
+      data.push({"label": k.desc, "value": k.key})
+    }
+    currentUserKeyList.value = data
+  })
+}
+
+
+const loadData = () => {
+  currentConfigList.value = []
+  configLoading.value = true
+  console.log(route.query)
+  getConfigList().then(res => {
+    configLoading.value = false
+    currentConfigList.value = res.data
+  }).catch(e => {
+    configLoading.value = false
+  })
+}
+
+onMounted(() => {
+  loadDeviceKey();
+  loadData()
+})
+
+
+const removeConfigData = (item) => {
+  removeConfig({
+    configId: item.id
+  }).then(res => {
+    if (res.data) {
+      loadData()
+    }
+  })
+}
+
+const refConfigData = (item) => {
+  configLoading.value = true
+  refConfig({
+    configId: item.id
+  }).then(res => {
+    configLoading.value = false
+    if (res.data) {
+      loadData()
+    }
+  })
+}
+
+
+const addConfigModal = () => {
+  addConfigVisible.value = true;
+};
+const addConfigOk = () => {
+  formTable.value.validate().then(res => {
+    console.log("添加配置表单", formState)
+    addConfig(
+        {
+          packageId: route.query.packageId,
+          ...formState
+        }
+    ).then(res => {
+      loadData()
+      addConfigVisible.value = false;
+    })
+  })
+};
+
+
+const columns = [
+  {title: '备注', dataIndex: 'remarks', key: 'remarks'},
+  {title: '内网IP', dataIndex: 'localIp', key: 'localIp'},
+  {title: '内网端口', dataIndex: 'localPort', key: 'localPort'},
+  {title: '穿透类型', dataIndex: 'connectType', key: 'connectType'},
+  {title: '操作', key: 'action'},
+];
+
+</script>
+
+<style lang="less">
+
+.op-btn button {
+  text-align: center;
+  margin: 5px;
+}
+
+.text-tips {
+  margin-top: 10px;
+  background-color: #4b6ff6;
+  color: #ffffff;
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
+.text-detail div {
+  margin-bottom: 10px;
+}
+
+.ant-card-body {
+  overflow: hidden;
+}
+
+.full-modal {
+  .ant-modal {
+    max-width: 100%;
+    top: 0;
+    padding-bottom: 0;
+    margin: 0;
+  }
+
+  .ant-modal-content {
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh);
+  }
+
+  .ant-modal-body {
+    flex: 1;
+  }
+}
+
+</style>

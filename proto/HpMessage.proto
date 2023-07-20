@@ -1,0 +1,46 @@
+//定义版本
+syntax = "proto3";
+
+package net.hserver.hp.common.protocol;
+
+option java_outer_classname="HpMessageData";
+option go_package = "./HpMessage";
+
+message HpMessage{
+
+  //枚举消息类型
+  enum HpMessageType
+  {
+    REGISTER=0;
+    REGISTER_RESULT=1;
+    CONNECTED=2;
+    DISCONNECTED=3;
+    DATA=4;
+    KEEPALIVE=5;
+  }
+
+  //传输数据类型
+  enum MessageType
+  {
+    TCP=0;
+    UDP=1;
+    TCP_UDP=2;
+  }
+
+  //元数据
+  message MetaData{
+    string key=1;
+    MessageType type=2;
+    string channelId=3;
+    bool success=4;
+    string reason=5;
+  }
+
+  //消息类型
+  HpMessageType type = 1;
+  //元数据
+  MetaData metaData = 2;
+  //穿透真实数据流
+  bytes data=3;
+}
+
