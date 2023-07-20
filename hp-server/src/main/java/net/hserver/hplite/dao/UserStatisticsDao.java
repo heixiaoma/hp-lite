@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Update;
 @Mybatis
 public interface UserStatisticsDao extends BaseMapper<UserStatisticsEntity> {
 
-    @Update("DELETE FROM user_statistics WHERE create_time < DATE('now', '-1 day');")
+    @Update("DELETE FROM user_statistics WHERE create_time > DATE('now', '-1 day');")
     int deleteOldData();
 
 }

@@ -7,5 +7,5 @@
 /log
 node_modules
 /dist
-*.db
+/*.db
 /queue
