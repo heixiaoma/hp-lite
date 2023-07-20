@@ -77,7 +77,7 @@ const showFlow = (key, dataList) => {
 
   let option = {
     title: {
-      text: '套餐:' + key + '、下载/上传',
+      text: '配置ID:' + key + '、下载/上传',
       left: 'center'
     },
     grid: {
@@ -194,7 +194,7 @@ const showAccess = (key, dataList) => {
 
   let option = {
     title: {
-      text: '套餐:' + key + '、pv/uv 统计',
+      text: '配置ID:' + key + '、pv/uv 统计',
       left: 'center'
     },
     tooltip: {
