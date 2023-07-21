@@ -47,10 +47,22 @@ public class HpServerHandler extends HpCommonHandler {
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
         channels.forEach(targetChannel -> {
-            targetChannel.config().setAutoRead(ctx.channel().isWritable());
+            //自己不可写，通道可以读，让通道关闭读
+            //自己可写，通道不可以读，让通道打开读
+            if (!ctx.channel().isWritable() && targetChannel.config().isAutoRead()) {
+                targetChannel.config().setAutoRead(false);
+            } else if (ctx.channel().isWritable() && !targetChannel.config().isAutoRead()) {
+                targetChannel.config().setAutoRead(true);
+            }
         });
         udp_channels.forEach(targetChannel -> {
-            targetChannel.config().setAutoRead(ctx.channel().isWritable());
+            //自己不可写，通道可以读，让通道关闭读
+            //自己可写，通道不可以读，让通道打开读
+            if (!ctx.channel().isWritable() && targetChannel.config().isAutoRead()) {
+                targetChannel.config().setAutoRead(false);
+            } else if (ctx.channel().isWritable() && !targetChannel.config().isAutoRead()) {
+                targetChannel.config().setAutoRead(true);
+            }
         });
         super.channelWritabilityChanged(ctx);
     }
@@ -211,11 +223,6 @@ public class HpServerHandler extends HpCommonHandler {
             channels.stream().filter(channel ->
                     channel.id().asLongText().equals(hpMessage.getMetaData().getChannelId())
             ).findFirst().ifPresent(targetChannel -> {
-                if (!targetChannel.isWritable() && getCtx().channel().config().isAutoRead()) {
-                    getCtx().channel().config().setAutoRead(false);
-                } else if (targetChannel.isWritable() && !targetChannel.config().isAutoRead()) {
-                    targetChannel.config().setAutoRead(true);
-                }
                 targetChannel.writeAndFlush(bytes);
             });
         }
@@ -226,11 +233,6 @@ public class HpServerHandler extends HpCommonHandler {
                 final Attribute<InetSocketAddress> attr = targetChannel.attr(RemoteUdpServerHandler.SENDER);
                 final InetSocketAddress inetSocketAddress = attr.get();
                 if (inetSocketAddress != null) {
-                    if (!targetChannel.isWritable() && getCtx().channel().config().isAutoRead()) {
-                        getCtx().channel().config().setAutoRead(false);
-                    } else if (targetChannel.isWritable() && !targetChannel.config().isAutoRead()) {
-                        targetChannel.config().setAutoRead(true);
-                    }
                     targetChannel.writeAndFlush(new DatagramPacket(Unpooled.wrappedBuffer(bytes), inetSocketAddress));
                 }
             });

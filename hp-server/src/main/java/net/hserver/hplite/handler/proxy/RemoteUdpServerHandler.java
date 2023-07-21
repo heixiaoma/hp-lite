@@ -2,6 +2,7 @@ package net.hserver.hplite.handler.proxy;
 
 import com.google.protobuf.ByteString;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.channel.ChannelConfig;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
@@ -32,7 +33,14 @@ public class RemoteUdpServerHandler extends
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-        proxyHandler.getCtx().channel().config().setAutoRead(ctx.channel().isWritable());
+        ChannelConfig config = proxyHandler.getCtx().channel().config();
+        //自己不可写，通道可以读，让通道关闭读
+        //自己可写，通道不可以读，让通道打开读
+        if (!ctx.channel().isWritable() && config.isAutoRead()) {
+            config.setAutoRead(false);
+        } else if (ctx.channel().isWritable() && !config.isAutoRead()) {
+            config.setAutoRead(true);
+        }
         super.channelWritabilityChanged(ctx);
     }
 
