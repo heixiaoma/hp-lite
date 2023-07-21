@@ -3,6 +3,8 @@ package net.hserver.hplite.utils;
 import cn.hutool.core.lang.Pair;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioDatagramChannel;
+import lombok.extern.slf4j.Slf4j;
 import net.hserver.hplite.message.DataStatistics;
 import net.hserver.hplite.message.UserConnectInfo;
 import net.hserver.hplite.message.UserStatistics;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 /**
  * 统计
  */
+@Slf4j
 public class StatisticsUtil {
 
     //pv uv
@@ -39,7 +42,14 @@ public class StatisticsUtil {
 
 
     private static String getIp(ChannelHandlerContext ctx) {
-        return ((SocketChannel) ctx.channel()).remoteAddress().getAddress().getHostAddress();
+        if (ctx.channel() instanceof SocketChannel) {
+            return ((SocketChannel) ctx.channel()).remoteAddress().getAddress().getHostAddress();
+        } else if (ctx.channel() instanceof SocketChannel) {
+            return ((NioDatagramChannel) ctx.channel()).remoteAddress().getAddress().getHostAddress();
+        } else {
+            log.error("未知类型，不能获取IP");
+            return "127.0.0.1";
+        }
     }
 
     /**
