@@ -1,9 +1,11 @@
 package net.hserver.hplite.handler.proxy;
 
+import cn.hserver.core.server.util.EpollUtil;
 import cn.hserver.core.server.util.EventLoopUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
+import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
@@ -52,7 +54,7 @@ public class FrontendHandler extends ChannelInboundHandlerAdapter {
         final Channel inboundChannel = ctx.channel();
         Bootstrap b = new Bootstrap();
         b.group(eventLoop)
-                .channel(NioSocketChannel.class)
+                .channel(EpollUtil.check() ? EpollSocketChannel.class : NioSocketChannel.class)
                 .handler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
