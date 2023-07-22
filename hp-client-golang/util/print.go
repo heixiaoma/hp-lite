@@ -42,5 +42,5 @@ func PrintStatus(data []*bean.LocalInnerWear) string {
 	// 渲染表格
 	table.Render()
 	result := buffer.String()
-	return result
+	return "\r\n" + result
 }
