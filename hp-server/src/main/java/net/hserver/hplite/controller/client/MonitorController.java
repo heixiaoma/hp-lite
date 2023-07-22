@@ -1,4 +1,4 @@
-package net.hserver.hplite.controller.api;
+package net.hserver.hplite.controller.client;
 
 import cn.hserver.core.ioc.annotation.Autowired;
 import cn.hserver.core.server.util.JsonResult;

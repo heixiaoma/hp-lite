@@ -16,7 +16,7 @@ import net.hserver.hplite.utils.TokenUtil;
 @Order(2)
 public class UserCheckFilter implements FilterAdapter {
 
-    private final static String uri1 = "/api/";
+    private final static String uri1 = "/client/";
 
     @Override
     public void doFilter(Webkit webkit) throws Exception {
