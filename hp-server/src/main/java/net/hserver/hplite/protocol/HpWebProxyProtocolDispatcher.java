@@ -43,7 +43,7 @@ public class HpWebProxyProtocolDispatcher extends DispatchHttp {
                 log.debug("version:{},host:{}", SSLUtils.verifyPacket(ByteBuffer.wrap(headers)), host);
                 if (host != null) {
                     //主站域名
-                    if (host.contains(webConfig.getHost())) {
+                    if (host.equals(webConfig.getHost())) {
                         return super.dispatcher(ctx, channelPipeline, headers);
                     }
                     //自定义分配域名
