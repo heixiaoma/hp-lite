@@ -55,8 +55,10 @@ public class CmdServerHandler extends SimpleChannelInboundHandler<CmdMessageData
             IdleStateEvent e = (IdleStateEvent) evt;
             //如果数据堆积情况，不能关闭连接，
             if (e.state() == IdleState.READER_IDLE) {
-                System.out.println("Read idle loss connection.");
-                ctx.close();
+                CmdMessageData.CmdMessage keepMessage = CmdMessageData.CmdMessage.newBuilder()
+                        .setData("中心节点-心跳数据")
+                        .setType(CmdMessageData.CmdMessage.CmdMessageType.TIPS).build();
+                ctx.writeAndFlush(keepMessage);
             } else if (e.state() == IdleState.WRITER_IDLE) {
                 log.info("中心节点-心跳数据");
                 CmdMessageData.CmdMessage keepMessage = CmdMessageData.CmdMessage.newBuilder()

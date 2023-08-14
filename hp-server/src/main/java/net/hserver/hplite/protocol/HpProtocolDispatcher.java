@@ -22,7 +22,7 @@ public class HpProtocolDispatcher implements ProtocolDispatcherAdapter {
     public boolean dispatcher(ChannelHandlerContext ctx, ChannelPipeline channelPipeline, byte[] bytes) {
         InetSocketAddress socketAddress = (InetSocketAddress) ctx.channel().localAddress();
         if (socketAddress.getPort() == 9090) {
-            channelPipeline.addLast(new IdleStateHandler(60, 30, 0));
+            channelPipeline.addLast(new IdleStateHandler(600, 300, 0));
             channelPipeline.addLast(new HpMessageDecoder());
             channelPipeline.addLast(new HpMessageEncoder());
             channelPipeline.addLast(new HpServerHandler());
