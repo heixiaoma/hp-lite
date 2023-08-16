@@ -223,6 +223,18 @@ public class HpServerHandler extends HpCommonHandler {
             channels.stream().filter(channel ->
                     channel.id().asLongText().equals(hpMessage.getMetaData().getChannelId())
             ).findFirst().ifPresent(targetChannel -> {
+                ChannelConfig config = getCtx().channel().config();
+                if (!targetChannel.isWritable()) {
+                    //自己不可写，通道可以读，让通道关闭读
+                    //自己可写，通道不可以读，让通道打开读
+                    if (config.isAutoRead()) {
+                        config.setAutoRead(false);
+                    }
+                } else {
+                    if (!config.isAutoRead()) {
+                        config.setAutoRead(true);
+                    }
+                }
                 targetChannel.writeAndFlush(bytes);
             });
         }
@@ -233,6 +245,18 @@ public class HpServerHandler extends HpCommonHandler {
                 final Attribute<InetSocketAddress> attr = targetChannel.attr(RemoteUdpServerHandler.SENDER);
                 final InetSocketAddress inetSocketAddress = attr.get();
                 if (inetSocketAddress != null) {
+                    ChannelConfig config = getCtx().channel().config();
+                    if (!targetChannel.isWritable()) {
+                        //自己不可写，通道可以读，让通道关闭读
+                        //自己可写，通道不可以读，让通道打开读
+                        if (config.isAutoRead()) {
+                            config.setAutoRead(false);
+                        }
+                    } else {
+                        if (!config.isAutoRead()) {
+                            config.setAutoRead(true);
+                        }
+                    }
                     targetChannel.writeAndFlush(new DatagramPacket(Unpooled.wrappedBuffer(bytes), inetSocketAddress));
                 }
             });
