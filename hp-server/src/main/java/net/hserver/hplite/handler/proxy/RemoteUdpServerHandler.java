@@ -85,6 +85,18 @@ public class RemoteUdpServerHandler extends
      */
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, DatagramPacket msg) throws Exception {
+        ChannelConfig config = ctx.channel().config();
+        if (!proxyHandler.getCtx().channel().isWritable()) {
+            //自己不可写，通道可以读，让通道关闭读
+            //自己可写，通道不可以读，让通道打开读
+            if (config.isAutoRead()) {
+                config.setAutoRead(false);
+            }
+        } else {
+            if (!config.isAutoRead()) {
+                config.setAutoRead(true);
+            }
+        }
         HpMessageData.HpMessage.Builder messageBuilder = HpMessageData.HpMessage.newBuilder();
         messageBuilder.setType(HpMessageData.HpMessage.HpMessageType.DATA);
         messageBuilder.setMetaData(HpMessageData.HpMessage.MetaData.newBuilder().setType(HpMessageData.HpMessage.MessageType.UDP).setChannelId(ctx.channel().id().asLongText()).build());

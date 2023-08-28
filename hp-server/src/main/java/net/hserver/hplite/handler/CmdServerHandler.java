@@ -3,6 +3,8 @@ package net.hserver.hplite.handler;
 import cn.hserver.core.queue.HServerQueue;
 import cn.hserver.core.server.util.ExceptionUtil;
 import cn.hutool.json.JSONUtil;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleState;
@@ -17,12 +19,17 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author hxm
  */
 @Slf4j
 public class CmdServerHandler extends SimpleChannelInboundHandler<CmdMessageData.CmdMessage> {
+
+
+    private final static Cache<String, String> CACHE = CacheBuilder.newBuilder().expireAfterAccess(4, TimeUnit.SECONDS).build();
+
 
     /**
      * 将key绑定在通道上，方便后期移除时直接查询执行删除map
@@ -71,6 +78,17 @@ public class CmdServerHandler extends SimpleChannelInboundHandler<CmdMessageData
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, CmdMessageData.CmdMessage cmdMessage) throws Exception {
+        //防从联
+        String ifPresent = CACHE.getIfPresent(cmdMessage.getKey());
+        if (ifPresent != null) {
+            channelHandlerContext.channel().close();
+            return;
+        } else {
+            CACHE.put(cmdMessage.getKey(), channelHandlerContext.channel().remoteAddress().toString());
+        }
+
+        log.info("消息类型:{},消息版本：{},配置key:{}", cmdMessage.getType().name(), cmdMessage.getVersion(), cmdMessage.getKey());
+
         log.debug("消息类型:{},消息版本：{}", cmdMessage.getType().name(), cmdMessage.getVersion());
         if (!checkVersion(cmdMessage, channelHandlerContext)) {
             return;
