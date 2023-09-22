@@ -166,7 +166,11 @@ public class HpServerHandler extends HpCommonHandler {
         sendBackMessageBuilder.setType(HpMessageData.HpMessage.HpMessageType.REGISTER_RESULT);
         HpMessageData.HpMessage.MetaData metaData = metaDataBuild.build();
         sendBackMessageBuilder.setMetaData(metaData);
-        ctx.writeAndFlush(sendBackMessageBuilder.build());
+        if (metaData.getSuccess()) {
+            ctx.writeAndFlush(sendBackMessageBuilder.build());
+        }else {
+            ctx.writeAndFlush(sendBackMessageBuilder.build()).addListener(ChannelFutureListener.CLOSE);
+        }
     }
 
 
@@ -210,7 +214,11 @@ public class HpServerHandler extends HpCommonHandler {
         sendBackMessageBuilder.setType(HpMessageData.HpMessage.HpMessageType.REGISTER_RESULT);
         HpMessageData.HpMessage.MetaData metaData = metaDataBuild.build();
         sendBackMessageBuilder.setMetaData(metaData);
-        ctx.writeAndFlush(sendBackMessageBuilder.build());
+        if (metaData.getSuccess()) {
+            ctx.writeAndFlush(sendBackMessageBuilder.build());
+        }else {
+            ctx.writeAndFlush(sendBackMessageBuilder.build()).addListener(ChannelFutureListener.CLOSE);
+        }
     }
 
     /**
@@ -299,8 +307,7 @@ public class HpServerHandler extends HpCommonHandler {
         sendBackMessageBuilder.setType(HpMessageData.HpMessage.HpMessageType.REGISTER_RESULT);
         HpMessageData.HpMessage.MetaData metaData = metaDataBuild.build();
         sendBackMessageBuilder.setMetaData(metaData);
-        ctx.writeAndFlush(sendBackMessageBuilder.build());
-        ctx.close();
+        ctx.writeAndFlush(sendBackMessageBuilder.build()).addListener(ChannelFutureListener.CLOSE);
         return null;
     }
 
