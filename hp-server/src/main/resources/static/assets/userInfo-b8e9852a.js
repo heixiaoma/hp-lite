@@ -1,1 +1,0 @@
-const t={KEY:"USER_INFO",setUserInfo(e){localStorage.setItem(this.KEY,JSON.stringify(e))},getUserInfo(){try{return JSON.parse(localStorage.getItem(this.KEY))}catch{return null}},removeUserInfo(){localStorage.removeItem(this.KEY)}};export{t as u};
