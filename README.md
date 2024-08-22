@@ -21,8 +21,8 @@ sudo docker run --restart=always -d  -e server=xxx.com穿透服务:6666 deviceId
 ```
 ##### Linux或者win
 ```shell
-chmod -R 777 ./hp-client-golang-amd64 
-./hp-client-golang-amd64 -server=xxx.com穿透服务:6666 -deviceId=32位的设备ID 
+chmod -R 777 ./hp-lite-amd64
+./hp-lite-amd64 -server=xxx.com穿透服务:6666 -deviceId=32位的设备ID 
 ```
 
 
