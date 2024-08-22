@@ -35,7 +35,8 @@ log: info #日志级别，不用动
 ```
 
 
-<iframe src="//player.bilibili.com/player.html?isOutside=true&aid=113006142818904&bvid=BV1pAW7eMEPX&cid=500001658615550&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
+### B站安装教程
+https://www.bilibili.com/video/BV1pAW7eMEPX
 
 
 ### 客户端运行方式
