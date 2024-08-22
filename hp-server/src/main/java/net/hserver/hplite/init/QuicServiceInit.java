@@ -20,6 +20,7 @@ import io.netty.incubator.codec.quic.*;
 import lombok.extern.slf4j.Slf4j;
 import net.hserver.hplite.config.CostConfig;
 import net.hserver.hplite.config.TunnelConfig;
+import net.hserver.hplite.dao.TableMapper;
 import net.hserver.hplite.handler.quic.QuicHandler;
 
 import java.net.InetSocketAddress;
@@ -34,9 +35,14 @@ import static io.netty.channel.unix.UnixChannelOption.SO_REUSEPORT;
 public class QuicServiceInit implements InitRunner {
 
     @Autowired
+    private TableMapper tableMapper;
+    @Autowired
     private TunnelConfig tunnelConfig;
     @Override
     public void init(String[] strings) {
+        tableMapper.createTableUserStatistics();
+        tableMapper.createTableUserConfig();
+        tableMapper.createTableUserDevice();
         new Thread(this::startHpQuic).start();
     }
 
