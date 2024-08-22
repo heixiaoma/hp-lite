@@ -39,9 +39,9 @@ log: info #日志级别，不用动
 ##### docker
 ```shell
 # 通过 docker run 运行容器
-sudo docker run --restart=always -d  -e server=xxx.com穿透服务:6666 deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/hserver/hp-lite:latest
+sudo docker run --restart=always -d  -e server=xxx.com穿透服务:6666 -e deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/hserver/hp-lite:latest
 # 通过 docker run 运行容器 ARM
-sudo docker run --restart=always -d  -e server=xxx.com穿透服务:6666 deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/hserver/hp-lite:latest-arm64
+sudo docker run --restart=always -d  -e server=xxx.com穿透服务:6666 -e deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/hserver/hp-lite:latest-arm64
 ```
 ##### Linux或者win
 ```shell
