@@ -1,14 +1,14 @@
 admin:
-  username: 'admin' #\u540E\u53F0\u8D26\u53F7
-  password: '123456' #\u540E\u53F0\u5BC6\u7801
-  port: 9090 #\u7BA1\u7406\u540E\u53F0\u76D1\u542C\u7684\u7AEF\u53E3
+  username: 'admin' #后台账号
+  password: '123456' #后台密码
+  port: 9090 #管理后台监听的端口
 
 cmd:
-  port: 6666 #\u63A7\u5236\u6307\u4EE4\u7AEF\u53E3
+  port: 6666 #控制指令端口
 
 tunnel:
-  ip: '127.0.0.1' #\u96A7\u9053\u76D1\u542C\u670D\u52A1\u5668\u771F\u5B9E\u7684IP
-  port: 9091 #\u96A7\u9053\u4F20\u8F93\u6570\u636E\u7AEF\u53E3
-  open-domain: true #\u662F\u5426\u5F00\u542F80\uFF0C443\u7AEF\u53E3\u57DF\u540D\u8F6C\u53D1
+  ip: '127.0.0.1' #隧道监听服务器真实的IP
+  port: 9091 #隧道传输数据端口
+  open-domain: true #是否开启80，443端口域名转发
 
 log: info
