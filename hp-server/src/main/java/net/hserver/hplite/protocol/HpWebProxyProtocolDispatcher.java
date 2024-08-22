@@ -1,20 +1,19 @@
 package net.hserver.hplite.protocol;
 
 import cn.hserver.core.interfaces.ProtocolDispatcherAdapter;
-import cn.hserver.core.ioc.annotation.Autowired;
 import cn.hserver.core.ioc.annotation.Bean;
 import cn.hserver.core.ioc.annotation.Order;
+import cn.hserver.core.ioc.annotation.Value;
 import cn.hserver.core.server.util.protocol.HostUtil;
-import cn.hserver.core.server.util.protocol.SSLUtils;
 import cn.hserver.plugin.web.protocol.DispatchHttp;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpServerCodec;
-import net.hserver.hplite.config.WebConfig;
+import io.netty.handler.ssl.OptionalSslHandler;
 import net.hserver.hplite.domian.bean.ConnectInfo;
-import net.hserver.hplite.handler.HpServerHandler;
 import net.hserver.hplite.handler.proxy.FrontendHandler;
 import net.hserver.hplite.handler.proxy.RouterHandler;
+import net.hserver.hplite.handler.quic.QuicStreamHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,11 +25,7 @@ import java.nio.ByteBuffer;
  */
 @Order(0)
 @Bean
-public class HpWebProxyProtocolDispatcher extends DispatchHttp {
-
-    @Autowired
-    private WebConfig webConfig;
-
+public class HpWebProxyProtocolDispatcher implements ProtocolDispatcherAdapter {
     private static final Logger log = LoggerFactory.getLogger(HpWebProxyProtocolDispatcher.class);
 
     //判断HP头
@@ -40,18 +35,12 @@ public class HpWebProxyProtocolDispatcher extends DispatchHttp {
         if (socketAddress.getPort() == 80 || socketAddress.getPort() == 443) {
             try {
                 String host = HostUtil.getHost(ByteBuffer.wrap(headers));
-                log.debug("version:{},host:{}", SSLUtils.verifyPacket(ByteBuffer.wrap(headers)), host);
                 if (host != null) {
-                    //主站域名
-                    if (host.equals(webConfig.getHost())) {
-                        return super.dispatcher(ctx, channelPipeline, headers);
-                    }
-                    //自定义分配域名
-                    ConnectInfo connectInfo = HpServerHandler.CURRENT_STATUS.stream().filter(v -> v != null && v.getCustomDomain() != null && host.equals(v.getCustomDomain())).findFirst().orElse(null);
+                    ConnectInfo connectInfo = QuicStreamHandler.getByDomain(host);
                     if (connectInfo == null) {
                         addErrorHandler(channelPipeline);
                     } else {
-                        addProxyHandler(host, channelPipeline, connectInfo.getPort());
+                        addProxyHandler(socketAddress.getPort() == 80, channelPipeline, host, connectInfo);
                     }
                     return true;
                 }
@@ -64,7 +53,7 @@ public class HpWebProxyProtocolDispatcher extends DispatchHttp {
     }
 
     /**
-     * 未知来源的访问直接响应错误的穿透
+     * 未知来源的访问直接响应错误的映射
      *
      * @param pipeline
      */
@@ -78,10 +67,14 @@ public class HpWebProxyProtocolDispatcher extends DispatchHttp {
      *
      * @param host
      * @param pipeline
-     * @param port
      */
-    public void addProxyHandler(String host, ChannelPipeline pipeline, Integer port) {
-        pipeline.addLast(new FrontendHandler(host, port));
+    public void addProxyHandler(boolean hasHttp, ChannelPipeline pipeline, String host, ConnectInfo connectInfo) {
+        pipeline.channel().config().setAutoRead(false);
+        if (connectInfo.getSslContext() != null) {
+            pipeline.addLast(new OptionalSslHandler(connectInfo.getSslContext()));
+        }
+        pipeline.addLast(new FrontendHandler(connectInfo, host));
     }
+
 
 }

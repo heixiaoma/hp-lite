@@ -14,5 +14,10 @@ public class ResDeviceInfo {
     private String desc;
 
     private boolean online;
-
+    public ResDeviceInfo(String deviceId, String desc, boolean online) {
+        this.deviceId = deviceId;
+        this.desc = desc;
+        this.online = online;
+    }
+    private MemoryInfo memoryInfo;
 }

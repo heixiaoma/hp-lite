@@ -12,7 +12,7 @@
     <parent>
         <artifactId>hserver-parent</artifactId>
         <groupId>cn.hserver</groupId>
-        <version>3.3.M2</version>
+        <version>3.5.M4</version>
     </parent>
 
     <modules>

@@ -5,12 +5,13 @@ import cn.hserver.core.ioc.annotation.Bean;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import net.hserver.hplite.dao.UserConfigDao;
 import net.hserver.hplite.dao.UserDeviceDao;
+import net.hserver.hplite.domian.bean.OnlineInfo;
 import net.hserver.hplite.domian.bean.ReqDeviceInfo;
 import net.hserver.hplite.domian.bean.ResDeviceInfo;
 import net.hserver.hplite.domian.bean.ResUserKey;
 import net.hserver.hplite.domian.entity.UserConfigEntity;
 import net.hserver.hplite.domian.entity.UserDeviceEntity;
-import net.hserver.hplite.handler.CmdServerHandler;
+import net.hserver.hplite.handler.cmd.CmdServerHandler;
 import net.hserver.hplite.utils.CheckUtil;
 
 import java.util.ArrayList;
@@ -26,15 +27,29 @@ public class DeviceService {
 
     @Autowired
     private UserDeviceDao deviceDao;
-
+    public List<UserDeviceEntity> getUserDeviceList() {
+        return deviceDao.selectList(new LambdaQueryWrapper<>());
+    }
     /**
      * 查用户的key和是否在线
      *
      * @return
      */
     public List<ResDeviceInfo> getDeviceList() {
-        List<UserDeviceEntity> userDeviceEntities = deviceDao.selectList(new LambdaQueryWrapper<>());
-        return userDeviceEntities.stream().map(k -> new ResDeviceInfo(k.getDeviceKey(), k.getRemarks(), CmdServerHandler.hasKey(k.getDeviceKey()))).collect(Collectors.toList());
+        List<UserDeviceEntity> userDeviceList = getUserDeviceList();
+        List<ResDeviceInfo> deviceInfos = new ArrayList<>();
+        if (userDeviceList.isEmpty()) {
+            return deviceInfos;
+        }
+        for (UserDeviceEntity deviceEntity : userDeviceList) {
+            OnlineInfo onlineKey = CmdServerHandler.getOnlineKey(deviceEntity.getDeviceKey());
+            ResDeviceInfo resDeviceInfo = new ResDeviceInfo(deviceEntity.getDeviceKey(), deviceEntity.getRemarks(), onlineKey != null);
+            if (onlineKey != null && onlineKey.getMemoryInfo() != null) {
+                resDeviceInfo.setMemoryInfo(onlineKey.getMemoryInfo());
+            }
+            deviceInfos.add(resDeviceInfo);
+        }
+        return deviceInfos;
     }
 
     public List<ResUserKey> getDeviceKey() {
@@ -42,7 +57,7 @@ public class DeviceService {
         return userDeviceEntities.stream().map(k -> {
             ResUserKey resUserKey = new ResUserKey();
             resUserKey.setKey(k.getDeviceKey());
-            boolean b = CmdServerHandler.hasKey(k.getDeviceKey());
+            boolean b = CmdServerHandler.getOnlineKey(k.getDeviceKey())!=null;
             resUserKey.setDesc((b ? "在线" : "离线") + "-" + k.getRemarks());
             return resUserKey;
         }).collect(Collectors.toList());
@@ -94,5 +109,9 @@ public class DeviceService {
                 new LambdaQueryWrapper<UserDeviceEntity>()
                         .eq(UserDeviceEntity::getDeviceKey, key)
         ) > 0;
+    }
+
+    public Object stop(String deviceId) {
+        return CmdServerHandler.sendCloseMsg(deviceId, "强制停止");
     }
 }

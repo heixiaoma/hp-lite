@@ -4,8 +4,9 @@ package net.hserver.hplite.task;
 import cn.hserver.core.ioc.annotation.Autowired;
 import cn.hserver.core.ioc.annotation.Bean;
 import cn.hserver.core.ioc.annotation.Task;
+import cn.hserver.plugin.web.context.WebConfig;
 import lombok.extern.slf4j.Slf4j;
-import net.hserver.hplite.config.WebConfig;
+import net.hserver.hplite.config.TunnelConfig;
 import net.hserver.hplite.dao.UserStatisticsDao;
 import net.hserver.hplite.domian.entity.UserStatisticsEntity;
 import net.hserver.hplite.message.DataStatistics;
@@ -18,8 +19,6 @@ import java.util.List;
 @Slf4j
 public class UploadDataTask {
 
-    @Autowired
-    private WebConfig webConfig;
     @Autowired
     private UserStatisticsDao userStatisticsDao;
 

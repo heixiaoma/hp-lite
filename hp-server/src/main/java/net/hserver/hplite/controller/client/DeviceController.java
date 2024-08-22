@@ -54,4 +54,13 @@ public class DeviceController  {
             return JsonResult.error(e.getMessage());
         }
     }
+
+    @GET("stop")
+    public JsonResult stop(HttpRequest request,String deviceId) {
+        try {
+            return JsonResult.ok().put("data", deviceService.stop(deviceId));
+        } catch (Exception e) {
+            return JsonResult.error(e.getMessage());
+        }
+    }
 }

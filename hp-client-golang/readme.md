@@ -13,3 +13,10 @@ gomobile bind -target=android
 #gomobile build -target=android 直接生成apk了
 在将aar导入android使用
 ```
+
+fyne 打包
+``` shell
+#安装fyne-cross命令
+go install github.com/fyne-io/fyne-cross@latest
+#打开docker服务
+```

@@ -19,10 +19,6 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class StatisticsUtil {
-
-    //pv uv
-    private final static Map<Integer, Map<String, Integer>> visitorCountMap = new ConcurrentHashMap<>();
-
     private static final Map<Integer, UserStatistics> data = new ConcurrentHashMap<>();
 
     /**
@@ -40,64 +36,27 @@ public class StatisticsUtil {
 
     }
 
-
-    private static String getIp(ChannelHandlerContext ctx) {
-        if (ctx.channel() instanceof SocketChannel) {
-            return ((SocketChannel) ctx.channel()).remoteAddress().getAddress().getHostAddress();
-        } else if (ctx.channel() instanceof SocketChannel) {
-            return ((NioDatagramChannel) ctx.channel()).remoteAddress().getAddress().getHostAddress();
-        } else {
-            log.error("未知类型，不能获取IP");
-            return "127.0.0.1";
-        }
-    }
-
     /**
      * 添加数据
      */
-    public static void addData(UserConnectInfo userConnectInfo, long download, long upload, int uv, int pv) {
+    public static void addData(UserConnectInfo userConnectInfo, long download, long upload) {
         UserStatistics userStatistics = data.get(userConnectInfo.getConfigId());
         if (userStatistics != null) {
-            userStatistics.getDownload().add(download);
-            userStatistics.getUpload().add(upload);
-            userStatistics.setUv(uv);
-            userStatistics.setPv(pv);
-
+            if (download > 0) {
+                userStatistics.getDownload().add(download);
+            }
+            if (upload > 0) {
+                userStatistics.getUpload().add(upload);
+            }
         }
     }
-
-    public static Pair<Integer, Integer> getUvPv(UserConnectInfo userConnectInfo) {
-        Map<String, Integer> stringIntegerMap = visitorCountMap.get(userConnectInfo.getConfigId());
-        int uv = stringIntegerMap.size();
-        int pv = stringIntegerMap.values().stream().mapToInt(Integer::intValue).sum();
-        return Pair.of(uv, pv);
-    }
-
 
     public static void addUvPv(UserConnectInfo userConnectInfo, ChannelHandlerContext ctx) {
-        Map<String, Integer> uvPv = visitorCountMap.get(userConnectInfo.getConfigId());
-        String ip = getIp(ctx);
-        if (uvPv == null) {
-            uvPv = new ConcurrentHashMap<>();
-            uvPv.put(ip, 1);
-            visitorCountMap.put(userConnectInfo.getConfigId(), uvPv);
-        } else {
-            Integer integer = uvPv.get(ip);
-            if (integer == null) {
-                integer = 0;
-            }
-            uvPv.put(ip, integer + 1);
+        UserStatistics userStatistics = data.get(userConnectInfo.getConfigId());
+        if (userStatistics != null) {
+            userStatistics.getPv().add(1);
         }
     }
-
-    public static void removeUvPv(UserConnectInfo userConnectInfo, ChannelHandlerContext ctx) {
-        Map<String, Integer> uvPv = visitorCountMap.get(userConnectInfo.getConfigId());
-        if (uvPv != null) {
-            String ip = getIp(ctx);
-            uvPv.remove(ip);
-        }
-    }
-
 
     /**
      * 获取有效的数据统计
