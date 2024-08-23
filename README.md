@@ -12,7 +12,9 @@ HP-Lite2.0是一个单机方案
 我们支持TCP和UDP协议，针对 http/https ws/wss 协议做了大量的优化工作可以更加灵活的控制。让用户使用更佳舒服简单。
 
 #### 资源下载地址
-https://gitee.com/HServer/hp-lite/releases/tag/2.0
+- B友可以点点赞，来个好评
+- https://gitee.com/HServer/hp-lite/releases/tag/2.0
+
 
 ### 服务端
 - 下载2.0的jar 使用java1.8+版本运行
