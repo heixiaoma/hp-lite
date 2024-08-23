@@ -3,6 +3,7 @@ package net.hserver.hplite;
 import cn.hserver.HServerApplication;
 import cn.hserver.core.ioc.annotation.HServerBoot;
 import cn.hserver.core.server.util.PropUtil;
+import cn.hutool.crypto.GlobalBouncyCastleProvider;
 
 
 /**
@@ -11,6 +12,7 @@ import cn.hserver.core.server.util.PropUtil;
 @HServerBoot
 public class StartProxy {
     public static void main(String[] args) {
+        GlobalBouncyCastleProvider.setUseBouncyCastle(false);
         PropUtil instance = PropUtil.getInstance();
         Integer adminPort = instance.getInt("admin.port");
         Integer cmdPort = instance.getInt("cmd.port");
