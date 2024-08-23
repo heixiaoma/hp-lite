@@ -20,6 +20,7 @@ HP-Lite2.0是一个单机方案
 - 下载2.0的jar 使用java1.8+版本运行
 - 配置说明 app.yml
 - app.yml文件放在和jar同目录下即可，不然会默认启动配置
+- 建议：部署时关闭所有防火墙，云厂的安全组，注意UDP端口放开，还有TCP，
 ```yaml
 admin:
   username: 'admin' #后台账号
