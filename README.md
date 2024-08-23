@@ -28,7 +28,7 @@ cmd:
 tunnel:
   ip: '127.0.0.1' #隧道监听服务器真实的IP
   port: 9091 #隧道传输数据端口，这个端口用来传输数据的，
-  open-domain: true #是否开启80，443端口域名转发
+  open-domain: true #true 开启80，443端口域名转发（如果你的服务有宝塔或者nginx等，端口多半是被用了），false 关闭
 
 log: info #日志级别，不用动
 
