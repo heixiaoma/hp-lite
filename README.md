@@ -11,6 +11,8 @@ HP-Lite2.0是一个单机方案
 我们采用的是数据转发实现 稳定性可靠性是有保证的即便是极端的环境只要能上网就能实现穿透。
 我们支持TCP和UDP协议，针对 http/https ws/wss 协议做了大量的优化工作可以更加灵活的控制。让用户使用更佳舒服简单。
 
+#### 资源下载地址
+https://gitee.com/HServer/hp-lite/releases/tag/2.0
 
 ### 服务端
 - 下载2.0的jar 使用java1.8+版本运行
