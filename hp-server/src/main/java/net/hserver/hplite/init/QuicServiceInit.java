@@ -81,9 +81,11 @@ public class QuicServiceInit implements InitRunner {
                 }
 
                 Bootstrap bs = new Bootstrap();
-                bs.group(group)
-                        .option(SO_REUSEPORT, true)
-                        .channel(datagramChannel)
+                Bootstrap group1 = bs.group(group);
+                if (thread!=1) {
+                    group1.option(SO_REUSEPORT, true);
+                }
+                group1 .channel(datagramChannel)
                         .handler(new QuicCodecDispatcher(){
                             @Override
                             protected void initChannel(Channel channel, int i, QuicConnectionIdGenerator quicConnectionIdGenerator) throws Exception {
