@@ -55,8 +55,13 @@ public class QuicServiceInit implements InitRunner {
                     .earlyData(true)
                     .applicationProtocols(CostConfig.HP_LITE).build();
             int thread = 50;
+            //win 服务器没有端口复用功能
+            //linux服务器有端口复用功能
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("win")) {
+               thread=1;
+            }
             EventLoopGroup group = EventLoopUtil.getEventLoop(thread, "hp-quic");
-
             try {
                 IoMultiplexer eventLoopType = EventLoopUtil.getEventLoopType();
                 Class<? extends DatagramChannel> datagramChannel;
