@@ -14,7 +14,7 @@ HP-Lite2.0是一个单机方案
 #### 资源下载地址
 - B友可以点点赞，来个好评
 - https://gitee.com/HServer/hp-lite/releases/tag/2.0
-
+- 建议：推荐使用docker，或者命令行运行，UI版本的好像没有命令行的稳定
 
 ### 服务端
 - 下载2.0的jar 使用java1.8+版本运行
