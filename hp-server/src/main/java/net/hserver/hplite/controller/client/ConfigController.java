@@ -13,7 +13,7 @@ import net.hserver.hplite.service.UserConfigService;
 
 @Slf4j
 @Controller("/client/config/")
-public class ConfigController  {
+public class ConfigController {
     @Autowired
     private UserConfigService userConfigService;
 
@@ -55,7 +55,6 @@ public class ConfigController  {
 
     @GET("refConfig")
     public JsonResult refConfig(HttpRequest request, Integer configId) {
-
         userConfigService.refConfig( configId);
         return JsonResult.ok();
     }

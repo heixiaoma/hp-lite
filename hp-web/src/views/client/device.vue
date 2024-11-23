@@ -57,7 +57,7 @@
     <div>
       <a-modal okText="确定" cancelText="取消" v-model:visible="addDeviceModalVisible" title="设备信息"
                @ok="addDeviceOk">
-        <a-form :model="formState" ref="formTable">
+        <a-form :model="formState" ref="formTable" :layout="'vertical'" >
           <a-form-item label="设备编号" name="deviceId" :rules="[{ required: true, message: '设备编号必填'}]">
             <a-input style="width: 70%" v-model:value="formState.deviceId" placeholder="设备ID：32位"/>
             <span style="padding-left: 8px;user-select: none"><a @click="guid">自动生成</a></span>
@@ -71,7 +71,7 @@
     <div>
       <a-modal okText="确定" cancelText="取消" v-model:visible="updateDeviceModalVisible" title="设备信息"
                @ok="updateDeviceOk">
-        <a-form :model="formState" ref="formTable">
+        <a-form :model="formState" ref="formTable" :layout="'vertical'" >
           <a-form-item label="设备编号"  name="deviceId" :rules="[{ required: true, message: '设备编号必填'}]">
             <a-input style="width: 70%" disabled="disabled" v-model:value="formState.deviceId" placeholder="设备ID：32位"/>
           </a-form-item>

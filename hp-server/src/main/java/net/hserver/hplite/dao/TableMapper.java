@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import net.hserver.hplite.domian.entity.UserConfigEntity;
 import org.apache.ibatis.annotations.Update;
 
+import java.util.Date;
+
 
 @Mybatis
 public interface TableMapper  {
@@ -21,14 +23,25 @@ public interface TableMapper  {
             ");")
     int createTableUserStatistics();
 
+    @Update("CREATE TABLE IF NOT EXISTS \"user_custom\" (\n" +
+            "  \"id\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n" +
+            "  \"username\" TEXT,\n" +
+            "  \"password\" TEXT,\n" +
+            "  \"desc\" TEXT,\n" +
+            "  \"create_time\" DATE\n" +
+            ");")
+    int createTableUserCustom();
+
     @Update("CREATE TABLE IF NOT EXISTS \"user_device\" (\n" +
             "  \"id\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n" +
+            "  \"user_id\" INTEGER,\n" +
             "  \"device_key\" TEXT,\n" +
             "  \"remarks\" TEXT\n" +
             ");")
     int createTableUserDevice();
     @Update("CREATE TABLE IF NOT EXISTS \"user_config\" (\n" +
             "  \"id\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n" +
+            "  \"user_id\" INTEGER,\n" +
             "  \"config_key\" TEXT,\n" +
             "  \"device_key\" TEXT,\n" +
             "  \"server_ip\" TEXT,\n" +

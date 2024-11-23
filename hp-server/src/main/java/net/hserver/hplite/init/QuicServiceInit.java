@@ -40,6 +40,7 @@ public class QuicServiceInit implements InitRunner {
     private TunnelConfig tunnelConfig;
     @Override
     public void init(String[] strings) {
+        tableMapper.createTableUserCustom();
         tableMapper.createTableUserStatistics();
         tableMapper.createTableUserConfig();
         tableMapper.createTableUserDevice();

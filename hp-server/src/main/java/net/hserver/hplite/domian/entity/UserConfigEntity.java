@@ -88,4 +88,10 @@ public class UserConfigEntity {
     public  enum ProxyVersion{
         V1,V2,NONE
     }
+
+    /**
+     * 用户ID
+     */
+    public Integer userId;
+
 }

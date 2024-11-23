@@ -6,14 +6,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import net.hserver.hplite.dao.UserConfigDao;
 import net.hserver.hplite.dao.UserDeviceDao;
-import net.hserver.hplite.domian.bean.OnlineInfo;
-import net.hserver.hplite.domian.bean.ReqDeviceInfo;
-import net.hserver.hplite.domian.bean.ResDeviceInfo;
-import net.hserver.hplite.domian.bean.ResUserKey;
+import net.hserver.hplite.domian.bean.*;
 import net.hserver.hplite.domian.entity.UserConfigEntity;
 import net.hserver.hplite.domian.entity.UserDeviceEntity;
 import net.hserver.hplite.handler.cmd.CmdServerHandler;
 import net.hserver.hplite.utils.CheckUtil;
+import net.hserver.hplite.utils.TokenUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +27,11 @@ public class DeviceService {
     @Autowired
     private UserDeviceDao deviceDao;
     public List<UserDeviceEntity> getUserDeviceList() {
-        return deviceDao.selectList(new LambdaQueryWrapper<>());
+        Token token = TokenUtil.getToken();
+        return deviceDao.selectList(
+                new LambdaQueryWrapper<UserDeviceEntity>()
+                        .eq(token.getRole()== Token.Role.CLIENT,UserDeviceEntity::getUserId,token.getUserId())
+        );
     }
     /**
      * 查用户的key和是否在线
@@ -54,7 +56,11 @@ public class DeviceService {
     }
 
     public List<ResUserKey> getDeviceKey() {
-        List<UserDeviceEntity> userDeviceEntities = deviceDao.selectList(new LambdaQueryWrapper<>());
+        Token token = TokenUtil.getToken();
+        List<UserDeviceEntity> userDeviceEntities = deviceDao.selectList(
+                new LambdaQueryWrapper<UserDeviceEntity>()
+                        .eq(token.getRole()==Token.Role.CLIENT,UserDeviceEntity::getUserId,token.getUserId())
+        );
         return userDeviceEntities.stream().map(k -> {
             ResUserKey resUserKey = new ResUserKey();
             resUserKey.setKey(k.getDeviceKey());
@@ -85,7 +91,7 @@ public class DeviceService {
 
 
     public boolean addDevice(ReqDeviceInfo reqDeviceInfo) {
-
+        Token token = TokenUtil.getToken();
         String desc = reqDeviceInfo.getDesc();
         if (desc == null || desc.trim().length() == 0) {
             throw new RuntimeException("设备备注不能为空");
@@ -105,6 +111,7 @@ public class DeviceService {
         UserDeviceEntity userDeviceEntity = new UserDeviceEntity();
         userDeviceEntity.setDeviceKey(reqDeviceInfo.getDeviceId());
         userDeviceEntity.setRemarks(reqDeviceInfo.getDesc());
+        userDeviceEntity.setUserId(token.getUserId());
         deviceDao.insert(userDeviceEntity);
         return true;
     }

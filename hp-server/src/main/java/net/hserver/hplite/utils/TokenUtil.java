@@ -1,5 +1,6 @@
 package net.hserver.hplite.utils;
 
+import cn.hserver.plugin.web.context.HServerContextHolder;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.symmetric.AES;
@@ -32,8 +33,9 @@ public class TokenUtil {
     }
 
 
-    public static Token getToken(String token) {
+    public static Token getToken() {
         try {
+            String token = HServerContextHolder.getWebKit().httpRequest.getHeader("token");
             String decode = Base64.decodeStr(token);
             String decrypt = aes.decryptStr(decode);
             String[] split = decrypt.split(":");

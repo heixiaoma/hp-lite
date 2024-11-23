@@ -5,26 +5,20 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-@Data
-@TableName("user_device")
-public class UserDeviceEntity {
+import java.util.Date;
 
+@Data
+@TableName("user_custom")
+public class UserCustomEntity{
     @TableId(type = IdType.AUTO)
     private Integer id;
 
-    /**
-     * 设备key
-     */
-    private String deviceKey;
+    private String username;
 
-    /**
-     * 描述
-     */
-    private String remarks;
+    private String password;
 
+    private String desc;
 
-    /**
-     * 用户ID
-     */
-    public Integer userId;
+    private Date createTime;
+
 }

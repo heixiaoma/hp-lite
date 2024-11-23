@@ -10,6 +10,7 @@ const client_config = () => import('../views/client/config.vue');
 const client_device = () => import('../views/client/device.vue');
 const client_teach = () => import('../views/client/teach.vue');
 const manage = () => import('../views/client/manage.vue');
+const client_user = () => import('../views/client/user.vue');
 
 const routes = [
     {path: '/', component: home},
@@ -19,8 +20,9 @@ const routes = [
     {
         path: '/client', component: manage,
         children: [
-            {path: '', redirect: '/client/monitor'},
+            {path: '', redirect: '/client/device'},
             {path: 'monitor', component: client_monitor},
+            {path: 'user', component: client_user, name: "user"},
             {path: 'config', component: client_config, name: "config"},
             {path: 'device', component: client_device, name: "device"},
             {path: 'teach', component: client_teach, name: "teach"},

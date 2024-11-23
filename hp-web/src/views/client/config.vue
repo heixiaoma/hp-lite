@@ -1,10 +1,5 @@
 <template>
   <div>
-
-    <div style="display: flex;justify-content: flex-end">
-      <left-circle-two-tone style="font-size: 30px" @click="router.push({name:'package'})"/>
-    </div>
-
     <a-button type="primary" style="margin-bottom: 10px;margin-left: 10px" @click="addConfigModal">添加穿透</a-button>
     <a-button type="primary" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
     <a-table :loading="configLoading" :columns="columns" rowKey="id" :data-source="currentConfigList"

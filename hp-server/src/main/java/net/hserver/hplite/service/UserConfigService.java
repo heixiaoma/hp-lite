@@ -9,9 +9,11 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import net.hserver.hplite.config.TunnelConfig;
 import net.hserver.hplite.dao.UserConfigDao;
+import net.hserver.hplite.domian.bean.Token;
 import net.hserver.hplite.domian.entity.UserConfigEntity;
 import net.hserver.hplite.utils.CheckUtil;
 import net.hserver.hplite.utils.SSLUtil;
+import net.hserver.hplite.utils.TokenUtil;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -34,10 +36,12 @@ public class UserConfigService {
     }
 
 
-    public Page<UserConfigEntity> getConfigList(Integer page,Integer pageSize) {
+    public Page<UserConfigEntity> getConfigList(Integer page, Integer pageSize) {
+        Token token = TokenUtil.getToken();
         return userConfigDao.selectPage(
                 new Page<>(page,pageSize),
                 new LambdaQueryWrapper<UserConfigEntity>()
+                        .eq(token.getRole()== Token.Role.CLIENT,UserConfigEntity::getUserId,token.getUserId())
                         .orderByDesc(UserConfigEntity::getId)
         );
     }
@@ -101,7 +105,7 @@ public class UserConfigService {
                             .eq(UserConfigEntity::getPort, userConfigEntity.getPort())
             );
             if (portCount > 0 && userConfigEntity.getPort() > 0) {
-                throw new RuntimeException("端口已被其他服务使用，请换一个");
+                throw new RuntimeException("外网端口已被其他服务使用，请换一个");
             }
             Long domainCount = userConfigDao.selectCount(
                     new LambdaQueryWrapper<UserConfigEntity>()
@@ -109,10 +113,11 @@ public class UserConfigService {
                             .eq(UserConfigEntity::getDomain, userConfigEntity.getDomain())
             );
             if (domainCount > 0) {
-                throw new RuntimeException("域名已被其他服务使用，请换一个");
+                throw new RuntimeException("外网域名已被其他服务使用，请换一个");
             }
         }
         userConfigEntity.setConfigKey(UUID.randomUUID().toString());
+        userConfigEntity.setUserId(TokenUtil.getToken().getUserId());
         userConfigEntity.setServerIp(tunnelConfig.getIp());
         userConfigEntity.setServerPort(tunnelConfig.getPort());
         if (userConfigEntity.getId()!=null){

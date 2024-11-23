@@ -40,6 +40,7 @@ public class DeviceController  {
     @POST("add")
     public JsonResult addDevice(HttpRequest request, ReqDeviceInfo reqDeviceInfo) {
         try {
+
             return JsonResult.ok().put("data", deviceService.addDevice(reqDeviceInfo));
         } catch (Exception e) {
             return JsonResult.error(e.getMessage());
