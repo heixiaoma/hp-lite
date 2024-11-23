@@ -26,6 +26,7 @@ import net.hserver.hplite.message.HpMessageData;
 import net.hserver.hplite.message.UserConnectInfo;
 import net.hserver.hplite.service.HttpService;
 import net.hserver.hplite.utils.NetUtil;
+import net.hserver.hplite.utils.PrintTable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -132,20 +133,20 @@ public class ConnEvent {
             });
             metaDataBuild.setSuccess(true);
             handler.addConnectInfo(connectInfo,true);
-
-            StringBuilder message =new StringBuilder();
-            message.append("\n<===============>");
-            message.append("\n穿透成功");
-            message.append("\n内网TCP=>").append(userConnectInfo.getProxyIp()).append(":").append(userConnectInfo.getProxyPort());
-            message.append("\n外网TCP=>").append( userConnectInfo.getIp()).append(":").append(userConnectInfo.getPort());
+            PrintTable printTable1 = PrintTable.create();
+            printTable1.setSbcMode(false);
+            printTable1.addHeader("类型", "描述");
+            printTable1.addBody("穿透结果", "穿透成功");
+            printTable1.addBody("内网TCP", userConnectInfo.getProxyIp()+":"+(userConnectInfo.getProxyPort()));
+            printTable1.addBody("外网TCP", userConnectInfo.getIp()+":"+(userConnectInfo.getPort()));
             if (StrUtil.isNotEmpty(userConnectInfo.getDomain())){
                 if (StrUtil.isNotEmpty(userConnectInfo.getCertificateContent())&&StrUtil.isNotEmpty(userConnectInfo.getCertificateKey())){
-                    message.append("\n外网HTTPS=>").append("https://").append( userConnectInfo.getDomain());
+                    printTable1.addBody("外网HTTPS", "https://"+(userConnectInfo.getDomain()));
                 }else {
-                    message.append("\n外网HTTP=>").append("http://").append( userConnectInfo.getDomain());
+                    printTable1.addBody("外网HTTP", "http://"+(userConnectInfo.getDomain()));
                 }
             }
-            metaDataBuild.setReason(message.toString());
+            metaDataBuild.setReason(printTable1.toString());
             HttpService.pushStatus(key, "TCP映射成功");
         } catch (Exception e) {
             metaDataBuild.setSuccess(false);
@@ -204,10 +205,13 @@ public class ConnEvent {
             });
             metaDataBuild.setSuccess(true);
             handler.addConnectInfo(connectInfo,false);
-            String message = "\n<===============>\n穿透成功" +
-                    "\n内网UDP=>" + userConnectInfo.getProxyIp() + ":" + userConnectInfo.getProxyPort() +
-                    "\n外网UDP=>" + userConnectInfo.getIp() + ":" + userConnectInfo.getPort();
-            metaDataBuild.setReason(message);
+            PrintTable printTable1 = PrintTable.create();
+            printTable1.setSbcMode(false);
+            printTable1.addHeader("类型", "描述");
+            printTable1.addBody("穿透结果", "穿透成功");
+            printTable1.addBody("内网UDP", userConnectInfo.getProxyIp()+":"+(userConnectInfo.getProxyPort()));
+            printTable1.addBody("外网UDP", userConnectInfo.getIp()+":"+(userConnectInfo.getPort()));
+            metaDataBuild.setReason(printTable1.toString());
             HttpService.pushStatus(key, "UDP映射成功");
         } catch (Exception e) {
             metaDataBuild.setSuccess(false);
