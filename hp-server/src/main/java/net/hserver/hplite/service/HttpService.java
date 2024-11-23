@@ -22,7 +22,9 @@ public class HttpService {
             userConnectInfo.setIp(config.getServerIp());
             userConnectInfo.setDomain(config.getDomain());
             userConnectInfo.setPort(config.getPort());
-            userConnectInfo.setProxyVersion(config.getProxyVersion().name());
+            if(config.getProxyVersion()!=null&&config.getProxyVersion()!= UserConfigEntity.ProxyVersion.NONE) {
+                userConnectInfo.setProxyVersion(config.getProxyVersion().name());
+            }
             return userConnectInfo;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
