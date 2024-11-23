@@ -34,6 +34,15 @@ public class DeviceService {
     @Autowired
     private UserDeviceDao deviceDao;
 
+
+    public UserDeviceEntity getDeviceKey(String deviceKey){
+      return   deviceDao.selectOne(
+                new LambdaQueryWrapper<UserDeviceEntity>().eq(UserDeviceEntity::getDeviceKey,deviceKey)
+                        .last("limit 1")
+        );
+    }
+
+
     public List<UserDeviceEntity> getUserDeviceList() {
         Token token = TokenUtil.getToken();
         return deviceDao.selectList(

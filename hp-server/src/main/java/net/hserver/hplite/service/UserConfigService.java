@@ -11,6 +11,7 @@ import net.hserver.hplite.config.TunnelConfig;
 import net.hserver.hplite.dao.UserConfigDao;
 import net.hserver.hplite.domian.bean.Token;
 import net.hserver.hplite.domian.entity.UserConfigEntity;
+import net.hserver.hplite.domian.entity.UserDeviceEntity;
 import net.hserver.hplite.utils.CheckUtil;
 import net.hserver.hplite.utils.SSLUtil;
 import net.hserver.hplite.utils.TokenUtil;
@@ -27,6 +28,10 @@ public class UserConfigService {
 
     @Autowired
     private UserConfigDao userConfigDao;
+
+    @Autowired
+    private DeviceService deviceService;
+
 
     public List<UserConfigEntity> getDeviceConfig(String deviceKey) {
         return userConfigDao.selectList(
@@ -117,7 +122,11 @@ public class UserConfigService {
             }
         }
         userConfigEntity.setConfigKey(UUID.randomUUID().toString());
-        userConfigEntity.setUserId(TokenUtil.getToken().getUserId());
+        UserDeviceEntity deviceKey = deviceService.getDeviceKey(userConfigEntity.getDeviceKey());
+        if (deviceKey==null){
+            throw new RuntimeException("设备不存在");
+        }
+        userConfigEntity.setUserId(deviceKey.getUserId());
         userConfigEntity.setServerIp(tunnelConfig.getIp());
         userConfigEntity.setServerPort(tunnelConfig.getPort());
         if (userConfigEntity.getId()!=null){
