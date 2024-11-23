@@ -29,7 +29,6 @@ public class StatisticsUtil {
     public static void init(UserConnectInfo userConnectInfo) {
         if (!data.containsKey(userConnectInfo.getConfigId())) {
             UserStatistics userStatistics = new UserStatistics();
-            userStatistics.setUserId(userConnectInfo.getId());
             userStatistics.setConfigId(userConnectInfo.getConfigId());
             data.put(userConnectInfo.getConfigId(), userStatistics);
         }
