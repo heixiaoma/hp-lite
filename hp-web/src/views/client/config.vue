@@ -33,7 +33,7 @@
           <div v-if="record.connectType==='TCP'">
             <div v-if="record.port">外网TCP地址: <span class="text-tips">{{ record.serverIp }}:{{ record.port }}</span>
             </div>
-            <div>外网HTTP地址: <span class="text-tips">http(s)://{{ record.domain }}</span></div>
+            <div v-if="record.domain">外网HTTP地址: <span class="text-tips">http(s)://{{ record.domain }}</span></div>
           </div>
 
           <div v-if="record.connectType==='UDP'">
@@ -46,7 +46,7 @@
             </div>
             <div v-if="record.port">外网TCP地址: <span class="text-tips">{{ record.serverIp }}:{{ record.port }}</span>
             </div>
-            <div>外网HTTP地址: <span class="text-tips">http(s)://{{ record.domain }}</span></div>
+            <div v-if="record.domain">外网HTTP地址: <span class="text-tips">http(s)://{{ record.domain }}</span></div>
           </div>
 
           <div v-if="record.statusMsg">
