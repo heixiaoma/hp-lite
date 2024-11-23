@@ -135,7 +135,7 @@ public class ConnEvent {
             handler.addConnectInfo(connectInfo,true);
             PrintTable printTable1 = PrintTable.create();
             printTable1.setSbcMode(false);
-            printTable1.addHeader("类型", "描述");
+            printTable1.addHeader("描述", "内容");
             printTable1.addBody("穿透结果", "穿透成功");
             printTable1.addBody("内网TCP", userConnectInfo.getProxyIp()+":"+(userConnectInfo.getProxyPort()));
             printTable1.addBody("外网TCP", userConnectInfo.getIp()+":"+(userConnectInfo.getPort()));
@@ -207,7 +207,7 @@ public class ConnEvent {
             handler.addConnectInfo(connectInfo,false);
             PrintTable printTable1 = PrintTable.create();
             printTable1.setSbcMode(false);
-            printTable1.addHeader("类型", "描述");
+            printTable1.addHeader("描述", "内容");
             printTable1.addBody("穿透结果", "穿透成功");
             printTable1.addBody("内网UDP", userConnectInfo.getProxyIp()+":"+(userConnectInfo.getProxyPort()));
             printTable1.addBody("外网UDP", userConnectInfo.getIp()+":"+(userConnectInfo.getPort()));
