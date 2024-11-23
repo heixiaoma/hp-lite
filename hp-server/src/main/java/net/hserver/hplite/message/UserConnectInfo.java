@@ -7,7 +7,6 @@ import net.hserver.hplite.domian.entity.UserConfigEntity;
 @Data
 @NoArgsConstructor
 public class UserConnectInfo {
-    private Integer id;
 
     /**
      * proxyVersion不为空就开启了真实IP解析，只能取值V1和V2
@@ -20,9 +19,13 @@ public class UserConnectInfo {
     //自定义的域名
     private String domain;
 
-    //开通的端口号 -1随机
+    //外网端口号 -1随机
     private Integer port;
 
+    /**
+     * 服务端IP
+     */
+    private String ip;
 
     /**
      * SSL证书Key

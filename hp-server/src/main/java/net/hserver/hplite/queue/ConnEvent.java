@@ -1,6 +1,7 @@
 package net.hserver.hplite.queue;
 
 
+import cn.hserver.core.ioc.annotation.Autowired;
 import cn.hserver.core.ioc.annotation.queue.QueueHandler;
 import cn.hserver.core.ioc.annotation.queue.QueueListener;
 import cn.hserver.core.server.util.PropUtil;
@@ -12,6 +13,7 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.incubator.codec.quic.QuicChannel;
 import lombok.extern.slf4j.Slf4j;
+import net.hserver.hplite.config.TunnelConfig;
 import net.hserver.hplite.domian.bean.ConnectInfo;
 import net.hserver.hplite.handler.FlowHandlerStatistics;
 import net.hserver.hplite.handler.RemoteProxyHandler;
@@ -32,6 +34,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @QueueListener(queueName = QueueEvent.CONN_EVENT)
 public class ConnEvent {
+
 
     @QueueHandler
     public void connEvent(HpMessageData.HpMessage hpMessage, String id) {
@@ -129,7 +132,20 @@ public class ConnEvent {
             });
             metaDataBuild.setSuccess(true);
             handler.addConnectInfo(connectInfo,true);
-            metaDataBuild.setReason("连接成功，外网TCP端口是:" + userConnectInfo.getPort() + (StrUtil.isNotEmpty(userConnectInfo.getDomain())?",外网HTTP地址是：http(s)://" + userConnectInfo.getDomain():""));
+
+            StringBuilder message =new StringBuilder();
+            message.append("\n<===============>");
+            message.append("\n穿透成功");
+            message.append("\n内网TCP=>").append(userConnectInfo.getProxyIp()).append(":").append(userConnectInfo.getProxyPort());
+            message.append("\n外网TCP=>").append( userConnectInfo.getIp()).append(":").append(userConnectInfo.getPort());
+            if (StrUtil.isNotEmpty(userConnectInfo.getDomain())){
+                if (StrUtil.isNotEmpty(userConnectInfo.getCertificateContent())&&StrUtil.isNotEmpty(userConnectInfo.getCertificateKey())){
+                    message.append("\n外网HTTPS=>").append("https://").append( userConnectInfo.getDomain());
+                }else {
+                    message.append("\n外网HTTP=>").append("http://").append( userConnectInfo.getDomain());
+                }
+            }
+            metaDataBuild.setReason(message.toString());
             HttpService.pushStatus(key, "TCP映射成功");
         } catch (Exception e) {
             metaDataBuild.setSuccess(false);
@@ -188,7 +204,10 @@ public class ConnEvent {
             });
             metaDataBuild.setSuccess(true);
             handler.addConnectInfo(connectInfo,false);
-            metaDataBuild.setReason("连接成功，外网UDP端口是:" +userConnectInfo.getPort());
+            String message = "\n<===============>\n穿透成功" +
+                    "\n内网UDP=>" + userConnectInfo.getProxyIp() + ":" + userConnectInfo.getProxyPort() +
+                    "\n外网UDP=>" + userConnectInfo.getIp() + ":" + userConnectInfo.getPort();
+            metaDataBuild.setReason(message);
             HttpService.pushStatus(key, "UDP映射成功");
         } catch (Exception e) {
             metaDataBuild.setSuccess(false);

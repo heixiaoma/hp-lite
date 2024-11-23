@@ -14,9 +14,15 @@ public class HttpService {
             UserConfigService userConfigService = IocUtil.getBean(UserConfigService.class);
             UserConfigEntity config = userConfigService.getConfig(configKey);
             UserConnectInfo userConnectInfo = new UserConnectInfo();
+            userConnectInfo.setProxyPort(config.getLocalPort());
+            userConnectInfo.setProxyIp(config.getLocalIp());
+            userConnectInfo.setCertificateContent(config.getCertificateContent());
+            userConnectInfo.setCertificateKey(config.getCertificateKey());
             userConnectInfo.setConfigId(config.getId());
+            userConnectInfo.setIp(config.getServerIp());
             userConnectInfo.setDomain(config.getDomain());
             userConnectInfo.setPort(config.getPort());
+            userConnectInfo.setProxyVersion(config.getProxyVersion().name());
             return userConnectInfo;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
