@@ -32,3 +32,11 @@ export function stopDevice(query) {
         params: query
     })
 }
+
+export function updateDevice(data) {
+    return http({
+        url: '/client/device/update',
+        method: 'post',
+        data
+    })
+}

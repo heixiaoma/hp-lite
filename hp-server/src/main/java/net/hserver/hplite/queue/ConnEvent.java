@@ -4,6 +4,7 @@ package net.hserver.hplite.queue;
 import cn.hserver.core.ioc.annotation.queue.QueueHandler;
 import cn.hserver.core.ioc.annotation.queue.QueueListener;
 import cn.hserver.core.server.util.PropUtil;
+import cn.hutool.core.util.StrUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelId;
@@ -127,8 +128,8 @@ public class ConnEvent {
                 }
             });
             metaDataBuild.setSuccess(true);
-            handler.addConnectInfo(connectInfo);
-            metaDataBuild.setReason("连接成功，外网TCP端口是:" + userConnectInfo.getPort() + ",外网HTTP地址是：http(s)://" + userConnectInfo.getDomain());
+            handler.addConnectInfo(connectInfo,true);
+            metaDataBuild.setReason("连接成功，外网TCP端口是:" + userConnectInfo.getPort() + (StrUtil.isNotEmpty(userConnectInfo.getDomain())?",外网HTTP地址是：http(s)://" + userConnectInfo.getDomain():""));
             HttpService.pushStatus(key, "TCP映射成功");
         } catch (Exception e) {
             metaDataBuild.setSuccess(false);
@@ -172,7 +173,7 @@ public class ConnEvent {
                 userConnectInfo.setPort(NetUtil.getAvailablePort());
             }
             remoteConnectionServer = new TunnelServer();
-            ConnectInfo connectInfo = new ConnectInfo(handler.getSuperChannel(),remoteConnectionServer, userConnectInfo, "(udp)", handler.getSuperChannelId(), key);
+            ConnectInfo connectInfo = new ConnectInfo(handler.getSuperChannel(),remoteConnectionServer, userConnectInfo, handler.getSuperChannelId(), key);
             remoteConnectionServer.bindUdp(userConnectInfo.getPort(), new ChannelInitializer<Channel>() {
                 @Override
                 public void initChannel(Channel ch) throws Exception {
@@ -186,7 +187,7 @@ public class ConnEvent {
                 }
             });
             metaDataBuild.setSuccess(true);
-            handler.addConnectInfo(connectInfo);
+            handler.addConnectInfo(connectInfo,false);
             metaDataBuild.setReason("连接成功，外网UDP端口是:" +userConnectInfo.getPort());
             HttpService.pushStatus(key, "UDP映射成功");
         } catch (Exception e) {

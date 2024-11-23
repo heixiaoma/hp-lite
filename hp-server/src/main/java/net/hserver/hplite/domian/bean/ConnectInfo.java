@@ -56,22 +56,7 @@ public class ConnectInfo {
 
     private TunnelServer tunnelServer;
 
-    //UDP
-    public ConnectInfo(QuicChannel quicChannel,TunnelServer tunnelServer, UserConnectInfo connectInfo, String domain, ChannelId channelId, String key) {
-        this.quicChannel=quicChannel;
-        this.port = connectInfo.getPort();
-        this.domain = domain;
-        this.channelId = channelId;
-        this.date = DateUtil.dateToStamp(new Date());
-        this.key = key;
-        this.tunnelServer = tunnelServer;
 
-        this.proxyVersion = connectInfo.getProxyVersion();
-        this.proxyIp = connectInfo.getProxyIp();
-        this.proxyPort = connectInfo.getProxyPort();
-    }
-
-    //TCP
     public ConnectInfo(QuicChannel quicChannel, TunnelServer tunnelServer, UserConnectInfo userConnectInfo, ChannelId channelId, String key) {
         this.quicChannel=quicChannel;
         this.port = userConnectInfo.getPort();

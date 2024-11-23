@@ -36,6 +36,7 @@
                 <a-button type="danger">强制停止</a-button>
               </a-popconfirm>
               <a-button type="dashed" @click="showQr(item)">查看设备码</a-button>
+              <a-button type="dashed" @click="edit(item)">编辑</a-button>
               </div>
           </a-card>
         </div>
@@ -54,7 +55,7 @@
 
 
     <div>
-      <a-modal okText="确定" cancelText="取消" v-model:visible="addDeviceModalVisible" title="添加内网穿透配置"
+      <a-modal okText="确定" cancelText="取消" v-model:visible="addDeviceModalVisible" title="设备信息"
                @ok="addDeviceOk">
         <a-form :model="formState" ref="formTable">
           <a-form-item label="设备编号" name="deviceId" :rules="[{ required: true, message: '设备编号必填'}]">
@@ -67,7 +68,19 @@
         </a-form>
       </a-modal>
     </div>
-
+    <div>
+      <a-modal okText="确定" cancelText="取消" v-model:visible="updateDeviceModalVisible" title="设备信息"
+               @ok="updateDeviceOk">
+        <a-form :model="formState" ref="formTable">
+          <a-form-item label="设备编号"  name="deviceId" :rules="[{ required: true, message: '设备编号必填'}]">
+            <a-input style="width: 70%" disabled="disabled" v-model:value="formState.deviceId" placeholder="设备ID：32位"/>
+          </a-form-item>
+          <a-form-item label="设备备注" name="desc" :rules="[{ required: true, message: '设备备注必填'}]">
+            <a-input style="width: 70%" v-model:value="formState.desc" placeholder="备注如：nas中的HP"/>
+          </a-form-item>
+        </a-form>
+      </a-modal>
+    </div>
 
   </div>
 </template>
@@ -75,7 +88,7 @@
 <script setup>
 import {onMounted, reactive, ref} from "vue";
 import {useRouter} from "vue-router";
-import {getDeviceList, addDevice, removeDevice,stopDevice} from "../../api/client/device";
+import {getDeviceList, addDevice, removeDevice, stopDevice, updateDevice} from "../../api/client/device";
 import qr from './qr.vue';
 const qrModalVisible = ref(false)
 const router = useRouter()
@@ -84,14 +97,26 @@ const deviceId = ref()
 const deviceList = ref()
 const listLoading = ref(false)
 const addDeviceModalVisible = ref(false)
+const updateDeviceModalVisible = ref(false)
 const formState = reactive({
   deviceId: "",
   desc: ""
 })
 
 const addDeviceModal = () => {
+  formState.deviceId=""
+  formState.desc=""
   addDeviceModalVisible.value = true;
 };
+
+
+const edit=(item)=>{
+  formState.deviceId=item.deviceId
+  formState.desc=item.desc
+  updateDeviceModalVisible.value = true;
+}
+
+
 const showQr = (item)=>{
   qrModalVisible.value = true;
   deviceId.value = item.deviceId;
@@ -111,6 +136,19 @@ const addDeviceOk = () => {
       formState.desc = ''
       loadData();
       addDeviceModalVisible.value = false;
+    })
+  })
+};
+
+const updateDeviceOk = () => {
+  formTable.value.validate().then(res => {
+    updateDevice({
+      ...formState
+    }).then(res => {
+      formState.deviceId = ''
+      formState.desc = ''
+      loadData();
+      updateDeviceModalVisible.value = false;
     })
   })
 };

@@ -46,6 +46,16 @@ public class DeviceController  {
         }
     }
 
+    @POST("update")
+    public JsonResult updateDevice(HttpRequest request, ReqDeviceInfo reqDeviceInfo) {
+        try {
+            return JsonResult.ok().put("data", deviceService.updateDevice(reqDeviceInfo));
+        } catch (Exception e) {
+            return JsonResult.error(e.getMessage());
+        }
+    }
+
+
     @GET("remove")
     public JsonResult remove(HttpRequest request,String deviceId) {
         try {

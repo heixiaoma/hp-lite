@@ -1,5 +1,6 @@
 package net.hserver.hplite.handler.quic;
 
+import cn.hutool.json.JSONUtil;
 import io.netty.channel.*;
 import io.netty.channel.socket.ChannelInputShutdownReadComplete;
 import io.netty.incubator.codec.quic.QuicChannel;
@@ -64,20 +65,19 @@ public abstract class QuicStreamSuperHandler extends SimpleChannelInboundHandler
         return CURRENT_STATUS.stream().filter(v -> v != null && v.getChannelId() != null && id.asLongText().equals(v.getChannelId().asLongText())).collect(Collectors.toList());
     }
 
-    public void addConnectInfo(ConnectInfo connectInfo) {
-        String domain = connectInfo.getDomain();
-        //udp 类型由回调删除
-        if (!domain.equals("(udp)")) {
-            List<ConnectInfo> byDomain = getByDomains(domain);
-            for (ConnectInfo info : byDomain) {
-                TunnelServer tunnelServer = info.getTunnelServer();
+    public void addConnectInfo(ConnectInfo connectInfo,boolean hasTcp) {
+        String key = connectInfo.getKey();
+        List<ConnectInfo> byDomain = getByKey(key);
+        for (ConnectInfo info : byDomain) {
+            TunnelServer tunnelServer = info.getTunnelServer();
+            if (hasTcp==tunnelServer.getHasTcp()) {
                 tunnelServer.close();
                 QuicChannel quicChannel = getQuicChannel(info.getChannelId());
                 if (quicChannel != null) {
                     quicChannel.close();
                 }
+                CURRENT_STATUS.remove(info);
             }
-            CURRENT_STATUS.removeAll(byDomain);
         }
         CURRENT_STATUS.add(connectInfo);
     }
@@ -109,7 +109,7 @@ public abstract class QuicStreamSuperHandler extends SimpleChannelInboundHandler
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt == ChannelInputShutdownReadComplete.INSTANCE) {
             ctx.channel().close();
-            if (w!=null){
+            if (w != null) {
                 getCtxStream().shutdownOutput();
                 w.close();
             }
@@ -121,7 +121,7 @@ public abstract class QuicStreamSuperHandler extends SimpleChannelInboundHandler
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         ctx.channel().close();
-        if (w!=null){
+        if (w != null) {
             getCtxStream().shutdownOutput();
             w.close();
         }
@@ -193,7 +193,7 @@ public abstract class QuicStreamSuperHandler extends SimpleChannelInboundHandler
     }
 
     public QuicChannel getSuperChannel() {
-        return (QuicChannel)channelHandlerContext.channel().parent();
+        return (QuicChannel) channelHandlerContext.channel().parent();
     }
 
     public ChannelId getSuperChannelId() {

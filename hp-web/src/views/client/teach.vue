@@ -7,12 +7,7 @@
       便做了多个简单的登录操作页面，并不是很专业，作者在开发维护迭代上也越来越费劲，因此，有了Lite的项目将其做的更佳完美，使用体验更佳舒服。在代码上维护上，全新的设计了一番。
     </div>
     <div class="mdui-typo" style="margin-top: 50px">
-      <span><a href="https://jq.qq.com/?_wv=1027&k=9xMZrFCQ" rel="nofollow"
-               target="_blank">QQ群1：767474069</a></span>
-      <span style="padding-left: 10px"><a
-          href="http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=HtcqAJXqHdLd9qi6Nmp5Wd2-ukBjGYFS&authKey=PevXyhvsxsRe35IKE28v9Ra7N6%2BZxsMU9notMbWYgRX4gXRNJ%2Fm7907VxQDZSjXi&noverify=0&group_code=738424584"
-          rel="nofollow"
-          target="_blank">QQ群2：738424584</a></span>
+      <span>QQ群：1065301527</span>
     </div>
 
   </div>

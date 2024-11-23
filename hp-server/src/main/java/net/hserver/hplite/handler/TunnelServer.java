@@ -23,12 +23,14 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class TunnelServer {
+    private Boolean hasTcp;
     private Channel tcpChannel;
     private Channel udpChannel;
     private final static EventLoopGroup BossGroup = EventLoopUtil.getEventLoop(32, "Boss-TunnelServer");
     private final static EventLoopGroup WorkerGroup = EventLoopUtil.getEventLoop(128, "Worker-TunnelServer");
 
     public synchronized void bindTcp(int port, ChannelInitializer<?> channelInitializer) throws Exception {
+        hasTcp=true;
         ServerBootstrap b = new ServerBootstrap();
         b.group(BossGroup, WorkerGroup)
                 .channel(EventLoopUtil.getEventLoopTypeClass())
@@ -43,7 +45,7 @@ public class TunnelServer {
 
 
     public synchronized void bindUdp(int port, ChannelInitializer<?> channelInitializer) throws Exception {
-
+        hasTcp=false;
         IoMultiplexer eventLoopType = EventLoopUtil.getEventLoopType();
         Class<? extends DatagramChannel> datagramChannel;
         switch (eventLoopType) {
@@ -70,6 +72,9 @@ public class TunnelServer {
         udpChannel = b.bind(port).sync().channel();
     }
 
+    public Boolean getHasTcp() {
+        return hasTcp;
+    }
 
     public synchronized void close() {
         if (udpChannel != null) {

@@ -3,6 +3,7 @@ package net.hserver.hplite.service;
 import cn.hserver.core.ioc.annotation.Autowired;
 import cn.hserver.core.ioc.annotation.Bean;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import net.hserver.hplite.dao.UserConfigDao;
 import net.hserver.hplite.dao.UserDeviceDao;
 import net.hserver.hplite.domian.bean.OnlineInfo;
@@ -61,8 +62,27 @@ public class DeviceService {
             resUserKey.setDesc((b ? "在线" : "离线") + "-" + k.getRemarks());
             return resUserKey;
         }).collect(Collectors.toList());
-
     }
+
+
+    public boolean updateDevice(ReqDeviceInfo reqDeviceInfo) {
+        String desc = reqDeviceInfo.getDesc();
+        if (desc == null || desc.trim().length() == 0) {
+            throw new RuntimeException("设备备注不能为空");
+        }
+        String deviceId = reqDeviceInfo.getDeviceId();
+        if (deviceId == null || deviceId.trim().length() != 32 || !CheckUtil.checkDomain(deviceId)) {
+            throw new RuntimeException("设备编号，不符合规范");
+        }
+       return deviceDao.update(null,
+                new LambdaUpdateWrapper<UserDeviceEntity>()
+                        .eq(UserDeviceEntity::getDeviceKey,reqDeviceInfo.getDeviceId())
+                        .set(UserDeviceEntity::getRemarks,reqDeviceInfo.getDesc())
+        )>0;
+    }
+
+
+
 
     public boolean addDevice(ReqDeviceInfo reqDeviceInfo) {
 

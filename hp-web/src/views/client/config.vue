@@ -9,7 +9,9 @@
     <a-button type="primary" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
     <a-table :loading="configLoading" :columns="columns" rowKey="id" :data-source="currentConfigList"
              :locale="{emptyText: '暂无配置,添加一个试试看看'}"
-             :scroll="{ x: 10 }" :pagination='false'>
+             :pagination="pagination"
+             @change="handleTableChange"
+             :scroll="{ x: 10 }" >
       <template #bodyCell="{ column ,record}">
 
         <template v-if="column.key === 'deviceKey'">
@@ -92,10 +94,6 @@
             <a-input v-model:value="formState.port" placeholder="8084"/>
           </a-form-item>
 
-          <a-form-item label="穿透域名" name="domain" :rules="[{ required: true, message: '穿透域名必填'}]">
-            <a-input v-model:value="formState.domain" placeholder="xxx.com"/>
-          </a-form-item>
-
           <a-form-item label="内网地址" name="localIp" :rules="[{ required: true, message: '内网地址必填'}]">
             <a-input v-model:value="formState.localIp" placeholder="内网IP如：127.0.0.1"/>
           </a-form-item>
@@ -114,12 +112,17 @@
               <a-select-option value="V2">V2版本</a-select-option>
             </a-select>
           </a-form-item>
-          <a-form-item label="证书KEY" name="certificateKey"
+
+          <a-form-item label="&nbsp;穿透域名&nbsp;&nbsp;" name="domain">
+            <a-input v-model:value="formState.domain" placeholder="xxx.com"/>
+          </a-form-item>
+
+          <a-form-item label="&nbsp;证书KEY&nbsp;&nbsp;" name="certificateKey"
                        :rules="[{ required: false, message: '必须填写证书.key文件'}]">
             <a-textarea :rows="6" v-model:value="formState.certificateKey"
                         placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;***大概是这样的证书私钥***&#10;-----END RSA PRIVATE KEY-----"/>
           </a-form-item>
-          <a-form-item label="证书内容" name="certificateContent"
+          <a-form-item label="&nbsp;证书内容&nbsp;&nbsp;" name="certificateContent"
                        :rules="[{ required: false, message: '映射描述必填'}]">
             <a-textarea :rows="6" v-model:value="formState.certificateContent"
                         placeholder="-----BEGIN CERTIFICATE-----&#10;***大概是这样的证书内容***&#10;-----BEGIN CERTIFICATE-----"/>
@@ -136,9 +139,21 @@ import {LeftCircleTwoTone} from '@ant-design/icons-vue';
 import {onMounted, reactive, ref} from "vue";
 import {removeConfig, getConfigList, getDeviceKey, addConfig, refConfig} from "../../api/client/config";
 import {useRoute, useRouter} from 'vue-router'
-
 const route = useRoute()
 const router = useRouter()
+const pagination = reactive({
+  total: 0,
+  current: 1,
+  pageSize: 10,
+});
+
+const handleTableChange = (item) => {
+  pagination.current = item.current
+  pagination.pageSize = item.pageSize
+  pagination.total = item.total
+  loadData()
+}
+
 
 const formTable = ref()
 const addConfigVisible = ref(false)
@@ -149,7 +164,7 @@ const formState = reactive({
   deviceKey: "",
   remarks: "",
   port: "",
-  domain: "",
+  domain: undefined,
   localIp: "",
   localPort: "",
   connectType: "",
@@ -185,10 +200,12 @@ const userKeyByName = (deviceKey) => {
 const loadData = () => {
   currentConfigList.value = []
   configLoading.value = true
-  console.log(route.query)
-  getConfigList().then(res => {
+  getConfigList(pagination).then(res => {
     configLoading.value = false
-    currentConfigList.value = res.data
+    currentConfigList.value = res.data.records
+    pagination.current = res.data.current
+    pagination.pageSize = res.data.size
+    pagination.total = res.data.total
   }).catch(e => {
     configLoading.value = false
   })
@@ -242,7 +259,7 @@ const addConfigModal = () => {
   formState.deviceKey=""
   formState.remarks=""
   formState.port=""
-  formState.domain=""
+  formState.domain=undefined
   formState.localIp=""
   formState.localPort=""
   formState.connectType=""
@@ -268,9 +285,11 @@ const addConfigOk = () => {
 
 
 const columns = [
+  {title: '配置ID', dataIndex: 'id', key: 'id'},
   {title: '备注', dataIndex: 'remarks', key: 'remarks'},
   {title: '内网IP', dataIndex: 'localIp', key: 'localIp'},
   {title: '内网端口', dataIndex: 'localPort', key: 'localPort'},
+  {title: '外网端口', dataIndex: 'port', key: 'port'},
   {title: '穿透类型', dataIndex: 'connectType', key: 'connectType'},
   {title: '域名', dataIndex: 'domain', key: 'domain'},
   {title: '部署设备', dataIndex: 'deviceKey', key: 'deviceKey'},

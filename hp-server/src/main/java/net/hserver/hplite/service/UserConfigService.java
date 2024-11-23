@@ -6,6 +6,7 @@ import cn.hserver.core.queue.HServerQueue;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import net.hserver.hplite.config.TunnelConfig;
 import net.hserver.hplite.dao.UserConfigDao;
 import net.hserver.hplite.domian.entity.UserConfigEntity;
@@ -33,9 +34,11 @@ public class UserConfigService {
     }
 
 
-    public List<UserConfigEntity> getConfigList() {
-        return userConfigDao.selectList(
-                new LambdaQueryWrapper<>()
+    public Page<UserConfigEntity> getConfigList(Integer page,Integer pageSize) {
+        return userConfigDao.selectPage(
+                new Page<>(page,pageSize),
+                new LambdaQueryWrapper<UserConfigEntity>()
+                        .orderByDesc(UserConfigEntity::getId)
         );
     }
 
@@ -77,9 +80,6 @@ public class UserConfigService {
         if (userConfigEntity.getPort() == null) {
             throw new RuntimeException("外网端口未填写");
         }
-        if (userConfigEntity.getDomain() == null) {
-            throw new RuntimeException("穿透域名未填写");
-        }
 
         if (!CheckUtil.isValidIPAddress(userConfigEntity.getLocalIp())) {
             throw new RuntimeException("内网IP填写不正确");
@@ -105,6 +105,7 @@ public class UserConfigService {
             }
             Long domainCount = userConfigDao.selectCount(
                     new LambdaQueryWrapper<UserConfigEntity>()
+                            .isNotNull(UserConfigEntity::getDomain)
                             .eq(UserConfigEntity::getDomain, userConfigEntity.getDomain())
             );
             if (domainCount > 0) {
