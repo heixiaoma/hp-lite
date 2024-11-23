@@ -18,6 +18,12 @@
             <p v-if="item.memoryInfo">HP占用内存：{{ (item.memoryInfo.hpTotalMem / 1024 / 1024).toFixed(2) }}/MB </p>
             <p v-if="item.memoryInfo">HP实际使用内存：{{ (item.memoryInfo.hpUseMem / 1024 / 1024).toFixed(2) }}/MB </p>
             <p>是否在线：{{ item.online ? "在线中" : "未在线" }}</p>
+
+            <div v-if="userInfo.getUserInfo().role==='ADMIN'">
+              <p v-if="item.username">归属用户：{{item.username}}</p>
+              <p v-if="item.userDesc">归属用户备注：{{item.userDesc}}</p>
+            </div>
+
             <div class="op-btn">
               <a-popconfirm
                   title="你真的要删除？"
@@ -90,6 +96,7 @@ import {onMounted, reactive, ref} from "vue";
 import {useRouter} from "vue-router";
 import {getDeviceList, addDevice, removeDevice, stopDevice, updateDevice} from "../../api/client/device";
 import qr from './qr.vue';
+import userInfo from "../../data/userInfo";
 const qrModalVisible = ref(false)
 const router = useRouter()
 const formTable = ref()

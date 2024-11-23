@@ -6,15 +6,17 @@
              :locale="{emptyText: '暂无配置,添加一个试试看看'}"
              :pagination="pagination"
              @change="handleTableChange"
-             :scroll="{ x: 10 }" >
+             :scroll="{ x: 10 }">
       <template #bodyCell="{ column ,record}">
-
         <template v-if="column.key === 'deviceKey'">
           <div>
-            {{ userKeyByName(record.deviceKey) }}
+            设备状态：{{ userKeyByName(record.deviceKey) }}
+          </div>
+          <div v-if="userInfo.getUserInfo().role==='ADMIN'">
+            <div v-if="userKeyByUserInfo(record.deviceKey).username"> 归属用户： {{ userKeyByUserInfo(record.deviceKey).username }}</div>
+            <div v-if="userKeyByUserInfo(record.deviceKey).userDesc"> 归属用户备注：{{ userKeyByUserInfo(record.deviceKey).userDesc }}</div>
           </div>
         </template>
-
         <template v-if="column.key === 'action'">
           <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="removeConfigData(record)">删除
           </a-button>
@@ -134,6 +136,8 @@ import {LeftCircleTwoTone} from '@ant-design/icons-vue';
 import {onMounted, reactive, ref} from "vue";
 import {removeConfig, getConfigList, getDeviceKey, addConfig, refConfig} from "../../api/client/config";
 import {useRoute, useRouter} from 'vue-router'
+import userInfo from "../../data/userInfo";
+
 const route = useRoute()
 const router = useRouter()
 const pagination = reactive({
@@ -176,7 +180,7 @@ const loadDeviceKey = () => {
   getDeviceKey().then(res => {
     let data = []
     for (let k of res.data) {
-      data.push({"label": k.desc, "value": k.key})
+      data.push({"label": k.desc, "value": k.key, userDesc: k.userDesc, username: k.username})
     }
     currentUserKeyList.value = data
   })
@@ -190,8 +194,19 @@ const userKeyByName = (deviceKey) => {
   } catch (e) {
     return "设备获取错误"
   }
-
 }
+
+const userKeyByUserInfo = (deviceKey) => {
+  try {
+    return currentUserKeyList.value.filter(r => {
+      return r.value === deviceKey
+    })[0]
+  } catch (e) {
+    return ""
+  }
+}
+
+
 const loadData = () => {
   currentConfigList.value = []
   configLoading.value = true
@@ -223,17 +238,17 @@ const removeConfigData = (item) => {
 }
 
 const editConfigData = (item) => {
-  formState.id=item.id
-  formState.deviceKey=item.deviceKey
-  formState.remarks=item.remarks
-  formState.port=item.port
-  formState.domain=item.domain
-  formState.localIp=item.localIp
-  formState.localPort=item.localPort
-  formState.connectType=item.connectType
-  formState.proxyVersion=item.proxyVersion
-  formState.certificateKey=item.certificateKey
-  formState.certificateContent=item.certificateContent
+  formState.id = item.id
+  formState.deviceKey = item.deviceKey
+  formState.remarks = item.remarks
+  formState.port = item.port
+  formState.domain = item.domain
+  formState.localIp = item.localIp
+  formState.localPort = item.localPort
+  formState.connectType = item.connectType
+  formState.proxyVersion = item.proxyVersion
+  formState.certificateKey = item.certificateKey
+  formState.certificateContent = item.certificateContent
   addConfigVisible.value = true;
 }
 const refConfigData = (item) => {
@@ -250,17 +265,17 @@ const refConfigData = (item) => {
 
 
 const addConfigModal = () => {
-  formState.id=""
-  formState.deviceKey=""
-  formState.remarks=""
-  formState.port=""
-  formState.domain=undefined
-  formState.localIp=""
-  formState.localPort=""
-  formState.connectType=""
-  formState.proxyVersion=""
-  formState.certificateKey=""
-  formState.certificateContent=""
+  formState.id = ""
+  formState.deviceKey = ""
+  formState.remarks = ""
+  formState.port = ""
+  formState.domain = undefined
+  formState.localIp = ""
+  formState.localPort = ""
+  formState.connectType = ""
+  formState.proxyVersion = ""
+  formState.certificateKey = ""
+  formState.certificateContent = ""
   addConfigVisible.value = true;
 };
 const addConfigOk = () => {

@@ -23,6 +23,7 @@ public class ClientUserController {
         if (TokenUtil.getToken().getRole()!= Token.Role.ADMIN) {
            return JsonResult.error(-2, "用户权限校验失败");
         }
+        userCustomService.adminSave(userCustomEntity);
         return JsonResult.ok();
     }
 

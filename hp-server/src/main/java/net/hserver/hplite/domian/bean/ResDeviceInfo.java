@@ -9,6 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ResDeviceInfo {
 
+    private Integer userId;
+    private String username;
+    private String userDesc;
+
     private String deviceId;
 
     private String desc;

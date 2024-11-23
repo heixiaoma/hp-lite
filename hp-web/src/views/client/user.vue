@@ -54,7 +54,7 @@ const addVisible = ref(false);
 const formState = reactive({
   username: "",
   password: "",
-  des:"",
+  desc:"",
   id:""
 })
 const pagination = reactive({
@@ -91,7 +91,7 @@ const removeData = (item) => {
 const edit = (item) => {
   formState.username = item.username
   formState.password = item.password
-  formState.des = item.des
+  formState.desc = item.desc
   formState.id = item.id
   addVisible.value=true
 }
@@ -116,7 +116,7 @@ const handleTableChange = (item) => {
 const addModal = () => {
   formState.username = ""
   formState.password = ""
-  formState.des = ""
+  formState.desc = ""
   formState.id = undefined
   addVisible.value = true
 }
