@@ -1,8 +1,8 @@
-package server
+package tunnel
 
 import (
+	"github.com/quic-go/quic-go"
 	"hp-server-lib/bean"
-	"hp-server-lib/net/handler"
 )
 
 type TunnelServer struct {
@@ -10,21 +10,21 @@ type TunnelServer struct {
 	port        int
 	tcpServer   *TcpServer
 	udpServer   *UdpServer
+	conn        quic.Connection
 }
 
-func NewTunnelServer(connectType bean.ConnectType, port int) *TunnelServer {
-	return &TunnelServer{connectType: connectType, port: port}
+func NewTunnelServer(connectType bean.ConnectType, port int, conn quic.Connection) *TunnelServer {
+	return &TunnelServer{connectType: connectType, port: port, conn: conn}
 }
 
 func (receiver *TunnelServer) StartServer() {
 	if receiver.connectType == bean.TCP || receiver.connectType == bean.TCP_UDP {
-		server := NewTcpServer(handler.NewTcpClientHandler())
+		server := NewTcpServer(receiver.conn)
 		server.StartServer(receiver.port)
 		receiver.tcpServer = server
 	}
 	if receiver.connectType == bean.UDP || receiver.connectType == bean.TCP_UDP {
-		clientHandler := &handler.UdpClientHandler{}
-		server := NewUdpServer(clientHandler)
+		server := NewUdpServer(NewUdpHandler(receiver.conn))
 		server.StartServer(receiver.port)
 		receiver.udpServer = server
 	}

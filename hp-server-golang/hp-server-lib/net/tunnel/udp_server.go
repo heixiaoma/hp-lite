@@ -1,4 +1,4 @@
-package server
+package tunnel
 
 import (
 	net2 "hp-server-lib/net/base"
@@ -48,7 +48,7 @@ func (udpServer *UdpServer) StartServer(port int) {
 
 func (udpServer *UdpServer) CLose() {
 	if udpServer.conn != nil {
-		udpServer.CLose()
+		udpServer.conn.Close()
 		udpServer.conn = nil
 	}
 }

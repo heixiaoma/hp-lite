@@ -1,4 +1,4 @@
-package handler
+package server
 
 import (
 	"github.com/quic-go/quic-go"
@@ -8,7 +8,13 @@ import (
 )
 
 type HPClientHandler struct {
-	service.HpService
+	*service.HpService
+}
+
+func NewHPHandler() *HPClientHandler {
+	return &HPClientHandler{
+		&service.HpService{},
+	}
 }
 
 // ChannelActive 连接激活时，发送注册信息给云端
@@ -22,9 +28,8 @@ func (h *HPClientHandler) ChannelRead(stream quic.Stream, data interface{}, conn
 	switch message.Type {
 	case hpMessage.HpMessage_REGISTER:
 		{
-			h.Register(stream, message, conn)
+			h.Register(message, conn)
 		}
-
 	}
 }
 

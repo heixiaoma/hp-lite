@@ -17,19 +17,19 @@ import (
 	"time"
 )
 
-type QuicServer struct {
+type HpServer struct {
 	net2.QuicHandler
 	listener *quic.Listener
 }
 
-func NewQuicServer(handler net2.QuicHandler) *QuicServer {
-	return &QuicServer{
+func NewHPServer(handler net2.QuicHandler) *HpServer {
+	return &HpServer{
 		handler,
 		nil,
 	}
 }
 
-func (quicServer *QuicServer) generateTLSConfig() *tls.Config {
+func (quicServer *HpServer) generateTLSConfig() *tls.Config {
 	key, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		panic(err)
@@ -53,7 +53,7 @@ func (quicServer *QuicServer) generateTLSConfig() *tls.Config {
 }
 
 // ConnectLocal 内网服务的TCP链接
-func (quicServer *QuicServer) StartServer(port int) {
+func (quicServer *HpServer) StartServer(port int) {
 	q := &quic.Config{
 		//最大空闲时间，超过就重连
 		MaxIdleTimeout:        time.Duration(20) * time.Second,
@@ -70,19 +70,18 @@ func (quicServer *QuicServer) StartServer(port int) {
 	//设置读
 	go func() {
 		for {
-			log.Println("等待接受QUIC")
+			log.Println("等待接收")
 			conn, err := listener.Accept(context.Background())
 			if err != nil {
 				log.Println("QUIC获取连接错误：" + err.Error())
 			}
-			log.Println("等待接受QUIC成功")
 			go func() {
 				for {
 					stream, err := conn.AcceptStream(context.Background())
 					if err != nil {
-						quicServer.ChannelInactive(stream, conn)
-						stream.Close()
-						continue
+						go quicServer.ChannelInactive(stream, conn)
+						log.Println("接收流错误：全部关闭:%s", err.Error())
+						return
 					}
 					// 为每个连接启动一个新的处理 goroutine
 					quicServer.handler(stream, conn)
@@ -92,7 +91,7 @@ func (quicServer *QuicServer) StartServer(port int) {
 	}()
 }
 
-func (quicServer *QuicServer) handler(stream quic.Stream, conn quic.Connection) {
+func (quicServer *HpServer) handler(stream quic.Stream, conn quic.Connection) {
 	go func() {
 		defer stream.Close()
 		quicServer.ChannelActive(stream, conn)
@@ -111,9 +110,9 @@ func (quicServer *QuicServer) handler(stream quic.Stream, conn quic.Connection) 
 	}()
 }
 
-func (quicServer *QuicServer) CLose() {
+func (quicServer *HpServer) CLose() {
 	if quicServer.listener != nil {
-		quicServer.CLose()
+		quicServer.listener.Close()
 		quicServer.listener = nil
 	}
 }

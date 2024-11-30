@@ -4,7 +4,7 @@ import (
 	"github.com/quic-go/quic-go"
 	"hp-server-lib/bean"
 	"hp-server-lib/message"
-	"hp-server-lib/net/server"
+	"hp-server-lib/net/tunnel"
 	"hp-server-lib/protol"
 	"hp-server-lib/util"
 	"log"
@@ -30,21 +30,21 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 
 }
 
-func (receiver *HpService) Register(stream quic.Stream, data *message.HpMessage, conn quic.Connection) {
+func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connection) {
 	configkey := data.MetaData.Key
-	tunnelServer, ok := CMD_CACHE_CONN.Load(configkey)
+	tunnelServer, ok := HP_CACHE_TUN.Load(configkey)
 	if ok {
-		s := tunnelServer.(server.TunnelServer)
+		s := tunnelServer.(*tunnel.TunnelServer)
 		s.CLose()
-		CMD_CACHE_CONN.Delete(configkey)
+		HP_CACHE_TUN.Delete(configkey)
 	}
 	info := receiver.loadUserConfigInfo(configkey)
-	//tunnelType := data.MetaData.Type.String()
-	//connectType := bean.ConnectType(tunnelType)
-	//newTunnelServer := server.NewTunnelServer(connectType, info.Port)
-	//newTunnelServer.StartServer()
+	tunnelType := data.MetaData.Type.String()
+	connectType := bean.ConnectType(tunnelType)
+	newTunnelServer := tunnel.NewTunnelServer(connectType, info.Port, conn)
+	newTunnelServer.StartServer()
 	log.Printf("隧道启动成功")
-	CMD_CACHE_CONN.Store(data.MetaData.Key, tunnelServer)
+	HP_CACHE_TUN.Store(configkey, newTunnelServer)
 	//通知客户端结果
 	arr2 := [][]string{
 		{"穿透结果", "穿透成功"},

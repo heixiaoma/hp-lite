@@ -4,6 +4,7 @@ go 1.22.3
 
 require (
 	github.com/golang/protobuf v1.5.3
+	github.com/google/uuid v1.6.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/quic-go/quic-go v0.46.0
 	google.golang.org/protobuf v1.33.0

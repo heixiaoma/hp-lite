@@ -1,4 +1,4 @@
-package handler
+package server
 
 import (
 	"bufio"
@@ -10,7 +10,13 @@ import (
 )
 
 type CmdClientHandler struct {
-	service.CmdService
+	*service.CmdService
+}
+
+func NewCmdHandler() *CmdClientHandler {
+	return &CmdClientHandler{
+		&service.CmdService{},
+	}
 }
 
 // ChannelActive 连接激活时，发送注册信息给云端

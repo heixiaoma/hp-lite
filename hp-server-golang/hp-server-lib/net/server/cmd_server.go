@@ -8,20 +8,20 @@ import (
 	"strconv"
 )
 
-type TcpServer struct {
+type CmdServer struct {
 	net2.Handler
 	listener net.Listener
 }
 
-func NewTcpServer(handler net2.Handler) *TcpServer {
-	return &TcpServer{
+func NewCmdServer(handler net2.Handler) *CmdServer {
+	return &CmdServer{
 		handler,
 		nil,
 	}
 }
 
 // ConnectLocal 内网服务的TCP链接
-func (tcpServer *TcpServer) StartServer(port int) {
+func (tcpServer *CmdServer) StartServer(port int) {
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Fatalf("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
@@ -38,13 +38,13 @@ func (tcpServer *TcpServer) StartServer(port int) {
 			if err == nil {
 				tcpServer.handler(conn)
 			} else {
-				log.Println("TCP错误连接:", err)
+				log.Println("TCP错误连接222:", err)
 			}
 		}
 	}()
 }
 
-func (tcpServer *TcpServer) handler(conn net.Conn) {
+func (tcpServer *CmdServer) handler(conn net.Conn) {
 	go func() {
 		defer conn.Close()
 		tcpServer.ChannelActive(conn)
@@ -74,9 +74,9 @@ func (tcpServer *TcpServer) handler(conn net.Conn) {
 	}()
 }
 
-func (tcpServer *TcpServer) CLose() {
+func (tcpServer *CmdServer) CLose() {
 	if tcpServer.listener != nil {
-		tcpServer.CLose()
+		tcpServer.listener.Close()
 		tcpServer.listener = nil
 	}
 }

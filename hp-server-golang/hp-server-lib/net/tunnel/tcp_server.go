@@ -1,0 +1,81 @@
+package tunnel
+
+import (
+	"bufio"
+	"github.com/quic-go/quic-go"
+	"log"
+	"net"
+	"strconv"
+)
+
+type TcpServer struct {
+	conn     quic.Connection
+	listener net.Listener
+}
+
+func NewTcpServer(conn quic.Connection) *TcpServer {
+	return &TcpServer{
+		conn,
+		nil,
+	}
+}
+
+// ConnectLocal 内网服务的TCP链接
+func (tcpServer *TcpServer) StartServer(port int) {
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
+	if err != nil {
+		log.Fatalf("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
+		return
+	}
+	tcpServer.listener = listener
+	//设置读
+	go func() {
+		for {
+			if tcpServer.listener == nil {
+				return
+			}
+			conn, err := listener.Accept()
+			if err == nil {
+				tcpServer.handler(conn)
+			}
+		}
+	}()
+}
+
+func (tcpServer *TcpServer) handler(conn net.Conn) {
+	go func() {
+		defer conn.Close()
+		handler := NewTcpHandler(conn, tcpServer.conn)
+		handler.ChannelActive(conn)
+		reader := bufio.NewReader(conn)
+		for {
+			if tcpServer.listener == nil {
+				println("---空")
+				return
+			}
+			//尝试读检查连接激活
+			_, err := reader.Peek(1)
+			if err != nil {
+				handler.ChannelInactive(conn)
+				return
+			}
+
+			decode, e := handler.Decode(reader)
+			if e != nil {
+				log.Println(e)
+				handler.ChannelInactive(conn)
+				return
+			}
+			if decode != nil {
+				handler.ChannelRead(conn, decode)
+			}
+		}
+	}()
+}
+
+func (tcpServer *TcpServer) CLose() {
+	if tcpServer.listener != nil {
+		tcpServer.listener.Close()
+		tcpServer.listener = nil
+	}
+}
