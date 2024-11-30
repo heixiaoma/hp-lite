@@ -20,7 +20,7 @@ func NewUdpServer(handler net2.UdpHandler) *UdpServer {
 }
 
 // ConnectLocal 内网服务的TCP链接
-func (udpServer *UdpServer) startServer(port int) {
+func (udpServer *UdpServer) StartServer(port int) {
 	udpAddr, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(port))
 	conn, err := net.ListenUDP("udp", udpAddr)
 	if err != nil {

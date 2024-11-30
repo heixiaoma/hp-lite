@@ -14,5 +14,5 @@ type Handler interface {
 	// ChannelInactive 连接断开
 	ChannelInactive(conn net.Conn)
 	//消息解码器
-	Decode(reader *bufio.Reader) (error, interface{})
+	Decode(reader *bufio.Reader) (interface{}, error)
 }

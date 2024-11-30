@@ -21,7 +21,7 @@ func NewTcpServer(handler net2.Handler) *TcpServer {
 }
 
 // ConnectLocal 内网服务的TCP链接
-func (tcpServer *TcpServer) startServer(port int) {
+func (tcpServer *TcpServer) StartServer(port int) {
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Fatalf("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
@@ -51,6 +51,7 @@ func (tcpServer *TcpServer) handler(conn net.Conn) {
 		reader := bufio.NewReader(conn)
 		for {
 			if tcpServer.listener == nil {
+				println("---空")
 				return
 			}
 			//尝试读检查连接激活
@@ -62,6 +63,7 @@ func (tcpServer *TcpServer) handler(conn net.Conn) {
 
 			decode, e := tcpServer.Decode(reader)
 			if e != nil {
+				log.Println(e)
 				tcpServer.ChannelInactive(conn)
 				return
 			}

@@ -14,6 +14,7 @@ import (
 	"log"
 	"math/big"
 	"strconv"
+	"time"
 )
 
 type QuicServer struct {
@@ -52,9 +53,16 @@ func (quicServer *QuicServer) generateTLSConfig() *tls.Config {
 }
 
 // ConnectLocal 内网服务的TCP链接
-func (quicServer *QuicServer) startServer(port int) {
-
-	listener, err := quic.ListenAddr(":"+strconv.Itoa(port), quicServer.generateTLSConfig(), nil)
+func (quicServer *QuicServer) StartServer(port int) {
+	q := &quic.Config{
+		//最大空闲时间，超过就重连
+		MaxIdleTimeout:        time.Duration(20) * time.Second,
+		MaxIncomingStreams:    1000000,
+		MaxIncomingUniStreams: 1000000,
+		//空闲时，应该发送心跳包
+		KeepAlivePeriod: time.Duration(5) * time.Second,
+	}
+	listener, err := quic.ListenAddr(":"+strconv.Itoa(port), quicServer.generateTLSConfig(), q)
 	if err != nil {
 		log.Println("不能创建QUIC服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
 	}
@@ -62,40 +70,42 @@ func (quicServer *QuicServer) startServer(port int) {
 	//设置读
 	go func() {
 		for {
+			log.Println("等待接受QUIC")
 			conn, err := listener.Accept(context.Background())
 			if err != nil {
 				log.Println("QUIC获取连接错误：" + err.Error())
 			}
+			log.Println("等待接受QUIC成功")
 			go func() {
 				for {
 					stream, err := conn.AcceptStream(context.Background())
 					if err != nil {
-						quicServer.ChannelInactive(stream)
+						quicServer.ChannelInactive(stream, conn)
 						stream.Close()
 						continue
 					}
 					// 为每个连接启动一个新的处理 goroutine
-					quicServer.handler(stream)
+					quicServer.handler(stream, conn)
 				}
 			}()
 		}
 	}()
 }
 
-func (quicServer *QuicServer) handler(conn quic.Stream) {
+func (quicServer *QuicServer) handler(stream quic.Stream, conn quic.Connection) {
 	go func() {
-		defer conn.Close()
-		quicServer.ChannelActive(conn)
-		reader := bufio.NewReader(conn)
+		defer stream.Close()
+		quicServer.ChannelActive(stream, conn)
+		reader := bufio.NewReader(stream)
 		//避坑点：多包问题，需要重复读取解包
 		for {
 			decode, e := protol.Decode(reader)
 			if e != nil {
-				quicServer.ChannelInactive(conn)
+				quicServer.ChannelInactive(stream, conn)
 				return
 			}
 			if decode != nil {
-				quicServer.ChannelRead(conn, decode)
+				quicServer.ChannelRead(stream, decode, conn)
 			}
 		}
 	}()

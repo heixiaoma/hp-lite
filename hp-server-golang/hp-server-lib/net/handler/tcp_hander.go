@@ -9,6 +9,10 @@ import (
 type TcpClientHandler struct {
 }
 
+func NewTcpClientHandler() *TcpClientHandler {
+	return &TcpClientHandler{}
+}
+
 // ChannelActive 连接激活时，发送注册信息给云端
 func (h *TcpClientHandler) ChannelActive(conn net.Conn) {
 
@@ -23,11 +27,11 @@ func (h *TcpClientHandler) ChannelInactive(conn net.Conn) {
 
 }
 
-func (h *TcpClientHandler) Decode(reader *bufio.Reader) (error, interface{}) {
+func (h *TcpClientHandler) Decode(reader *bufio.Reader) (interface{}, error) {
 	if reader.Buffered() > 0 {
 		data := make([]byte, reader.Buffered())
 		_, err := io.ReadFull(reader, data)
-		return err, data
+		return data, err
 	}
 	return nil, nil
 }

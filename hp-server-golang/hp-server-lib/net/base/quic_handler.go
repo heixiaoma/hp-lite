@@ -7,9 +7,9 @@ import (
 // Handler 抽象接口
 type QuicHandler interface {
 	// ChannelActive 连接激活
-	ChannelActive(conn quic.Stream)
+	ChannelActive(stream quic.Stream, conn quic.Connection)
 	// ChannelRead 连接有数据时
-	ChannelRead(conn quic.Stream, data interface{})
+	ChannelRead(stream quic.Stream, data interface{}, conn quic.Connection)
 	// ChannelInactive 连接断开
-	ChannelInactive(conn quic.Stream)
+	ChannelInactive(stream quic.Stream, conn quic.Connection)
 }
