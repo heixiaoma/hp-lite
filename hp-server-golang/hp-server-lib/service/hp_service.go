@@ -14,6 +14,7 @@ import (
 
 // config_key->隧道服务
 var HP_CACHE_TUN = sync.Map{}
+var DOMAIN_USER_INFO = sync.Map{}
 
 type HpService struct {
 }
@@ -21,6 +22,7 @@ type HpService struct {
 func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfigInfo {
 	return &bean.UserConfigInfo{
 		ProxyVersion: "",
+		Domain:       "op.hp.mcle.cn",
 		ProxyIp:      "192.168.100.246",
 		ProxyPort:    5666,
 		ConfigId:     configKey,
@@ -31,19 +33,23 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 
 func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connection) {
 	configkey := data.MetaData.Key
+	info := receiver.loadUserConfigInfo(configkey)
 	tunnelServer, ok := HP_CACHE_TUN.Load(configkey)
 	if ok {
 		s := tunnelServer.(*tunnel.TunnelServer)
 		s.CLose()
 		HP_CACHE_TUN.Delete(configkey)
+		DOMAIN_USER_INFO.Delete(info.Domain)
 	}
-	info := receiver.loadUserConfigInfo(configkey)
 	tunnelType := data.MetaData.Type.String()
 	connectType := bean.ConnectType(tunnelType)
 	newTunnelServer := tunnel.NewTunnelServer(connectType, info.Port, conn, info)
 	newTunnelServer.StartServer()
 	log.Printf("隧道启动成功")
 	HP_CACHE_TUN.Store(configkey, newTunnelServer)
+	if len(info.Domain) > 0 {
+		DOMAIN_USER_INFO.Store(info.Domain, info)
+	}
 	//通知客户端结果
 	arr2 := [][]string{
 		{"穿透结果", "穿透成功"},

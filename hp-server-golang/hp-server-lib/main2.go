@@ -9,7 +9,6 @@ import (
 
 func main() {
 	// 设置要转发的地址
-
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		host := r.Host
 		fmt.Println("Host:", host)
