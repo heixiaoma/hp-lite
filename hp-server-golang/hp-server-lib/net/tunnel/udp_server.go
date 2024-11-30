@@ -44,9 +44,9 @@ func (udpServer *UdpServer) StartServer(port int) {
 				udpServer.cache.Range(func(key, value any) bool {
 					handler := value.(*UdpHandler)
 					go handler.ChannelInactive(conn)
+					udpServer.cache.Delete(key)
 					return true
 				})
-				udpServer.cache.Clear()
 				break
 			}
 			value, ok := udpServer.cache.Load(addr.String())
@@ -59,6 +59,14 @@ func (udpServer *UdpServer) StartServer(port int) {
 				go handler.ChannelRead(conn, buffer[:n])
 			}
 		}
+
+		udpServer.cache.Range(func(key, value any) bool {
+			handler := value.(*UdpHandler)
+			go handler.ChannelInactive(conn)
+			udpServer.cache.Delete(key)
+			return true
+		})
+
 	}()
 }
 

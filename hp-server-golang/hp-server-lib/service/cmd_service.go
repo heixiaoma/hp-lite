@@ -47,11 +47,11 @@ func (receiver CmdService) connectInfo(conn net.Conn, message *cmdMessage.CmdMes
 	a := &bean.LocalInnerWear{
 		OutLimit:    -1,
 		InLimit:     -1,
-		ConnectType: "UDP",
+		ConnectType: "TCP",
 		ConfigKey:   "ac9b0b97-b3dd-44ef-9570-0a0039823398",
-		LocalIp:     "127.0.0.1",
-		LocalPort:   7777,
-		ServerIp:    "127.0.0.1",
+		LocalIp:     "192.168.100.246",
+		LocalPort:   5666,
+		ServerIp:    "47.109.206.174",
 		ServerPort:  9090,
 	}
 	arr2 := [1]*bean.LocalInnerWear{a}
