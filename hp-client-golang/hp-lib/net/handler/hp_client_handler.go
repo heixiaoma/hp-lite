@@ -9,6 +9,7 @@ import (
 	hpMessage "hp-lib/message"
 	"hp-lib/net/connect"
 	"hp-lib/protol"
+	"log"
 	"net"
 	"strconv"
 	"sync"
@@ -111,6 +112,9 @@ func (h *HpClientHandler) connected(stream quic.Stream, message *hpMessage.HpMes
 
 	}
 	if message.MetaData.Type == hpMessage.HpMessage_UDP {
+
+		log.Printf("连接UDP" + message.MetaData.ChannelId)
+
 		conn := connect.NewUdpConnection().Connect(h.ProxyAddress, h.ProxyPort, &LocalProxyUdpHandler{
 			HpClientHandler: h,
 			WToN:            n,
@@ -166,8 +170,10 @@ func (h *HpClientHandler) Close(channelId string) {
 
 // writeData 往内网写数据
 func (h *HpClientHandler) WriteData(stream quic.Stream, message *hpMessage.HpMessage) {
+	log.Printf(message.MetaData.Type.String())
 	load, ok := WNConnGroup.Load(message.MetaData.ChannelId)
 	if !ok {
+		println("不存在通道" + message.MetaData.ChannelId)
 		return
 	}
 

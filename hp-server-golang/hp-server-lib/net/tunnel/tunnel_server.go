@@ -24,7 +24,7 @@ func (receiver *TunnelServer) StartServer() {
 		receiver.tcpServer = server
 	}
 	if receiver.connectType == bean.UDP || receiver.connectType == bean.TCP_UDP {
-		server := NewUdpServer(NewUdpHandler(receiver.conn))
+		server := NewUdpServer(receiver.conn)
 		server.StartServer(receiver.port)
 		receiver.udpServer = server
 	}

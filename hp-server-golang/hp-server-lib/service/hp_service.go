@@ -21,8 +21,8 @@ type HpService struct {
 func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfigInfo {
 	return &bean.UserConfigInfo{
 		ProxyVersion: "",
-		ProxyIp:      "192.168.100.1",
-		ProxyPort:    80,
+		ProxyIp:      "127.0.0.1",
+		ProxyPort:    7777,
 		ConfigId:     configKey,
 		Port:         8765,
 		Ip:           "127.0.0.1",

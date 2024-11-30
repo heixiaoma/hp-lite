@@ -1,20 +1,23 @@
 package tunnel
 
 import (
-	net2 "hp-server-lib/net/base"
+	"github.com/quic-go/quic-go"
 	"log"
 	"net"
 	"strconv"
+	"sync"
 )
 
 type UdpServer struct {
-	net2.UdpHandler
-	conn net.Conn
+	cache   sync.Map
+	conn    quic.Connection
+	udpConn *net.UDPConn
 }
 
-func NewUdpServer(handler net2.UdpHandler) *UdpServer {
+func NewUdpServer(conn quic.Connection) *UdpServer {
 	return &UdpServer{
-		handler,
+		sync.Map{},
+		conn,
 		nil,
 	}
 }
@@ -27,28 +30,41 @@ func (udpServer *UdpServer) StartServer(port int) {
 		log.Fatalf("不能创建UDP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
 		return
 	}
-	udpServer.conn = conn
+	udpServer.udpConn = conn
 	//设置读
 	go func() {
 		// 创建缓冲区用于接收数据
-		buffer := make([]byte, 1024)
+		buffer := make([]byte, 1450)
 		for {
 			if udpServer.conn == nil {
-				return
+				break
 			}
 			n, addr, err := conn.ReadFromUDP(buffer)
 			if err != nil {
-				log.Println("错误读取UDP信息:", err)
-				continue
+				udpServer.cache.Range(func(key, value any) bool {
+					handler := value.(*UdpHandler)
+					go handler.ChannelInactive(conn)
+					return true
+				})
+				udpServer.cache.Clear()
+				break
 			}
-			go udpServer.ChannelRead(conn, addr, buffer[:n])
+			value, ok := udpServer.cache.Load(addr.String())
+			if !ok {
+				handler := NewUdpHandler(udpServer, conn, udpServer.conn, addr)
+				go handler.ChannelActive(conn)
+				udpServer.cache.Store(addr.String(), handler)
+			} else {
+				handler := value.(*UdpHandler)
+				go handler.ChannelRead(conn, buffer[:n])
+			}
 		}
 	}()
 }
 
 func (udpServer *UdpServer) CLose() {
-	if udpServer.conn != nil {
-		udpServer.conn.Close()
-		udpServer.conn = nil
+	if udpServer.udpConn != nil {
+		udpServer.udpConn.Close()
+		udpServer.udpConn = nil
 	}
 }

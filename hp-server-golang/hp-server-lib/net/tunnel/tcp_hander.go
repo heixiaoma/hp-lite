@@ -84,6 +84,7 @@ func (h *TcpHandler) ChannelInactive(conn net.Conn) {
 		},
 	}
 	h.stream.Write(protol.Encode(m))
+	h.stream.Close()
 }
 
 func (h *TcpHandler) Decode(reader *bufio.Reader) (interface{}, error) {
