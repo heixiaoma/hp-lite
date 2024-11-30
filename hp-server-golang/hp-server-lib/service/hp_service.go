@@ -27,7 +27,6 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 		Port:         8765,
 		Ip:           "47.109.206.174",
 	}
-
 }
 
 func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connection) {
@@ -41,7 +40,7 @@ func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connectio
 	info := receiver.loadUserConfigInfo(configkey)
 	tunnelType := data.MetaData.Type.String()
 	connectType := bean.ConnectType(tunnelType)
-	newTunnelServer := tunnel.NewTunnelServer(connectType, info.Port, conn)
+	newTunnelServer := tunnel.NewTunnelServer(connectType, info.Port, conn, info)
 	newTunnelServer.StartServer()
 	log.Printf("隧道启动成功")
 	HP_CACHE_TUN.Store(configkey, newTunnelServer)

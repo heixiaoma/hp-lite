@@ -3,6 +3,7 @@ package tunnel
 import (
 	"bufio"
 	"github.com/quic-go/quic-go"
+	"hp-server-lib/bean"
 	"log"
 	"net"
 	"strconv"
@@ -11,12 +12,14 @@ import (
 type TcpServer struct {
 	conn     quic.Connection
 	listener net.Listener
+	userInfo *bean.UserConfigInfo
 }
 
-func NewTcpServer(conn quic.Connection) *TcpServer {
+func NewTcpServer(conn quic.Connection, userInfo *bean.UserConfigInfo) *TcpServer {
 	return &TcpServer{
 		conn,
 		nil,
+		userInfo,
 	}
 }
 
@@ -45,12 +48,11 @@ func (tcpServer *TcpServer) StartServer(port int) {
 func (tcpServer *TcpServer) handler(conn net.Conn) {
 	go func() {
 		defer conn.Close()
-		handler := NewTcpHandler(conn, tcpServer.conn)
+		handler := NewTcpHandler(conn, tcpServer.conn, tcpServer.userInfo)
 		handler.ChannelActive(conn)
 		reader := bufio.NewReader(conn)
 		for {
 			if tcpServer.listener == nil {
-				println("---空")
 				return
 			}
 			//尝试读检查连接激活

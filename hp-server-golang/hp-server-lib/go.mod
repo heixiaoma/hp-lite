@@ -15,6 +15,7 @@ require (
 	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/onsi/ginkgo/v2 v2.9.5 // indirect
+	github.com/pires/go-proxyproto v0.8.0 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	golang.org/x/crypto v0.23.0 // indirect

@@ -11,15 +11,16 @@ type TunnelServer struct {
 	tcpServer   *TcpServer
 	udpServer   *UdpServer
 	conn        quic.Connection
+	userInfo    *bean.UserConfigInfo
 }
 
-func NewTunnelServer(connectType bean.ConnectType, port int, conn quic.Connection) *TunnelServer {
-	return &TunnelServer{connectType: connectType, port: port, conn: conn}
+func NewTunnelServer(connectType bean.ConnectType, port int, conn quic.Connection, userInfo *bean.UserConfigInfo) *TunnelServer {
+	return &TunnelServer{connectType: connectType, port: port, conn: conn, userInfo: userInfo}
 }
 
 func (receiver *TunnelServer) StartServer() {
 	if receiver.connectType == bean.TCP || receiver.connectType == bean.TCP_UDP {
-		server := NewTcpServer(receiver.conn)
+		server := NewTcpServer(receiver.conn, receiver.userInfo)
 		server.StartServer(receiver.port)
 		receiver.tcpServer = server
 	}
