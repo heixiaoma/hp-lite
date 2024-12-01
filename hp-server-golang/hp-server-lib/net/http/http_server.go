@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hp-server-lib/bean"
 	"hp-server-lib/service"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -11,7 +12,11 @@ import (
 )
 
 func StartHttpServer() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+
+	mux := http.NewServeMux()
+
+	// 使用反向代理处理所有请求
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		host := r.Host
 		fmt.Println("Host:", host)
 		// 根据 host 选择不同的目标代理
@@ -29,9 +34,10 @@ func StartHttpServer() {
 			return
 		}
 		proxy := httputil.NewSingleHostReverseProxy(target)
+		log.Printf("Proxying request to target: %s %s", target, r.URL.Path)
 		proxy.ServeHTTP(w, r)
 	})
-	err := http.ListenAndServe(":80", nil)
+	err := http.ListenAndServe(":80", mux)
 	if err != nil {
 		return
 	}
