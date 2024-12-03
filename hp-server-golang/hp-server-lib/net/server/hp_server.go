@@ -70,7 +70,6 @@ func (quicServer *HpServer) StartServer(port int) {
 	//设置读
 	go func() {
 		for {
-			log.Println("等待接收")
 			conn, err := listener.Accept(context.Background())
 			if err != nil {
 				log.Println("QUIC获取连接错误：" + err.Error())
@@ -80,7 +79,7 @@ func (quicServer *HpServer) StartServer(port int) {
 					stream, err := conn.AcceptStream(context.Background())
 					if err != nil {
 						go quicServer.ChannelInactive(stream, conn)
-						log.Println("接收流错误：全部关闭:%s", err.Error())
+						log.Printf("接收流错误：全部关闭:%s", err.Error())
 						return
 					}
 					// 为每个连接启动一个新的处理 goroutine
@@ -89,6 +88,7 @@ func (quicServer *HpServer) StartServer(port int) {
 			}()
 		}
 	}()
+	log.Printf("数据传输服务启动成功UDP:%d", port)
 }
 
 func (quicServer *HpServer) handler(stream quic.Stream, conn quic.Connection) {

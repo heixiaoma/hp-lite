@@ -19,12 +19,13 @@ func NewHPHandler() *HPClientHandler {
 
 // ChannelActive 连接激活时，发送注册信息给云端
 func (h *HPClientHandler) ChannelActive(stream quic.Stream, conn quic.Connection) {
-	println("HPClientHandler-->ChannelActive")
+	log.Printf("HP传输打开流：%d", stream.StreamID())
+
 }
 
 func (h *HPClientHandler) ChannelRead(stream quic.Stream, data interface{}, conn quic.Connection) {
 	message := data.(*hpMessage.HpMessage)
-	log.Printf("消息类型:%s,ip:%s", message.Type.String(), conn)
+	log.Printf("流ID:%d|HP消息类型:%s|IP:%s", stream.StreamID(), message.Type.String(), conn.RemoteAddr())
 	switch message.Type {
 	case hpMessage.HpMessage_REGISTER:
 		{
@@ -34,5 +35,7 @@ func (h *HPClientHandler) ChannelRead(stream quic.Stream, data interface{}, conn
 }
 
 func (h *HPClientHandler) ChannelInactive(stream quic.Stream, conn quic.Connection) {
-	println("HPClientHandler-->ChannelInactive")
+	if stream != nil {
+		log.Printf("HP传输断开流：%d", stream.StreamID())
+	}
 }

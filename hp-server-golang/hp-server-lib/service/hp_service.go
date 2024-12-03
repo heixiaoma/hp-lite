@@ -14,7 +14,7 @@ import (
 	"sync"
 )
 
-// config_key->隧道服务
+// 端口->隧道服务
 var HP_CACHE_TUN = sync.Map{}
 var DOMAIN_USER_INFO = sync.Map{}
 
@@ -47,24 +47,32 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connection) {
 	configkey := data.MetaData.Key
 	info := receiver.loadUserConfigInfo(configkey)
-	tunnelServer, ok := HP_CACHE_TUN.Load(configkey)
+	tunnelServer, ok := HP_CACHE_TUN.Load(info.Port)
 	if ok {
+		log.Printf("重复配置KEY:%s", configkey)
 		s := tunnelServer.(*tunnel.TunnelServer)
 		s.CLose()
-		HP_CACHE_TUN.Delete(configkey)
-		DOMAIN_USER_INFO.Delete(info.Domain)
+		HP_CACHE_TUN.Delete(info.Port)
+		DOMAIN_USER_INFO.Delete(*info.Domain)
 	}
+
+	HP_CACHE_TUN.Range(func(key, value any) bool {
+		log.Printf("缓存配置KEY:%s -> %s", key, configkey)
+		return true
+	})
+
 	tunnelType := data.MetaData.Type.String()
 	connectType := bean.ConnectType(tunnelType)
 	newTunnelServer := tunnel.NewTunnelServer(connectType, info.Port, conn, info)
 	server := newTunnelServer.StartServer()
 	if !server {
 		newTunnelServer.CLose()
+	} else {
+		log.Printf("隧道启动成功")
+		HP_CACHE_TUN.Store(info.Port, newTunnelServer)
 	}
-	log.Printf("隧道启动成功")
-	HP_CACHE_TUN.Store(configkey, newTunnelServer)
 	if info.Domain != nil {
-		DOMAIN_USER_INFO.Store(info.Domain, info)
+		DOMAIN_USER_INFO.Store(*info.Domain, info)
 	}
 
 	//更新服务端状态
@@ -72,7 +80,7 @@ func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connectio
 	if !server {
 		strMsg = "配置启动失败，大概率是端口冲突，请刷新"
 	}
-	db.DB.Model(&entity.UserConfigEntity{}).Where("device_key = ?", configkey).UpdateColumn("status_msg", strMsg)
+	db.DB.Model(&entity.UserConfigEntity{}).Where("config_key = ?", configkey).Update("status_msg", strMsg)
 	//通知客户端结果
 	arr2 := [][]string{
 		{"穿透结果", strconv.FormatBool(server)},

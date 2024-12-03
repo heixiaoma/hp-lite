@@ -24,7 +24,7 @@ func NewCmdServer(handler net2.Handler) *CmdServer {
 func (tcpServer *CmdServer) StartServer(port int) {
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
-		log.Fatalf("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
+		log.Printf("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
 		return
 	}
 	tcpServer.listener = listener
@@ -42,6 +42,8 @@ func (tcpServer *CmdServer) StartServer(port int) {
 			}
 		}
 	}()
+	log.Printf("指令传输服务启动成功TCP:%d", port)
+
 }
 
 func (tcpServer *CmdServer) handler(conn net.Conn) {
@@ -51,7 +53,6 @@ func (tcpServer *CmdServer) handler(conn net.Conn) {
 		reader := bufio.NewReader(conn)
 		for {
 			if tcpServer.listener == nil {
-				println("---空")
 				return
 			}
 			//尝试读检查连接激活

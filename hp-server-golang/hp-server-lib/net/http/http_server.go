@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"hp-server-lib/bean"
 	"hp-server-lib/service"
 	"log"
@@ -16,7 +15,6 @@ func StartHttpServer() {
 	// 使用反向代理处理所有请求
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		host := r.Host
-		fmt.Println("Host:", host)
 		// 根据 host 选择不同的目标代理
 		value, ok := service.DOMAIN_USER_INFO.Load(host)
 		if !ok {
@@ -33,7 +31,7 @@ func StartHttpServer() {
 		log.Printf("代理地址: %s %s", target, r.URL.Path)
 		proxy.ServeHTTP(w, r)
 	})
-	fmt.Println("HTTP代理服务启动")
+	log.Println("HTTP代理服务启动")
 	err := http.ListenAndServe(":80", mux)
 	if err != nil {
 		return

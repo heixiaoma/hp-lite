@@ -21,12 +21,12 @@ func NewCmdHandler() *CmdClientHandler {
 
 // ChannelActive 连接激活时，发送注册信息给云端
 func (h *CmdClientHandler) ChannelActive(conn net.Conn) {
-	println("-->ChannelActive")
+	log.Printf("CMD指令激活 ip:%s", conn.RemoteAddr().String())
 }
 
 func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
 	message := data.(*cmdMessage.CmdMessage)
-	log.Printf("消息类型:%s,消息版本:%s,ip:%s", message.Type.String(), message.Version, conn.RemoteAddr().String())
+	log.Printf("消息类型:%s|消息版本:%s|ip:%s", message.Type.String(), message.Version, conn.RemoteAddr().String())
 	switch message.Type {
 	case cmdMessage.CmdMessage_CONNECT:
 		{
@@ -44,7 +44,7 @@ func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
 }
 
 func (h *CmdClientHandler) ChannelInactive(conn net.Conn) {
-	println("-->ChannelInactive")
+	log.Printf("CMD指令断开 ip:%s", conn.RemoteAddr().String())
 	h.Clear(conn)
 }
 

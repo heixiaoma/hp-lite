@@ -27,7 +27,7 @@ func NewTcpServer(conn quic.Connection, userInfo *bean.UserConfigInfo) *TcpServe
 func (tcpServer *TcpServer) StartServer(port int) bool {
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
-		log.Fatalf("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
+		log.Printf("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error())
 		return false
 	}
 	tcpServer.listener = listener

@@ -48,7 +48,6 @@ func StartHttpsServer() {
 	}
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		host := r.TLS.ServerName
-		fmt.Println("Host:", host)
 		// 根据 host 选择不同的目标代理
 		value, ok := service.DOMAIN_USER_INFO.Load(host)
 		if !ok {
@@ -72,10 +71,10 @@ func StartHttpsServer() {
 		TLSConfig: tlsConfig,
 	}
 	// 启动 HTTPS 服务
-	fmt.Println("HTTPS代理服务启动")
+	log.Println("HTTPS代理服务启动")
 	err := server.ListenAndServeTLS("", "") // 证书由 GetCertificate 动态选择
 	if err != nil {
-		log.Fatalf("Error starting server: %v", err)
+		log.Fatalf("HTTPS代理服务启动失败: %v", err)
 	}
 
 }

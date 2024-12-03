@@ -27,7 +27,7 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 	udpAddr, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(port))
 	conn, err := net.ListenUDP("udp", udpAddr)
 	if err != nil {
-		log.Fatalf("不能创建UDP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
+		log.Printf("不能创建UDP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error())
 		return false
 	}
 	udpServer.udpConn = conn
