@@ -23,6 +23,7 @@ func (receiver LoginController) LoginHandler(w http.ResponseWriter, r *http.Requ
 	login := receiver.Login(msg)
 	if login != nil {
 		json.NewEncoder(w).Encode(bean.ResOk(login))
+		return
 	} else {
 		json.NewEncoder(w).Encode(bean.ResError("登陆失败"))
 	}

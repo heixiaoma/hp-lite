@@ -57,6 +57,9 @@ func StartWebServer(port int) {
 	mux.HandleFunc("/client/config/refConfig", configController.RefConfig)
 	mux.HandleFunc("/client/config/addConfig", configController.Add)
 
+	monitorController := controller.MonitorController{}
+	mux.HandleFunc("/client/monitor/list", monitorController.List)
+
 	muxWithRecovery := recoveryMiddleware(mux)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), muxWithRecovery))
 }
