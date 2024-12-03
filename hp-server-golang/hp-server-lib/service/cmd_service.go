@@ -3,6 +3,8 @@ package service
 import (
 	"encoding/json"
 	"hp-server-lib/bean"
+	"hp-server-lib/db"
+	"hp-server-lib/entity"
 	cmdMessage "hp-server-lib/message"
 	"hp-server-lib/protol"
 	"log"
@@ -44,6 +46,42 @@ func SendCloseMsg(deviceKey, msg string) bool {
 		CMD_CACHE_CONN.Delete(deviceKey)
 	}
 	return ok
+}
+
+func NoticeClientUpdateData(deviceKey string) bool {
+	var results []entity.UserConfigEntity
+	db.DB.Where("device_key", deviceKey).Find(&results)
+	if results != nil {
+		var results2 []bean.LocalInnerWear
+		for _, item := range results {
+			wear := bean.LocalInnerWear{
+				OutLimit:    -1,
+				InLimit:     -1,
+				ConnectType: *item.ConnectType,
+				ConfigKey:   item.ConfigKey,
+				LocalIp:     item.ServerIp,
+				LocalPort:   *item.LocalPort,
+				ServerIp:    item.ServerIp,
+				ServerPort:  *item.ServerPort,
+			}
+			results2 = append(results2, wear)
+		}
+		jsonData, err := json.Marshal(results2)
+		if err == nil {
+			c := &cmdMessage.CmdMessage{
+				Data: string(jsonData),
+				Type: cmdMessage.CmdMessage_LOCAL_INNER_WEAR,
+			}
+			value, ok := CMD_CACHE_CONN.Load(deviceKey)
+			if ok {
+				conn := value.(net.Conn)
+				conn.Write(protol.CmdEncode(c))
+			}
+			return ok
+		}
+
+	}
+	return false
 }
 
 func (receiver CmdService) storeMemInfo(message *cmdMessage.CmdMessage) {

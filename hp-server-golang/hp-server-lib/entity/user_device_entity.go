@@ -1,7 +1,7 @@
 package entity
 
 type UserDeviceEntity struct {
-	Id int `json:"id" gorm:"primaryKey;autoIncrement"`
+	Id *int `json:"id" gorm:"primaryKey;autoIncrement"`
 
 	/**
 	 * 设备key
@@ -16,7 +16,7 @@ type UserDeviceEntity struct {
 	/**
 	 * 用户ID
 	 */
-	UserId int `json:"userId"`
+	UserId *int `json:"userId"`
 }
 
 func (UserDeviceEntity) TableName() string {

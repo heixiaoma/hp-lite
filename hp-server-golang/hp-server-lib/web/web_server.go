@@ -49,6 +49,14 @@ func StartWebServer(port int) {
 	mux.HandleFunc("/client/device/update", deviceController.Update)
 	mux.HandleFunc("/client/device/remove", deviceController.Del)
 	mux.HandleFunc("/client/device/stop", deviceController.Stop)
+
+	configController := controller.ConfigController{}
+	mux.HandleFunc("/client/config/getDeviceKey", configController.GetDeviceKey)
+	mux.HandleFunc("/client/config/getConfigList", configController.GetConfigList)
+	mux.HandleFunc("/client/config/removeConfig", configController.RemoveConfig)
+	mux.HandleFunc("/client/config/refConfig", configController.RefConfig)
+	mux.HandleFunc("/client/config/addConfig", configController.Add)
+
 	muxWithRecovery := recoveryMiddleware(mux)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), muxWithRecovery))
 }

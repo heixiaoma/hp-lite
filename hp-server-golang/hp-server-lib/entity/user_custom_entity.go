@@ -3,7 +3,7 @@ package entity
 import "time"
 
 type UserCustomEntity struct {
-	Id int `json:"id" gorm:"primaryKey;autoIncrement"`
+	Id *int `json:"id" gorm:"primaryKey;autoIncrement"`
 
 	Username string `json:"username"`
 

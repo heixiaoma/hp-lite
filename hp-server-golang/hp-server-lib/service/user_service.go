@@ -15,13 +15,10 @@ func (receiver *UserService) Login(login bean.ReqLogin) *bean.ResLoginUser {
 	if strings.Compare(config.AdminUser, login.Email) == 0 && strings.Compare(config.AdminPassword, login.Password) == 0 {
 		return bean.NewAdminUser(login)
 	} else {
-		userQuery := entity.UserCustomEntity{
-			Username: login.Email,
-			Password: login.Password,
-		}
-		db.DB.Find(&userQuery)
-		if userQuery.Id > 0 {
-			return bean.NewClientUser(userQuery.Id, userQuery.Username)
+		userQuery := entity.UserCustomEntity{}
+		db.DB.Where("username = ?  and password = ?", login.Email, login.Password).First(&userQuery)
+		if userQuery.Id != nil {
+			return bean.NewClientUser(*userQuery.Id, userQuery.Username)
 		}
 	}
 	return nil

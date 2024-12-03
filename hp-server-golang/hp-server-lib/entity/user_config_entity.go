@@ -6,7 +6,7 @@ type UserConfigEntity struct {
 	/**
 	 * 主键
 	 */
-	Id int `json:"id" gorm:"primaryKey;autoIncrement"`
+	Id *int `json:"id" gorm:"primaryKey;autoIncrement"`
 	/**
 	 *当前key
 	 */
@@ -24,7 +24,7 @@ type UserConfigEntity struct {
 	 * 套餐端口
 	 */
 
-	ServerPort int `json:"serverPort"`
+	ServerPort *int `json:"serverPort"`
 
 	/**
 	 * 本地IP
@@ -34,12 +34,12 @@ type UserConfigEntity struct {
 	/**
 	 * 本地端口
 	 */
-	LocalPort int `json:"localPort"`
+	LocalPort *int `json:"localPort"`
 
 	/**
 	 * 穿透类型
 	 */
-	ConnectType bean.ConnectType `json:"connectType"`
+	ConnectType *bean.ConnectType `json:"connectType"`
 
 	/**
 	 * 备注
@@ -49,12 +49,12 @@ type UserConfigEntity struct {
 	/**
 	 * 端口
 	 */
-	Port int `json:"port"`
+	Port *int `json:"port"`
 
 	/**
 	 * 域名
 	 */
-	Domain string `json:"domain"`
+	Domain *string `json:"domain"`
 
 	/**
 	 * 状态
@@ -79,7 +79,7 @@ type UserConfigEntity struct {
 	/**
 	 * 用户ID
 	 */
-	UserId int `json:"userId"`
+	UserId *int `json:"userId"`
 }
 
 func (UserConfigEntity) TableName() string {

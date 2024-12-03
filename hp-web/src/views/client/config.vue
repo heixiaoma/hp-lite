@@ -88,7 +88,7 @@
           </a-form-item>
           <!--    套餐选择      -->
           <a-form-item label="外网端口" name="port" :rules="[{ required: true, message: '外网端口必填'}]">
-            <a-input v-model:value="formState.port" placeholder="8084"/>
+            <a-input v-model:value.number="formState.port"  type="number"  placeholder="8084"/>
           </a-form-item>
 
           <a-form-item label="内网地址" name="localIp" :rules="[{ required: true, message: '内网地址必填'}]">
@@ -96,7 +96,7 @@
           </a-form-item>
 
           <a-form-item label="内网端口" name="localPort" :rules="[{ required: true, message: '内网端口必填'}]">
-            <a-input v-model:value="formState.localPort" placeholder="内网端口如：8080"/>
+            <a-input v-model:value.number="formState.localPort" type="number" placeholder="内网端口如：8080"/>
           </a-form-item>
 
           <a-form-item label="代理协议" name="proxyVersion"
@@ -159,13 +159,13 @@ const addConfigVisible = ref(false)
 const configLoading = ref(false)
 
 const formState = reactive({
-  id: "",
+  id: undefined,
   deviceKey: "",
   remarks: "",
-  port: "",
+  port: undefined,
   domain: undefined,
   localIp: "",
-  localPort: "",
+  localPort: undefined,
   connectType: "",
   proxyVersion: "",
   certificateKey: "",
@@ -265,13 +265,13 @@ const refConfigData = (item) => {
 
 
 const addConfigModal = () => {
-  formState.id = ""
+  formState.id = undefined
   formState.deviceKey = ""
   formState.remarks = ""
-  formState.port = ""
+  formState.port = undefined
   formState.domain = undefined
   formState.localIp = ""
-  formState.localPort = ""
+  formState.localPort = undefined
   formState.connectType = ""
   formState.proxyVersion = ""
   formState.certificateKey = ""

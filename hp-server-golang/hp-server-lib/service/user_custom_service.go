@@ -11,7 +11,7 @@ type UserCustomService struct {
 }
 
 func (receiver *UserCustomService) AddData(custom entity.UserCustomEntity) {
-	if custom.Id == 0 {
+	if custom.Id == nil {
 		custom.CreateTime = time.Now()
 	}
 	db.DB.Save(&custom)
@@ -26,5 +26,5 @@ func (receiver *UserCustomService) ListData(page int, pageSize int) *bean.ResPag
 }
 
 func (receiver *UserCustomService) RemoveData(id int) {
-	db.DB.Delete(&entity.UserCustomEntity{Id: id})
+	db.DB.Delete(&entity.UserCustomEntity{Id: &id})
 }

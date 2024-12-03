@@ -25,7 +25,7 @@ func (receiver *DeviceService) AddData(userId int, device bean.ReqDeviceInfo) er
 
 	db.DB.Save(&entity.UserDeviceEntity{
 		Remarks:   device.Desc,
-		UserId:    userId,
+		UserId:    &userId,
 		DeviceKey: device.DeviceId,
 	})
 	return nil
@@ -39,7 +39,7 @@ func (receiver *DeviceService) UpdateData(device bean.ReqDeviceInfo) error {
 		return errors.New("设备编码只能是32字母数字组成")
 	}
 	var total int64
-	db.DB.Model(&entity.UserDeviceEntity{DeviceKey: device.DeviceId}).Count(&total)
+	db.DB.Model(&entity.UserDeviceEntity{}).Where("device_key = ?", device.DeviceId).Count(&total)
 	if total != 1 {
 		return errors.New("设备编码不存在")
 	}
@@ -51,11 +51,9 @@ func (receiver *DeviceService) ListData(userId int) []bean.ResDeviceInfo {
 	var results []entity.UserDeviceEntity
 	// 计算总记录数并执行分页查询
 	if userId < 0 {
-		db.DB.Model(&entity.UserDeviceEntity{}).Find(&results)
+		db.DB.Find(&results)
 	} else {
-		db.DB.Model(&entity.UserDeviceEntity{
-			UserId: userId,
-		}).Find(&results)
+		db.DB.Where("user_id = ?", userId).Find(&results)
 	}
 	var result2 []bean.ResDeviceInfo
 	var userIds []int
@@ -65,9 +63,9 @@ func (receiver *DeviceService) ListData(userId int) []bean.ResDeviceInfo {
 		if ok {
 			info.MemoryInfo = value.(*bean.MemoryInfo)
 		}
-		info.UserId = item.UserId
+		info.UserId = *item.UserId
 		result2 = append(result2, *info)
-		userIds = append(userIds, item.UserId)
+		userIds = append(userIds, *item.UserId)
 	}
 
 	if userId < 0 {
@@ -76,7 +74,7 @@ func (receiver *DeviceService) ListData(userId int) []bean.ResDeviceInfo {
 			// 将查询结果转换成 map[int]User
 			userMap := make(map[int]*entity.UserCustomEntity)
 			for _, user := range users {
-				userMap[user.Id] = user
+				userMap[*user.Id] = user
 			}
 			for _, item := range result2 {
 				customEntity := userMap[item.UserId]
@@ -93,7 +91,7 @@ func (receiver *DeviceService) ListData(userId int) []bean.ResDeviceInfo {
 func (receiver *DeviceService) RemoveData(deviceKey string) error {
 	//检查是否存在配置
 	var configTotal int64
-	db.DB.Model(&entity.UserConfigEntity{DeviceKey: deviceKey}).Count(&configTotal)
+	db.DB.Model(&entity.UserConfigEntity{}).Where("device_key = ?", deviceKey).Count(&configTotal)
 	if configTotal > 0 {
 		return errors.New("设备被占用，请删除映射后再来")
 	}
