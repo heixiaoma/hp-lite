@@ -131,7 +131,7 @@ func StartHttpsServer() {
 	mux := http.NewServeMux()
 	// 设置 SNI 支持的证书和目标获取函数
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: false,
+		InsecureSkipVerify: true,
 		GetCertificate: func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 			// 获取客户端请求的主机名（SNI）
 			domain := clientHello.ServerName
