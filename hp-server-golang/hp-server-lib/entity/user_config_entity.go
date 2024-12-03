@@ -3,84 +3,83 @@ package entity
 import "hp-server-lib/bean"
 
 type UserConfigEntity struct {
-
 	/**
 	 * 主键
 	 */
-	id int
+	Id int `json:"id" gorm:"primaryKey;autoIncrement"`
 	/**
 	 *当前key
 	 */
-	configKey string
+	ConfigKey string `json:"configKey"`
 	/**
 	 * 用户KEY
 	 */
-	deviceKey string
+	DeviceKey string `json:"deviceKey"`
 	/**
 	 * 套餐IP
 	 */
-	serverIp string
+	ServerIp string `json:"serverIp"`
 
 	/**
 	 * 套餐端口
 	 */
 
-	serverPort int
+	ServerPort int `json:"serverPort"`
 
 	/**
 	 * 本地IP
 	 */
-	localIp string
+	LocalIp string `json:"localIp"`
 
 	/**
 	 * 本地端口
 	 */
-	localPort int
+	LocalPort int `json:"localPort"`
 
 	/**
 	 * 穿透类型
 	 */
-	connectType bean.ConnectType
+	ConnectType bean.ConnectType `json:"connectType"`
 
 	/**
 	 * 备注
 	 */
-	remarks string
+	Remarks string `json:"remarks"`
 
 	/**
 	 * 端口
 	 */
-	port int
+	Port int `json:"port"`
 
 	/**
 	 * 域名
 	 */
-	domain string
+	Domain string `json:"domain"`
 
 	/**
 	 * 状态
 	 */
-	statusMsg string
+	StatusMsg string `json:"statusMsg"`
 
 	/**
 	 * 代理版本
 	 */
-	proxyVersion bean.ProxyVersion
+	ProxyVersion bean.ProxyVersion `json:"proxyVersion"`
 
 	/**
 	 * SSL证书Key
 	 */
-	certificateKey string
+	CertificateKey string `json:"certificateKey"`
 
 	/**
 	 * 证书内容
 	 */
-	certificateContent string
+	CertificateContent string `json:"certificateContent"`
 
 	/**
 	 * 用户ID
 	 */
-	userId int
+	UserId int `json:"userId"`
 }
 
 func (UserConfigEntity) TableName() string {

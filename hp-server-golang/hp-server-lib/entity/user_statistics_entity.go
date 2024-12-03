@@ -3,42 +3,42 @@ package entity
 import "time"
 
 type UserStatisticsEntity struct {
-	id int
+	Id int `json:"id" gorm:"primaryKey;autoIncrement"`
 
 	/**
 	 * 套餐ID
 	 */
-	configId int
+	ConfigId int `json:"configId"`
 
 	/**
 	 * 下载量
 	 */
-	download int64
+	Download int64 `json:"download"`
 
 	/**
 	 * 上传量
 	 */
-	upload int64
+	Upload int64 `json:"upload"`
 
 	/**
 	 * uv
 	 */
-	uv int64
+	Uv int64 `json:"uv"`
 
 	/**
 	 * pv
 	 */
-	pv int64
+	Pv int64 `json:"pv"`
 
 	/**
 	 * 时间
 	 */
-	time int64
+	Time int64 `json:"time"`
 
 	/**
 	 * 创建时间
 	 */
-	createTime time.Time
+	CreateTime time.Time `json:"createTime"`
 }
 
 func (UserStatisticsEntity) TableName() string {

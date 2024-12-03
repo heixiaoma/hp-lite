@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"hp-server-lib/entity"
 	"log"
 )
@@ -12,7 +13,9 @@ var DB *gorm.DB
 var err error
 
 func init() {
-	DB, err = gorm.Open(sqlite.Open("hp-lite.db"), &gorm.Config{})
+	DB, err = gorm.Open(sqlite.Open("hp-lite.db"), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info), // 设置日志级别为 Info
+	})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -29,4 +32,7 @@ func init() {
 
 	//自动创建表
 	DB.AutoMigrate(&entity.UserCustomEntity{})
+	DB.AutoMigrate(&entity.UserDeviceEntity{})
+	DB.AutoMigrate(&entity.UserConfigEntity{})
+	DB.AutoMigrate(&entity.UserStatisticsEntity{})
 }

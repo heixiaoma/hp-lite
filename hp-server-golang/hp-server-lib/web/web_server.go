@@ -18,6 +18,7 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Headers", "*")
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
+			return
 		}
 		defer func() {
 			if err := recover(); err != nil {
@@ -35,12 +36,19 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 
 func StartWebServer(port int) {
 	mux := http.NewServeMux()
+
 	mux.HandleFunc("/user/login", controller.LoginController{}.LoginHandler)
 	clientUserController := controller.ClientUserController{}
 	mux.HandleFunc("/client/user/saveUser", clientUserController.Add)
 	mux.HandleFunc("/client/user/list", clientUserController.List)
 	mux.HandleFunc("/client/user/removeUser", clientUserController.Del)
-	// 使用全局异常处理器
+
+	deviceController := controller.DeviceController{}
+	mux.HandleFunc("/client/device/list", deviceController.List)
+	mux.HandleFunc("/client/device/add", deviceController.Add)
+	mux.HandleFunc("/client/device/update", deviceController.Update)
+	mux.HandleFunc("/client/device/remove", deviceController.Del)
+	mux.HandleFunc("/client/device/stop", deviceController.Stop)
 	muxWithRecovery := recoveryMiddleware(mux)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), muxWithRecovery))
 }

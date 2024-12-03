@@ -31,6 +31,21 @@ func (receiver *CmdService) sendTips(conn net.Conn, tips string) {
 	receiver.sendMessage(conn, c)
 }
 
+func SendCloseMsg(deviceKey, msg string) bool {
+	value, ok := CMD_CACHE_CONN.Load(deviceKey)
+	if ok {
+		c := &cmdMessage.CmdMessage{
+			Data: msg,
+			Type: cmdMessage.CmdMessage_DISCONNECT,
+		}
+		conn := value.(net.Conn)
+		conn.Write(protol.CmdEncode(c))
+		conn.Close()
+		CMD_CACHE_CONN.Delete(deviceKey)
+	}
+	return ok
+}
+
 func (receiver CmdService) storeMemInfo(message *cmdMessage.CmdMessage) {
 	data := message.GetData()
 	if len(data) > 0 {

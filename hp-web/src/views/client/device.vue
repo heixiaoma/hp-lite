@@ -171,7 +171,9 @@ const loadData = () => {
   listLoading.value = true
   getDeviceList().then(res => {
     listLoading.value = false
-    deviceList.value = res.data
+    if (res.data){
+      deviceList.value = res.data
+    }
   }).catch(e => {
     listLoading.value = false
   })

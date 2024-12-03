@@ -1,22 +1,22 @@
 package entity
 
 type UserDeviceEntity struct {
-	id int
+	Id int `json:"id" gorm:"primaryKey;autoIncrement"`
 
 	/**
 	 * 设备key
 	 */
-	deviceKey string
+	DeviceKey string `json:"deviceKey"`
 
 	/**
 	 * 描述
 	 */
-	remarks string
+	Remarks string `json:"remarks"`
 
 	/**
 	 * 用户ID
 	 */
-	userId int
+	UserId int `json:"userId"`
 }
 
 func (UserDeviceEntity) TableName() string {
