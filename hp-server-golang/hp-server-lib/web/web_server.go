@@ -1,6 +1,7 @@
 package web
 
 import (
+	"embed"
 	"fmt"
 	"hp-server-lib/web/controller"
 	"log"
@@ -8,6 +9,9 @@ import (
 	"runtime/debug"
 	"strconv"
 )
+
+//go:embed static
+var content embed.FS
 
 // 全局异常拦截器中间件
 func recoveryMiddleware(next http.Handler) http.Handler {
@@ -36,6 +40,7 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 
 func StartWebServer(port int) {
 	mux := http.NewServeMux()
+	mux.HandleFunc("/", controller.StaticController{Content: content}.Static)
 
 	mux.HandleFunc("/user/login", controller.LoginController{}.LoginHandler)
 	clientUserController := controller.ClientUserController{}
