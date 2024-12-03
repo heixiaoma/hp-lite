@@ -24,11 +24,11 @@ func NewTcpServer(conn quic.Connection, userInfo *bean.UserConfigInfo) *TcpServe
 }
 
 // ConnectLocal 内网服务的TCP链接
-func (tcpServer *TcpServer) StartServer(port int) {
+func (tcpServer *TcpServer) StartServer(port int) bool {
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Fatalf("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
-		return
+		return false
 	}
 	tcpServer.listener = listener
 	//设置读
@@ -43,6 +43,7 @@ func (tcpServer *TcpServer) StartServer(port int) {
 			}
 		}
 	}()
+	return true
 }
 
 func (tcpServer *TcpServer) handler(conn net.Conn) {

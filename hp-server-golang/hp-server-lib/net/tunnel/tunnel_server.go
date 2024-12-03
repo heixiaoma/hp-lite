@@ -18,17 +18,25 @@ func NewTunnelServer(connectType bean.ConnectType, port int, conn quic.Connectio
 	return &TunnelServer{connectType: connectType, port: port, conn: conn, userInfo: userInfo}
 }
 
-func (receiver *TunnelServer) StartServer() {
+func (receiver *TunnelServer) StartServer() bool {
+
 	if receiver.connectType == bean.TCP || receiver.connectType == bean.TCP_UDP {
 		server := NewTcpServer(receiver.conn, receiver.userInfo)
-		server.StartServer(receiver.port)
 		receiver.tcpServer = server
+		if !server.StartServer(receiver.port) {
+			return false
+		}
+
 	}
 	if receiver.connectType == bean.UDP || receiver.connectType == bean.TCP_UDP {
 		server := NewUdpServer(receiver.conn)
-		server.StartServer(receiver.port)
 		receiver.udpServer = server
+		startServer := server.StartServer(receiver.port)
+		if !startServer {
+			return false
+		}
 	}
+	return true
 }
 
 func (receiver *TunnelServer) CLose() {

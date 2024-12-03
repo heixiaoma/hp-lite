@@ -33,7 +33,7 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 	}
 	return &bean.UserConfigInfo{
 		ProxyVersion:       s,
-		Domain:             *userQuery.Domain,
+		Domain:             userQuery.Domain,
 		ProxyIp:            userQuery.LocalIp,
 		ProxyPort:          *userQuery.LocalPort,
 		ConfigId:           *userQuery.Id,
@@ -57,36 +57,46 @@ func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connectio
 	tunnelType := data.MetaData.Type.String()
 	connectType := bean.ConnectType(tunnelType)
 	newTunnelServer := tunnel.NewTunnelServer(connectType, info.Port, conn, info)
-	newTunnelServer.StartServer()
+	server := newTunnelServer.StartServer()
+	if !server {
+		newTunnelServer.CLose()
+	}
 	log.Printf("隧道启动成功")
 	HP_CACHE_TUN.Store(configkey, newTunnelServer)
-	if len(info.Domain) > 0 {
+	if info.Domain != nil {
 		DOMAIN_USER_INFO.Store(info.Domain, info)
 	}
+
+	//更新服务端状态
+	strMsg := "配置启动成功"
+	if !server {
+		strMsg = "配置启动失败，大概率是端口冲突，请刷新"
+	}
+	db.DB.Model(&entity.UserConfigEntity{}).Where("device_key = ?", configkey).UpdateColumn("status_msg", strMsg)
 	//通知客户端结果
 	arr2 := [][]string{
-		{"穿透结果", "穿透成功"},
+		{"穿透结果", strconv.FormatBool(server)},
 	}
 
-	if connectType == bean.TCP || connectType == bean.TCP_UDP {
+	if server && (connectType == bean.TCP || connectType == bean.TCP_UDP) {
 		arr2 = append(arr2, []string{"内网TCP", info.ProxyIp + ":" + strconv.Itoa(info.ProxyPort)})
 		arr2 = append(arr2, []string{"外网TCP", info.Ip + ":" + strconv.Itoa(info.Port)})
-		if len(info.Domain) > 0 {
-			arr2 = append(arr2, []string{"HTTP地址", "http://" + info.Domain})
+		if info.Domain != nil {
+			arr2 = append(arr2, []string{"HTTP地址", "http://" + *info.Domain})
 		}
 		if len(info.CertificateKey) > 0 && len(info.CertificateContent) > 0 {
-			arr2 = append(arr2, []string{"HTTPS地址", "https://" + info.Domain})
+			arr2 = append(arr2, []string{"HTTPS地址", "https://" + *info.Domain})
 		}
 	}
 
-	if connectType == bean.UDP || connectType == bean.TCP_UDP {
+	if server && (connectType == bean.UDP || connectType == bean.TCP_UDP) {
 		arr2 = append(arr2, []string{"内网UDP", info.ProxyIp + ":" + strconv.Itoa(info.ProxyPort)})
 		arr2 = append(arr2, []string{"外网UDP", info.Ip + ":" + strconv.Itoa(info.Port)})
 	}
 
 	status := util.PrintStatus(arr2)
 	m := &message.HpMessage_MetaData{
-		Success: true,
+		Success: server,
 		Reason:  status,
 	}
 	hpMessage := &message.HpMessage{

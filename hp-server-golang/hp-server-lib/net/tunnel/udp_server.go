@@ -23,12 +23,12 @@ func NewUdpServer(conn quic.Connection) *UdpServer {
 }
 
 // ConnectLocal 内网服务的TCP链接
-func (udpServer *UdpServer) StartServer(port int) {
+func (udpServer *UdpServer) StartServer(port int) bool {
 	udpAddr, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(port))
 	conn, err := net.ListenUDP("udp", udpAddr)
 	if err != nil {
 		log.Fatalf("不能创建UDP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
-		return
+		return false
 	}
 	udpServer.udpConn = conn
 	//设置读
@@ -68,6 +68,7 @@ func (udpServer *UdpServer) StartServer(port int) {
 		})
 
 	}()
+	return true
 }
 
 func (udpServer *UdpServer) CLose() {

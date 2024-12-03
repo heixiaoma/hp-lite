@@ -59,7 +59,7 @@ func NoticeClientUpdateData(deviceKey string) bool {
 				InLimit:     -1,
 				ConnectType: *item.ConnectType,
 				ConfigKey:   item.ConfigKey,
-				LocalIp:     item.ServerIp,
+				LocalIp:     item.LocalIp,
 				LocalPort:   *item.LocalPort,
 				ServerIp:    item.ServerIp,
 				ServerPort:  *item.ServerPort,
