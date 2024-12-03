@@ -3,6 +3,8 @@ package service
 import (
 	"github.com/quic-go/quic-go"
 	"hp-server-lib/bean"
+	"hp-server-lib/db"
+	"hp-server-lib/entity"
 	"hp-server-lib/message"
 	"hp-server-lib/net/tunnel"
 	"hp-server-lib/protol"
@@ -20,14 +22,25 @@ type HpService struct {
 }
 
 func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfigInfo {
+
+	userQuery := entity.UserConfigEntity{}
+	db.DB.Where("config_key = ? ", configKey).First(&userQuery)
+	s := ""
+	if userQuery.ProxyVersion == bean.V1 {
+		s = "V1"
+	} else if userQuery.ProxyVersion == bean.V2 {
+		s = "V2"
+	}
 	return &bean.UserConfigInfo{
-		ProxyVersion: "",
-		Domain:       "op.hp.mcle.cn",
-		ProxyIp:      "192.168.100.246",
-		ProxyPort:    5666,
-		ConfigId:     configKey,
-		Port:         8765,
-		Ip:           "47.109.206.174",
+		ProxyVersion:       s,
+		Domain:             *userQuery.Domain,
+		ProxyIp:            userQuery.LocalIp,
+		ProxyPort:          *userQuery.LocalPort,
+		ConfigId:           *userQuery.Id,
+		Port:               *userQuery.Port,
+		Ip:                 userQuery.ServerIp,
+		CertificateKey:     userQuery.CertificateKey,
+		CertificateContent: userQuery.CertificateContent,
 	}
 }
 
@@ -53,9 +66,24 @@ func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connectio
 	//通知客户端结果
 	arr2 := [][]string{
 		{"穿透结果", "穿透成功"},
-		{"内外TCP", info.ProxyIp + ":" + strconv.Itoa(info.ProxyPort)},
-		{"外网TCP", info.Ip + ":" + strconv.Itoa(info.Port)},
 	}
+
+	if connectType == bean.TCP || connectType == bean.TCP_UDP {
+		arr2 = append(arr2, []string{"内网TCP", info.ProxyIp + ":" + strconv.Itoa(info.ProxyPort)})
+		arr2 = append(arr2, []string{"外网TCP", info.Ip + ":" + strconv.Itoa(info.Port)})
+		if len(info.Domain) > 0 {
+			arr2 = append(arr2, []string{"HTTP地址", "http://" + info.Domain})
+		}
+		if len(info.CertificateKey) > 0 && len(info.CertificateContent) > 0 {
+			arr2 = append(arr2, []string{"HTTPS地址", "https://" + info.Domain})
+		}
+	}
+
+	if connectType == bean.UDP || connectType == bean.TCP_UDP {
+		arr2 = append(arr2, []string{"内网UDP", info.ProxyIp + ":" + strconv.Itoa(info.ProxyPort)})
+		arr2 = append(arr2, []string{"外网UDP", info.Ip + ":" + strconv.Itoa(info.Port)})
+	}
+
 	status := util.PrintStatus(arr2)
 	m := &message.HpMessage_MetaData{
 		Success: true,

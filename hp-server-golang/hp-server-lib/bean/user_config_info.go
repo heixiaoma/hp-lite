@@ -5,7 +5,7 @@ type UserConfigInfo struct {
 	ProxyIp            string `json:"proxyIp"`
 	ProxyPort          int    `json:"proxyPort"`
 	Domain             string `json:"domain"`
-	ConfigId           string `json:"configId"`
+	ConfigId           int    `json:"configId"`
 	Port               int    `json:"port"`
 	Ip                 string `json:"ip"`
 	CertificateKey     string `json:"certificateKey"`

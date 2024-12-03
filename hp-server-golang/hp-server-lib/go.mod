@@ -10,6 +10,7 @@ require (
 	github.com/pires/go-proxyproto v0.8.0
 	github.com/quic-go/quic-go v0.46.0
 	google.golang.org/protobuf v1.33.0
+	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/gorm v1.25.12
 )
 

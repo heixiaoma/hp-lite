@@ -114,8 +114,8 @@ func (receiver *ConfigService) AddData(userId int, configEntity entity.UserConfi
 	}
 	configEntity.ConfigKey = newUUID.String()
 	configEntity.UserId = &userId
-	configEntity.ServerIp = config.TunnelConfigIP
-	configEntity.ServerPort = &config.TunnelConfigPort
+	configEntity.ServerIp = config.ConfigData.Tunnel.IP
+	configEntity.ServerPort = &config.ConfigData.Tunnel.Port
 	db.DB.Save(&configEntity)
 	NoticeClientUpdateData(configEntity.DeviceKey)
 	return nil

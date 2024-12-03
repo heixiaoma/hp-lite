@@ -96,28 +96,6 @@ func (receiver CmdService) storeMemInfo(message *cmdMessage.CmdMessage) {
 	}
 }
 
-func (receiver CmdService) connectInfo(conn net.Conn, message *cmdMessage.CmdMessage) {
-	a := &bean.LocalInnerWear{
-		OutLimit:    -1,
-		InLimit:     -1,
-		ConnectType: "TCP",
-		ConfigKey:   "ac9b0b97-b3dd-44ef-9570-0a0039823398",
-		LocalIp:     "192.168.100.246",
-		LocalPort:   5666,
-		ServerIp:    "47.109.206.174",
-		ServerPort:  9090,
-	}
-	arr2 := [1]*bean.LocalInnerWear{a}
-	jsonData, err := json.Marshal(arr2)
-	if err == nil {
-		c := &cmdMessage.CmdMessage{
-			Data: string(jsonData),
-			Type: cmdMessage.CmdMessage_LOCAL_INNER_WEAR,
-		}
-		receiver.sendMessage(conn, c)
-	}
-}
-
 func (receiver *CmdService) Connect(conn net.Conn, message *cmdMessage.CmdMessage) {
 	_, ok := CMD_CACHE_CONN.Load(message.GetKey())
 	if ok {
@@ -127,7 +105,7 @@ func (receiver *CmdService) Connect(conn net.Conn, message *cmdMessage.CmdMessag
 	} else {
 		receiver.storeMemInfo(message)
 		CMD_CACHE_CONN.Store(message.GetKey(), conn)
-		receiver.connectInfo(conn, message)
+		NoticeClientUpdateData(message.GetKey())
 	}
 }
 
