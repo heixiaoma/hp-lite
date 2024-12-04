@@ -75,9 +75,14 @@ func (receiver *ConfigService) ConfigList(userId int, page int, pageSize int) *b
 }
 
 func (receiver *ConfigService) RemoveData(configId int) bool {
-	var results entity.UserDeviceEntity
-	db.DB.Where("id = ?", configId).Delete(&results)
-	return NoticeClientUpdateData(results.DeviceKey)
+	userQuery := &entity.UserConfigEntity{}
+	db.DB.Where("id = ? ", configId).First(userQuery)
+	if userQuery != nil {
+		var results entity.UserConfigEntity
+		db.DB.Where("id = ?", configId).Delete(&results)
+		return NoticeClientUpdateData(userQuery.DeviceKey)
+	}
+	return false
 }
 func (receiver *ConfigService) AddData(userId int, configEntity entity.UserConfigEntity) error {
 	if len(configEntity.DeviceKey) == 0 {
@@ -115,7 +120,12 @@ func (receiver *ConfigService) AddData(userId int, configEntity entity.UserConfi
 		return errors.New(err.Error())
 	}
 	configEntity.ConfigKey = newUUID.String()
-	configEntity.UserId = &userId
+	deviceQuery := &entity.UserDeviceEntity{}
+	db.DB.Where("device_key = ? ", configEntity.DeviceKey).First(deviceQuery)
+	if deviceQuery == nil || deviceQuery.UserId == nil {
+		return errors.New("设备不存在")
+	}
+	configEntity.UserId = deviceQuery.UserId
 	configEntity.ServerIp = config.ConfigData.Tunnel.IP
 	configEntity.ServerPort = &config.ConfigData.Tunnel.Port
 	db.DB.Save(&configEntity)

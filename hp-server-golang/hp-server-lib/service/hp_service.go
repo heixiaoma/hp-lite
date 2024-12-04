@@ -23,8 +23,11 @@ type HpService struct {
 
 func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfigInfo {
 
-	userQuery := entity.UserConfigEntity{}
-	db.DB.Where("config_key = ? ", configKey).First(&userQuery)
+	userQuery := &entity.UserConfigEntity{}
+	db.DB.Where("config_key = ? ", configKey).First(userQuery)
+	if userQuery == nil || userQuery.LocalPort == nil || userQuery.Port == nil || userQuery.Id == nil {
+		return nil
+	}
 	s := ""
 	if userQuery.ProxyVersion == bean.V1 {
 		s = "V1"
@@ -47,6 +50,9 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connection) {
 	configkey := data.MetaData.Key
 	info := receiver.loadUserConfigInfo(configkey)
+	if info == nil {
+		return
+	}
 	tunnelServer, ok := HP_CACHE_TUN.Load(info.Port)
 	if ok {
 		s := tunnelServer.(*tunnel.TunnelServer)
