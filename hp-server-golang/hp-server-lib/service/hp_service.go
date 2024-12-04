@@ -49,18 +49,13 @@ func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connectio
 	info := receiver.loadUserConfigInfo(configkey)
 	tunnelServer, ok := HP_CACHE_TUN.Load(info.Port)
 	if ok {
-		log.Printf("重复配置KEY:%s", configkey)
 		s := tunnelServer.(*tunnel.TunnelServer)
 		s.CLose()
 		HP_CACHE_TUN.Delete(info.Port)
-		DOMAIN_USER_INFO.Delete(*info.Domain)
+		if info.Domain != nil {
+			DOMAIN_USER_INFO.Delete(*info.Domain)
+		}
 	}
-
-	HP_CACHE_TUN.Range(func(key, value any) bool {
-		log.Printf("缓存配置KEY:%s -> %s", key, configkey)
-		return true
-	})
-
 	tunnelType := data.MetaData.Type.String()
 	connectType := bean.ConnectType(tunnelType)
 	newTunnelServer := tunnel.NewTunnelServer(connectType, info.Port, conn, info)

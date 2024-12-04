@@ -84,13 +84,12 @@ func NoticeClientUpdateData(deviceKey string) bool {
 	return false
 }
 
-func (receiver CmdService) storeMemInfo(message *cmdMessage.CmdMessage) {
+func (receiver CmdService) StoreMemInfo(message *cmdMessage.CmdMessage) {
 	data := message.GetData()
 	if len(data) > 0 {
 		info := &bean.MemoryInfo{}
 		err := json.Unmarshal([]byte(data), info)
 		if err == nil {
-			println(info.HpTotalMem)
 			CMD_CACHE_MEMORY_INFO.Store(message.GetKey(), info)
 		}
 	}
@@ -103,7 +102,7 @@ func (receiver *CmdService) Connect(conn net.Conn, message *cmdMessage.CmdMessag
 		receiver.sendTips(conn, "设备KEY已经在线")
 		return
 	} else {
-		receiver.storeMemInfo(message)
+		receiver.StoreMemInfo(message)
 		CMD_CACHE_CONN.Store(message.GetKey(), conn)
 		NoticeClientUpdateData(message.GetKey())
 	}

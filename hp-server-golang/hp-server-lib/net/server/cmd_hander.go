@@ -8,21 +8,53 @@ import (
 	"log"
 	"net"
 	"runtime/debug"
+	"time"
+)
+
+const (
+	// 最大闲置时间
+	IdleTimeout = 5 * time.Minute
 )
 
 type CmdClientHandler struct {
 	*service.CmdService
+	IdleTimer *time.Timer
 }
 
 func NewCmdHandler() *CmdClientHandler {
 	return &CmdClientHandler{
 		&service.CmdService{},
+		time.NewTimer(IdleTimeout),
 	}
+}
+
+func (receiver CmdClientHandler) idle(conn net.Conn) {
+	go func() {
+		for {
+			select {
+			case <-receiver.IdleTimer.C:
+				if conn == nil {
+					return
+				}
+				c := &cmdMessage.CmdMessage{
+					Data: "中心节点-心跳数据",
+					Type: cmdMessage.CmdMessage_TIPS,
+				}
+				// 如果 5 分钟没有读写操作，发送心跳包
+				_, err := conn.Write(protol.CmdEncode(c))
+				if err != nil {
+					return
+				}
+				receiver.IdleTimer.Reset(IdleTimeout)
+			}
+		}
+	}()
 }
 
 // ChannelActive 连接激活时，发送注册信息给云端
 func (h *CmdClientHandler) ChannelActive(conn net.Conn) {
 	log.Printf("CMD指令激活 ip:%s", conn.RemoteAddr().String())
+	h.idle(conn)
 }
 
 func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
@@ -32,7 +64,6 @@ func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
 			log.Printf("CMD-ChannelRead: %v\n栈情况: %s", err, string(debug.Stack()))
 		}
 	}()
-
 	message := data.(*cmdMessage.CmdMessage)
 	log.Printf("消息类型:%s|消息版本:%s|ip:%s", message.Type.String(), message.Version, conn.RemoteAddr().String())
 	switch message.Type {
@@ -42,7 +73,7 @@ func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
 		}
 	case cmdMessage.CmdMessage_TIPS:
 		{
-
+			h.StoreMemInfo(message)
 		}
 	case cmdMessage.CmdMessage_DISCONNECT:
 		{

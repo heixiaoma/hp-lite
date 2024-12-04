@@ -68,8 +68,10 @@ func (tcpServer *CmdServer) handler(conn net.Conn) {
 				tcpServer.ChannelInactive(conn)
 				return
 			}
-			if decode != nil {
+			if decode != nil && conn != nil {
 				tcpServer.ChannelRead(conn, decode)
+			} else {
+				return
 			}
 		}
 	}()
