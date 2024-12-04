@@ -7,6 +7,7 @@ import (
 	"hp-server-lib/service"
 	"log"
 	"net"
+	"runtime/debug"
 )
 
 type CmdClientHandler struct {
@@ -25,6 +26,13 @@ func (h *CmdClientHandler) ChannelActive(conn net.Conn) {
 }
 
 func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
+	defer func() {
+		if err := recover(); err != nil {
+			// 捕获异常并记录日志
+			log.Printf("CMD-ChannelRead: %v\n栈情况: %s", err, string(debug.Stack()))
+		}
+	}()
+
 	message := data.(*cmdMessage.CmdMessage)
 	log.Printf("消息类型:%s|消息版本:%s|ip:%s", message.Type.String(), message.Version, conn.RemoteAddr().String())
 	switch message.Type {
@@ -41,6 +49,7 @@ func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
 			h.Clear(conn)
 		}
 	}
+
 }
 
 func (h *CmdClientHandler) ChannelInactive(conn net.Conn) {

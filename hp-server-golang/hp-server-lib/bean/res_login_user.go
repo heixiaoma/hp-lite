@@ -38,7 +38,7 @@ func NewClientUser(userId int, email string) *ResLoginUser {
 	return &ResLoginUser{
 		ExpTime: threeDaysLaterUnix,
 		Email:   email,
-		Role:    ADMIN,
+		Role:    CLIENT,
 		Token:   token,
 	}
 }

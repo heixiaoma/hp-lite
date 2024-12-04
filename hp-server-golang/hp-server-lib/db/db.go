@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"hp-server-lib/entity"
 	"log"
 )
@@ -13,7 +14,7 @@ var err error
 
 func init() {
 	DB, err = gorm.Open(sqlite.Open("hp-lite.db"), &gorm.Config{
-		//Logger: logger.Default.LogMode(logger.Info), // 设置日志级别为 Info
+		Logger: logger.Default.LogMode(logger.Info), // 设置日志级别为 Info
 	})
 	if err != nil {
 		fmt.Println(err)

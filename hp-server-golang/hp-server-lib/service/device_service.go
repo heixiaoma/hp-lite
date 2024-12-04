@@ -47,7 +47,7 @@ func (receiver *DeviceService) UpdateData(device bean.ReqDeviceInfo) error {
 	return nil
 }
 
-func (receiver *DeviceService) ListData(userId int) []bean.ResDeviceInfo {
+func (receiver *DeviceService) ListData(userId int) []*bean.ResDeviceInfo {
 	var results []entity.UserDeviceEntity
 	// 计算总记录数并执行分页查询
 	if userId < 0 {
@@ -55,7 +55,7 @@ func (receiver *DeviceService) ListData(userId int) []bean.ResDeviceInfo {
 	} else {
 		db.DB.Where("user_id = ?", userId).Find(&results)
 	}
-	var result2 []bean.ResDeviceInfo
+	var result2 []*bean.ResDeviceInfo
 	var userIds []int
 	for _, item := range results {
 		value, ok := CMD_CACHE_MEMORY_INFO.Load(item.DeviceKey)
@@ -64,13 +64,13 @@ func (receiver *DeviceService) ListData(userId int) []bean.ResDeviceInfo {
 			info.MemoryInfo = value.(*bean.MemoryInfo)
 		}
 		info.UserId = *item.UserId
-		result2 = append(result2, *info)
+		result2 = append(result2, info)
 		userIds = append(userIds, *item.UserId)
 	}
 
 	if userId < 0 {
 		var users []*entity.UserCustomEntity
-		if err := db.DB.Where("id IN ?", userIds).Find(&users).Error; err == nil {
+		if err := db.DB.Model(&entity.UserCustomEntity{}).Where("id IN ?", userIds).Find(&users).Error; err == nil {
 			// 将查询结果转换成 map[int]User
 			userMap := make(map[int]*entity.UserCustomEntity)
 			for _, user := range users {

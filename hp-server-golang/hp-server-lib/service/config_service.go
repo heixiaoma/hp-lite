@@ -7,6 +7,7 @@ import (
 	"hp-server-lib/config"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
+	"log"
 )
 
 type ConfigService struct {
@@ -29,7 +30,7 @@ func (receiver *ConfigService) DeviceKey(userId int) []*bean.ResUserDeviceInfo {
 			desc = "离线-" + item.Remarks
 		}
 		info := &bean.ResUserDeviceInfo{
-			UserId: userId,
+			UserId: *item.UserId,
 			Key:    item.DeviceKey,
 			Desc:   desc,
 		}
@@ -41,7 +42,7 @@ func (receiver *ConfigService) DeviceKey(userId int) []*bean.ResUserDeviceInfo {
 			userIds = append(userIds, item.UserId)
 		}
 		var users []*entity.UserCustomEntity
-		if err := db.DB.Where("id IN ?", userIds).Find(&users).Error; err == nil {
+		if err := db.DB.Model(&entity.UserCustomEntity{}).Where("id IN ?", userIds).Find(&users).Error; err == nil {
 			// 将查询结果转换成 map[int]User
 			userMap := make(map[int]*entity.UserCustomEntity)
 			for _, user := range users {
@@ -50,6 +51,7 @@ func (receiver *ConfigService) DeviceKey(userId int) []*bean.ResUserDeviceInfo {
 			for _, item := range data {
 				customEntity := userMap[item.UserId]
 				if customEntity != nil {
+					log.Printf(customEntity.Username)
 					item.Username = customEntity.Username
 					item.UserDesc = customEntity.Desc
 				}
