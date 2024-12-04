@@ -25,6 +25,10 @@ func (h *HPClientHandler) ChannelActive(stream quic.Stream, conn quic.Connection
 
 func (h *HPClientHandler) ChannelRead(stream quic.Stream, data interface{}, conn quic.Connection) {
 	message := data.(*hpMessage.HpMessage)
+	if message == nil {
+		log.Printf("消息类型:解码异常|ip:%s", conn.RemoteAddr().String())
+		return
+	}
 	log.Printf("流ID:%d|HP消息类型:%s|IP:%s", stream.StreamID(), message.Type.String(), conn.RemoteAddr())
 	switch message.Type {
 	case hpMessage.HpMessage_REGISTER:
