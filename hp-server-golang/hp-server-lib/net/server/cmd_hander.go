@@ -67,6 +67,7 @@ func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
 	message := data.(*cmdMessage.CmdMessage)
 	if message == nil {
 		log.Printf("消息类型:解码异常|ip:%s", conn.RemoteAddr().String())
+		conn.Close()
 		return
 	}
 	log.Printf("消息类型:%s|消息版本:%s|ip:%s", message.Type.String(), message.Version, conn.RemoteAddr().String())

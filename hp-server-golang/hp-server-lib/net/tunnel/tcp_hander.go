@@ -6,6 +6,7 @@ import (
 	"github.com/quic-go/quic-go"
 	"hp-server-lib/bean"
 	"hp-server-lib/message"
+	"hp-server-lib/net/base"
 	"hp-server-lib/protol"
 	"hp-server-lib/util"
 	"io"
@@ -43,6 +44,7 @@ func (h *TcpHandler) handlerStream(stream quic.Stream) {
 func (receiver *TcpHandler) ReadStreamData(data *message.HpMessage) {
 	if data.Type == message.HpMessage_DATA {
 		receiver.tcpConn.Write(data.Data)
+		base.AddSent(receiver.userInfo.ConfigId, int64(len(data.Data)))
 	}
 	if data.Type == message.HpMessage_DISCONNECTED {
 		receiver.tcpConn.Close()
@@ -112,6 +114,7 @@ func (h *TcpHandler) ChannelRead(conn net.Conn, data interface{}) {
 		},
 		Data: data.([]byte),
 	}
+	base.AddReceived(h.userInfo.ConfigId, int64(len(m.Data)))
 	h.stream.Write(protol.Encode(m))
 }
 

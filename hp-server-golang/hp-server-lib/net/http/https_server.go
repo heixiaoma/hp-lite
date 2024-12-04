@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"hp-server-lib/bean"
+	"hp-server-lib/net/base"
 	"hp-server-lib/service"
 	"log"
 	"net/http"
@@ -55,6 +56,8 @@ func StartHttpsServer() {
 			return
 		}
 		info := value.(*bean.UserConfigInfo)
+		base.AddPv(info.ConfigId, 1)
+		base.AddUv(info.ConfigId, r.RemoteAddr)
 		target, err := url.Parse("http://127.0.0.1:" + strconv.Itoa(info.Port))
 		if err != nil {
 			http.Error(w, "错误URL地址", http.StatusInternalServerError)
