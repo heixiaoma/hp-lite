@@ -2,6 +2,7 @@ package server
 
 import (
 	"bufio"
+	"errors"
 	cmdMessage "hp-server-lib/message"
 	"hp-server-lib/protol"
 	"hp-server-lib/service"
@@ -57,7 +58,7 @@ func (h *CmdClientHandler) ChannelActive(conn net.Conn) {
 	h.idle(conn)
 }
 
-func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
+func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) error {
 	defer func() {
 		if err := recover(); err != nil {
 			// 捕获异常并记录日志
@@ -66,9 +67,8 @@ func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
 	}()
 	message := data.(*cmdMessage.CmdMessage)
 	if message == nil {
-		log.Printf("消息类型:解码异常|ip:%s", conn.RemoteAddr().String())
-		conn.Close()
-		return
+		log.Printf("HP消息类型:解码异常|ip:%s", conn.RemoteAddr().String())
+		return errors.New("消息类型异常")
 	}
 	log.Printf("消息类型:%s|消息版本:%s|ip:%s", message.Type.String(), message.Version, conn.RemoteAddr().String())
 	switch message.Type {
@@ -85,6 +85,7 @@ func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
 			h.Clear(conn)
 		}
 	}
+	return nil
 
 }
 

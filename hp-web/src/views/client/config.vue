@@ -105,8 +105,9 @@
                 v-model:value="formState.proxyVersion"
             >
               <a-select-option value="NONE">不设置(小白用户请不要设置-用于获取真实IP)</a-select-option>
-              <a-select-option value="V1">V1版本</a-select-option>
-              <a-select-option value="V2">V2版本</a-select-option>
+              <a-select-option value="V1">TCP#V1版本</a-select-option>
+              <a-select-option value="V2">TCP#V2版本</a-select-option>
+              <a-select-option value="V3">HTTP#X-Forwarded-For</a-select-option>
             </a-select>
           </a-form-item>
 

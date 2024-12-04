@@ -105,7 +105,7 @@ func (h *TcpHandler) ChannelActive(conn net.Conn) {
 	}
 }
 
-func (h *TcpHandler) ChannelRead(conn net.Conn, data interface{}) {
+func (h *TcpHandler) ChannelRead(conn net.Conn, data interface{}) error {
 	m := &message.HpMessage{
 		Type: message.HpMessage_DATA,
 		MetaData: &message.HpMessage_MetaData{
@@ -116,6 +116,7 @@ func (h *TcpHandler) ChannelRead(conn net.Conn, data interface{}) {
 	}
 	base.AddReceived(h.userInfo.ConfigId, int64(len(m.Data)))
 	h.stream.Write(protol.Encode(m))
+	return nil
 }
 
 func (h *TcpHandler) ChannelInactive(conn net.Conn) {

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"github.com/quic-go/quic-go"
 	hpMessage "hp-server-lib/message"
 	"hp-server-lib/service"
@@ -23,12 +24,12 @@ func (h *HPClientHandler) ChannelActive(stream quic.Stream, conn quic.Connection
 
 }
 
-func (h *HPClientHandler) ChannelRead(stream quic.Stream, data interface{}, conn quic.Connection) {
+func (h *HPClientHandler) ChannelRead(stream quic.Stream, data interface{}, conn quic.Connection) error {
 	message := data.(*hpMessage.HpMessage)
 	if message == nil {
 		log.Printf("消息类型:解码异常|ip:%s", conn.RemoteAddr().String())
 		stream.Close()
-		return
+		return errors.New("HP消息类型:解码异常")
 	}
 	log.Printf("流ID:%d|HP消息类型:%s|IP:%s", stream.StreamID(), message.Type.String(), conn.RemoteAddr())
 	switch message.Type {
@@ -37,6 +38,7 @@ func (h *HPClientHandler) ChannelRead(stream quic.Stream, data interface{}, conn
 			h.Register(message, conn)
 		}
 	}
+	return nil
 }
 
 func (h *HPClientHandler) ChannelInactive(stream quic.Stream, conn quic.Connection) {

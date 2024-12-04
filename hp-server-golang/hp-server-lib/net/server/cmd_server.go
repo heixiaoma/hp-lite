@@ -69,7 +69,10 @@ func (tcpServer *CmdServer) handler(conn net.Conn) {
 				return
 			}
 			if decode != nil && conn != nil {
-				tcpServer.ChannelRead(conn, decode)
+				err := tcpServer.ChannelRead(conn, decode)
+				if err != nil {
+					return
+				}
 			} else {
 				return
 			}

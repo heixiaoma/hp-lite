@@ -11,6 +11,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 // 根据域名返回证书和目标后端服务地址
@@ -56,6 +57,22 @@ func StartHttpsServer() {
 			return
 		}
 		info := value.(*bean.UserConfigInfo)
+
+		if strings.Compare(info.ProxyVersion, "V3") == 0 {
+			clientIP := getClientIP(r)
+			// 获取当前的 X-Forwarded-For 头部（如果有）
+			xfwd := r.Header.Get("X-Forwarded-For")
+			if xfwd != "" {
+				// 如果已有 X-Forwarded-For，添加当前客户端 IP 地址到头部中
+				xfwd = xfwd + ", " + clientIP
+			} else {
+				// 如果没有 X-Forwarded-For 头部，直接设置客户端 IP 地址
+				xfwd = clientIP
+			}
+			// 动态设置 X-Forwarded-For 头部
+			r.Header.Set("X-Forwarded-For", xfwd)
+		}
+
 		base.AddPv(info.ConfigId, 1)
 		base.AddUv(info.ConfigId, r.RemoteAddr)
 		target, err := url.Parse("http://127.0.0.1:" + strconv.Itoa(info.Port))

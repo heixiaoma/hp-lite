@@ -104,7 +104,10 @@ func (quicServer *HpServer) handler(stream quic.Stream, conn quic.Connection) {
 				return
 			}
 			if decode != nil {
-				quicServer.ChannelRead(stream, decode, conn)
+				e := quicServer.ChannelRead(stream, decode, conn)
+				if e != nil {
+					return
+				}
 			}
 		}
 	}()
