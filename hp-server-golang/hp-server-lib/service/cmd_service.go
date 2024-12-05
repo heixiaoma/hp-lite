@@ -90,6 +90,7 @@ func (receiver CmdService) StoreMemInfo(conn net.Conn, message *cmdMessage.CmdMe
 		info := &bean.MemoryInfo{}
 		err := json.Unmarshal([]byte(data), info)
 		if err == nil {
+			CMD_CACHE_MEMORY_INFO.Delete(message.GetKey())
 			CMD_CACHE_MEMORY_INFO.Store(message.GetKey(), info)
 			CMD_CACHE_CONN.Delete(message.GetKey())
 			CMD_CACHE_CONN.Store(message.GetKey(), conn)
