@@ -78,7 +78,7 @@ func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) error {
 		}
 	case cmdMessage.CmdMessage_TIPS:
 		{
-			h.StoreMemInfo(message)
+			h.StoreMemInfo(conn, message)
 		}
 	case cmdMessage.CmdMessage_DISCONNECT:
 		{
