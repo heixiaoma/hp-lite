@@ -2,20 +2,17 @@ package server
 
 import (
 	"bufio"
-	net2 "hp-server-lib/net/base"
 	"log"
 	"net"
 	"strconv"
 )
 
 type CmdServer struct {
-	net2.Handler
 	listener net.Listener
 }
 
-func NewCmdServer(handler net2.Handler) *CmdServer {
+func NewCmdServer() *CmdServer {
 	return &CmdServer{
-		handler,
 		nil,
 	}
 }
@@ -49,7 +46,8 @@ func (tcpServer *CmdServer) StartServer(port int) {
 func (tcpServer *CmdServer) handler(conn net.Conn) {
 	go func() {
 		defer conn.Close()
-		tcpServer.ChannelActive(conn)
+		handler := NewCmdHandler()
+		handler.ChannelActive(conn)
 		reader := bufio.NewReader(conn)
 		for {
 			if tcpServer.listener == nil {
@@ -58,18 +56,18 @@ func (tcpServer *CmdServer) handler(conn net.Conn) {
 			//尝试读检查连接激活
 			_, err := reader.Peek(1)
 			if err != nil {
-				tcpServer.ChannelInactive(conn)
+				handler.ChannelInactive(conn)
 				return
 			}
 
-			decode, e := tcpServer.Decode(reader)
+			decode, e := handler.Decode(reader)
 			if e != nil {
 				log.Println(e)
-				tcpServer.ChannelInactive(conn)
+				handler.ChannelInactive(conn)
 				return
 			}
 			if decode != nil && conn != nil {
-				err := tcpServer.ChannelRead(conn, decode)
+				err := handler.ChannelRead(conn, decode)
 				if err != nil {
 					return
 				}

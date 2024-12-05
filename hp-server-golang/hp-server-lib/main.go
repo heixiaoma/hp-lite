@@ -27,7 +27,7 @@ func main() {
 		go http.StartHttpsServer()
 	}
 	//指令控制
-	tcpServer := server.NewCmdServer(server.NewCmdHandler())
+	tcpServer := server.NewCmdServer()
 	go tcpServer.StartServer(config.ConfigData.Cmd.Port)
 	//数据传输
 	quicServer := server.NewHPServer(server.NewHPHandler())

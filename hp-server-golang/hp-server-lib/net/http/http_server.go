@@ -33,7 +33,7 @@ func StartHttpServer() {
 		// 根据 host 选择不同的目标代理
 		value, ok := service.DOMAIN_USER_INFO.Load(host)
 		if !ok {
-			http.Error(w, "错误代理", http.StatusInternalServerError)
+			http.Error(w, "设备不在线", http.StatusInternalServerError)
 			return
 		}
 		info := value.(*bean.UserConfigInfo)
