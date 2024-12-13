@@ -2,6 +2,7 @@ package tunnel
 
 import (
 	"bufio"
+	"errors"
 	"github.com/pires/go-proxyproto"
 	"github.com/quic-go/quic-go"
 	"hp-server-lib/bean"
@@ -115,6 +116,9 @@ func (h *TcpHandler) ChannelRead(conn net.Conn, data interface{}) error {
 		Data: data.([]byte),
 	}
 	base.AddReceived(h.userInfo.ConfigId, int64(len(m.Data)))
+	if h.stream == nil {
+		return errors.New("流关闭异常")
+	}
 	h.stream.Write(protol.Encode(m))
 	return nil
 }
@@ -127,8 +131,10 @@ func (h *TcpHandler) ChannelInactive(conn net.Conn) {
 			ChannelId: h.channelId,
 		},
 	}
-	h.stream.Write(protol.Encode(m))
-	h.stream.Close()
+	if h.stream != nil {
+		h.stream.Write(protol.Encode(m))
+		h.stream.Close()
+	}
 }
 
 func (h *TcpHandler) Decode(reader *bufio.Reader) (interface{}, error) {

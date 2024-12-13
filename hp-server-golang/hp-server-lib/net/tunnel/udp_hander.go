@@ -98,8 +98,10 @@ func (h *UdpHandler) ChannelRead(udpConn *net.UDPConn, data interface{}) {
 		},
 		Data: data.([]byte),
 	}
-	h.stream.Write(protol.Encode(m))
-	h.lastActiveAt = time.Now()
+	if h.stream != nil {
+		h.stream.Write(protol.Encode(m))
+		h.lastActiveAt = time.Now()
+	}
 }
 
 func (h *UdpHandler) ChannelInactive(udpConn *net.UDPConn) {
@@ -110,6 +112,8 @@ func (h *UdpHandler) ChannelInactive(udpConn *net.UDPConn) {
 			ChannelId: h.channelId,
 		},
 	}
-	h.stream.Write(protol.Encode(m))
-	h.stream.Close()
+	if h.stream != nil {
+		h.stream.Write(protol.Encode(m))
+		h.stream.Close()
+	}
 }

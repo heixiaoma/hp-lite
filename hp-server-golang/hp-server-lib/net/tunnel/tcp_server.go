@@ -70,7 +70,11 @@ func (tcpServer *TcpServer) handler(conn net.Conn) {
 				return
 			}
 			if decode != nil {
-				handler.ChannelRead(conn, decode)
+				err := handler.ChannelRead(conn, decode)
+				if err != nil {
+					log.Println(e)
+					return
+				}
 			}
 		}
 	}()
