@@ -2,6 +2,7 @@ package http
 
 import (
 	"hp-server-lib/bean"
+	"hp-server-lib/config"
 	"hp-server-lib/net/base"
 	"hp-server-lib/service"
 	"log"
@@ -30,6 +31,17 @@ func StartHttpServer() {
 	// 使用反向代理处理所有请求
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		host := r.Host
+		//检查是否是证书挑战
+		if strings.Contains(r.URL.String(), "/.well-known/acme-challenge/") {
+			target, err := url.Parse("http://127.0.0.1:" + config.ConfigData.Acme.HttpPort)
+			if err != nil {
+				http.Error(w, "错误URL地址", http.StatusInternalServerError)
+				return
+			}
+			proxy := httputil.NewSingleHostReverseProxy(target)
+			log.Printf("代理地址: %s %s", target, r.URL.Path)
+			proxy.ServeHTTP(w, r)
+		}
 		// 根据 host 选择不同的目标代理
 		value, ok := service.DOMAIN_USER_INFO.Load(host)
 		if !ok {

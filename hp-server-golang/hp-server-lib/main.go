@@ -34,5 +34,25 @@ func main() {
 	go quicServer.StartServer(config.ConfigData.Tunnel.Port)
 	//管理后台
 	go web.StartWebServer(config.ConfigData.Admin.Port)
+	//acme挑战
+	go func() {
+		acmeServer, err2 := server.StartAcmeServer(config.ConfigData.Acme.Email, config.ConfigData.Acme.HttpPort)
+		if err2 != nil {
+			log.Printf("证书申请服务启动失败..." + err2.Error())
+		}
+		cert, err2 := acmeServer.GenCert("nas.hp.hserver.net")
+		if err2 != nil {
+			log.Printf("证书1申请失败..." + err2.Error())
+		} else {
+			log.Printf("证书1申请成功..." + cert.CertURL)
+		}
+		cert, err2 = acmeServer.GenCert("qb.hp.hserver.net")
+		if err2 != nil {
+			log.Printf("证书2申请失败..." + err2.Error())
+		} else {
+			log.Printf("证书2申请成功..." + cert.CertURL)
+		}
+
+	}()
 	select {}
 }

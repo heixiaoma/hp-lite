@@ -4,6 +4,7 @@ type Config struct {
 	Admin  AdminConfig  `yaml:"admin"`
 	Cmd    CmdConfig    `yaml:"cmd"`
 	Tunnel TunnelConfig `yaml:"tunnel"`
+	Acme   AcmeConfig   `yaml:"acme"`
 }
 
 type AdminConfig struct {
@@ -20,4 +21,9 @@ type TunnelConfig struct {
 	IP         string `yaml:"ip"`
 	Port       int    `yaml:"port"`
 	OpenDomain bool   `yaml:"open-domain"`
+}
+
+type AcmeConfig struct {
+	Email    string `yaml:"email"`
+	HttpPort string `yaml:"http-port"`
 }
