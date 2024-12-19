@@ -157,7 +157,7 @@ const route = useRoute()
 const pagination = reactive({
   total: 0,
   current: 1,
-  pageSize: 2,
+  pageSize: 10,
 });
 
 const handleTableChange = (item) => {
