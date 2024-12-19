@@ -43,7 +43,7 @@ func (receiver ClientUserController) Add(w http.ResponseWriter, r *http.Request)
 func (receiver ClientUserController) List(w http.ResponseWriter, r *http.Request) {
 	if receiver.checkUser(w, r) {
 		queryParams := r.URL.Query()
-		page := queryParams.Get("page")
+		page := queryParams.Get("current")
 		pageSize := queryParams.Get("pageSize")
 		pageInt, _ := strconv.Atoi(page)
 		pageSizeInt, _ := strconv.Atoi(pageSize)

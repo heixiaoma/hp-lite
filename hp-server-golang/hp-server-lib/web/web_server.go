@@ -65,6 +65,13 @@ func StartWebServer(port int) {
 	monitorController := controller.MonitorController{}
 	mux.HandleFunc("/client/monitor/list", monitorController.List)
 
+	domainController := controller.DomainController{}
+	mux.HandleFunc("/client/domain/list", domainController.GetDomainList)
+	mux.HandleFunc("/client/domain/remove", domainController.RemoveDomain)
+	mux.HandleFunc("/client/domain/add", domainController.Add)
+	mux.HandleFunc("/client/domain/gen", domainController.Gen)
+	mux.HandleFunc("/client/domain/query", domainController.Query)
+
 	muxWithRecovery := recoveryMiddleware(mux)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), muxWithRecovery))
 }

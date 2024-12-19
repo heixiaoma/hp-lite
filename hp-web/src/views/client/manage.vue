@@ -36,6 +36,9 @@
           <a-menu-item key="device">
             <router-link to="/client/device">穿透设备</router-link>
           </a-menu-item>
+          <a-menu-item key="domain">
+            <router-link to="/client/domain">穿透域名</router-link>
+          </a-menu-item>
           <a-menu-item key="config">
             <router-link to="/client/config">穿透配置</router-link>
           </a-menu-item>

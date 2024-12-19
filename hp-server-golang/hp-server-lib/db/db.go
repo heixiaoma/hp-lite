@@ -35,4 +35,5 @@ func init() {
 	DB.AutoMigrate(&entity.UserDeviceEntity{})
 	DB.AutoMigrate(&entity.UserConfigEntity{})
 	DB.AutoMigrate(&entity.UserStatisticsEntity{})
+	DB.AutoMigrate(&entity.UserDomainEntity{})
 }

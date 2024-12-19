@@ -84,7 +84,7 @@ func (receiver *ConfigService) RemoveData(configId int) bool {
 	}
 	return false
 }
-func (receiver *ConfigService) AddData(userId int, configEntity entity.UserConfigEntity) error {
+func (receiver *ConfigService) AddData(configEntity entity.UserConfigEntity) error {
 	if len(configEntity.DeviceKey) == 0 {
 		return errors.New("设备ID未选择")
 	}

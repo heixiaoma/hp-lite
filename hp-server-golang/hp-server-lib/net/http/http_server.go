@@ -41,6 +41,7 @@ func StartHttpServer() {
 			proxy := httputil.NewSingleHostReverseProxy(target)
 			log.Printf("代理地址: %s %s", target, r.URL.Path)
 			proxy.ServeHTTP(w, r)
+			return
 		}
 		// 根据 host 选择不同的目标代理
 		value, ok := service.DOMAIN_USER_INFO.Load(host)

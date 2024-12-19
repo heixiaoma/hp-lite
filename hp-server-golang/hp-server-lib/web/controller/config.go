@@ -60,7 +60,7 @@ func (receiver ConfigController) RemoveConfig(w http.ResponseWriter, r *http.Req
 }
 
 func (receiver ConfigController) Add(w http.ResponseWriter, r *http.Request) {
-	userId, err := receiver.getUserId(w, r)
+	_, err := receiver.getUserId(w, r)
 	if err == nil {
 		var msg entity.UserConfigEntity
 		// 解析请求体中的JSON数据
@@ -70,7 +70,7 @@ func (receiver ConfigController) Add(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		err = receiver.AddData(userId, msg)
+		err = receiver.AddData(msg)
 		if err == nil {
 			json.NewEncoder(w).Encode(bean.ResOk(nil))
 			return

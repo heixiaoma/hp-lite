@@ -13,8 +13,12 @@
             设备状态：{{ userKeyByName(record.deviceKey) }}
           </div>
           <div v-if="userInfo.getUserInfo().role==='ADMIN'">
-            <div v-if="userKeyByUserInfo(record.deviceKey).username"> 归属用户： {{ userKeyByUserInfo(record.deviceKey).username }}</div>
-            <div v-if="userKeyByUserInfo(record.deviceKey).userDesc"> 归属用户备注：{{ userKeyByUserInfo(record.deviceKey).userDesc }}</div>
+            <div v-if="userKeyByUserInfo(record.deviceKey).username"> 归属用户：
+              {{ userKeyByUserInfo(record.deviceKey).username }}
+            </div>
+            <div v-if="userKeyByUserInfo(record.deviceKey).userDesc">
+              归属用户备注：{{ userKeyByUserInfo(record.deviceKey).userDesc }}
+            </div>
           </div>
         </template>
         <template v-if="column.key === 'action'">
@@ -88,7 +92,7 @@
           </a-form-item>
           <!--    套餐选择      -->
           <a-form-item label="外网端口" name="port" :rules="[{ required: true, message: '外网端口必填'}]">
-            <a-input v-model:value.number="formState.port"  type="number"  placeholder="8084"/>
+            <a-input v-model:value.number="formState.port" type="number" placeholder="8084"/>
           </a-form-item>
 
           <a-form-item label="内网地址" name="localIp" :rules="[{ required: true, message: '内网地址必填'}]">
@@ -112,7 +116,15 @@
           </a-form-item>
 
           <a-form-item label="&nbsp;穿透域名&nbsp;&nbsp;" name="domain">
-            <a-input v-model:value="formState.domain" placeholder="xxx.com"/>
+            <!--            <a-input v-model:value="formState.domain" placeholder="xxx.com"/>-->
+            <a-select
+                v-model:value="formState.domain"
+                show-search
+                placeholder="选择一个域名"
+                :options="domainOptions"
+                @change="handleChange"
+            ></a-select>
+
           </a-form-item>
 
           <a-form-item label="&nbsp;证书KEY&nbsp;&nbsp;" name="certificateKey"
@@ -133,18 +145,19 @@
 </template>
 
 <script setup>
-import {LeftCircleTwoTone} from '@ant-design/icons-vue';
 import {onMounted, reactive, ref} from "vue";
 import {removeConfig, getConfigList, getDeviceKey, addConfig, refConfig} from "../../api/client/config";
-import {useRoute, useRouter} from 'vue-router'
+import {useRoute} from 'vue-router'
 import userInfo from "../../data/userInfo";
+import {queryDomain} from "../../api/client/domain.js";
+
+const domainOptions = ref([]);
 
 const route = useRoute()
-const router = useRouter()
 const pagination = reactive({
   total: 0,
   current: 1,
-  pageSize: 10,
+  pageSize: 2,
 });
 
 const handleTableChange = (item) => {
@@ -173,9 +186,37 @@ const formState = reactive({
   certificateContent: "",
 })
 
+
 const currentConfigList = ref()
 
 const currentUserKeyList = ref()
+
+
+const loadDomains=()=>{
+  queryDomain({}).then(res => {
+      const result = res.data.data;
+      console.log(result)
+      result.forEach(r => {
+        domainOptions.value.push({
+          value: r.domain,
+          label: r.domain,
+          certificateContent: r.certificateContent,
+          certificateKey: r.certificateKey,
+        });
+      });
+  })
+}
+
+
+const handleChange = val => {
+  const data = domainOptions.value.filter((item)=>{return item.value===val})
+  console.log(data)
+  if (data.length===1){
+    formState.certificateKey=data[0].certificateKey.trim()
+    formState.certificateContent=data[0].certificateContent.trim()
+  }
+};
+
 
 const loadDeviceKey = () => {
   getDeviceKey().then(res => {
@@ -215,7 +256,6 @@ const loadData = () => {
     configLoading.value = false
     currentConfigList.value = res.data.records
     pagination.current = res.data.current
-    pagination.pageSize = res.data.size
     pagination.total = res.data.total
   }).catch(e => {
     configLoading.value = false
@@ -224,6 +264,7 @@ const loadData = () => {
 
 onMounted(() => {
   loadDeviceKey();
+  loadDomains();
   loadData()
 })
 

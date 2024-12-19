@@ -11,6 +11,7 @@ const client_device = () => import('../views/client/device.vue');
 const client_teach = () => import('../views/client/teach.vue');
 const manage = () => import('../views/client/manage.vue');
 const client_user = () => import('../views/client/user.vue');
+const client_domain = () => import('../views/client/domain.vue');
 
 const routes = [
     {path: '/', component: home},
@@ -26,6 +27,7 @@ const routes = [
             {path: 'config', component: client_config, name: "config"},
             {path: 'device', component: client_device, name: "device"},
             {path: 'teach', component: client_teach, name: "teach"},
+            {path: 'domain', component: client_domain, name: "domain"},
         ],
     },
 ]

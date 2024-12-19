@@ -1,6 +1,7 @@
 <template>
   <div>
-    <a-button type="primary" style="margin-bottom: 10px" @click="addModal">添加用户</a-button>
+    <a-button type="primary" style="margin-bottom: 10px" @click="addModal">添加域名</a-button>
+    <a-button type="primary" style="margin-bottom: 10px;margin-left: 5px" @click="loadData">刷新</a-button>
 
     <a-table :loading="dataLoading" :columns="columns" rowKey="id" :data-source="listData"
              :locale="{emptyText: '暂无数据,添加一个试试看看'}"
@@ -15,6 +16,7 @@
         </template>
 
         <template v-if="column.key === 'action'">
+          <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="getSSl(record)">获取SSL证书</a-button>
           <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="edit(record)">编辑</a-button>
           <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="removeData(record)">删除</a-button>
         </template>
@@ -24,14 +26,25 @@
 
 
   <div>
-    <a-modal okText="确定" cancelText="取消" v-model:visible="addVisible" title="添加"
+    <a-modal okText="确定" cancelText="取消" v-model:visible="addVisible" title="信息"
              @ok="addOk">
       <a-form :model="formState" ref="formTable" :layout="'vertical'" >
-        <a-form-item label="用户名 ">
-          <a-input v-model:value="formState.username" placeholder="用户名"/>
+        <a-form-item label="域名 " v-if="isAdd">
+          <a-input v-model:value="formState.domain" placeholder="域名"/>
         </a-form-item>
-        <a-form-item label="密码">
-          <a-input v-model:value="formState.password" placeholder="密码"/>
+        <a-form-item label="备注">
+          <a-input v-model:value="formState.desc" placeholder="备注"/>
+        </a-form-item>
+      </a-form>
+    </a-modal>
+  </div>
+
+  <div>
+    <a-modal okText="确定" cancelText="取消" v-model:visible="sslVisible" title="信息"
+             @ok="addOk">
+      <a-form :model="formState" ref="formTable" :layout="'vertical'" >
+        <a-form-item label="域名 " v-if="isAdd">
+          <a-input v-model:value="formState.domain" placeholder="域名"/>
         </a-form-item>
         <a-form-item label="备注">
           <a-input v-model:value="formState.desc" placeholder="备注"/>
@@ -43,7 +56,7 @@
 </template>
 
 <script setup>
-import {getUser, removeUser, saveUser} from "../../api/client/client_user";
+import {getDomain, removeDomain, addDomain,genSSL} from "../../api/client/domain.js";
 import {onMounted, reactive, ref} from "vue";
 import {notification} from "ant-design-vue";
 
@@ -51,10 +64,12 @@ import {notification} from "ant-design-vue";
 const listData = ref();
 const dataLoading = ref(false);
 const addVisible = ref(false);
+const sslVisible = ref(false);
+const isAdd = ref(false);
+
 const formState = reactive({
-  username: "",
-  password: "",
-  desc:"",
+  domain: "",
+  desc: "",
   id:""
 })
 const pagination = reactive({
@@ -65,7 +80,7 @@ const pagination = reactive({
 
 const loadData = () => {
   dataLoading.value = true
-  getUser({
+  getDomain({
     current: pagination.current,
     pageSize: pagination.pageSize
   }).then(res => {
@@ -77,7 +92,7 @@ const loadData = () => {
 }
 
 const removeData = (item) => {
-  removeUser({
+  removeDomain({
     id: item.id
   }).then(res => {
     notification.open({
@@ -87,20 +102,33 @@ const removeData = (item) => {
   })
 }
 
+
+
 const edit = (item) => {
-  formState.username = item.username
-  formState.password = item.password
+  isAdd.value=false
   formState.desc = item.desc
   formState.id = item.id
-  addVisible.value=true
+  addVisible.value = true
+}
+const getSSl = (item) => {
+  genSSL({
+    id: item.id
+  }).then(res => {
+    notification.open({
+      message: "任务已经提交，请稍等几分钟刷新列表",
+    })
+    loadData()
+  })
 }
 
 const columns = [
   {title: 'id', dataIndex: 'id', key: 'id'},
-  {title: '用户名', dataIndex: 'username', key: 'username'},
-  {title: '密码', dataIndex: 'password', key: 'password'},
+  {title: '域名', dataIndex: 'domain', key: 'domain'},
   {title: '备注', dataIndex: 'desc', key: 'desc'},
-  {title: '创建时间', dataIndex: 'createTime', key: 'createTime'},
+  {title: '证书密钥', dataIndex: 'certificateKey', key: 'certificateKey', ellipsis: true,},
+  {title: '证书内容', dataIndex: 'certificateContent', key: 'certificateContent' ,ellipsis: true,},
+  {title: '状态', dataIndex: 'status', key: 'status'},
+  {title: '提示', dataIndex: 'tips', key: 'tips'},
   {title: '操作', key: 'action'},
 ];
 
@@ -113,15 +141,15 @@ const handleTableChange = (item) => {
 }
 
 const addModal = () => {
-  formState.username = ""
-  formState.password = ""
+  isAdd.value=true
+  formState.domain = ""
   formState.desc = ""
   formState.id = undefined
   addVisible.value = true
 }
 
 const addOk = () => {
-  saveUser({...formState}).then(res => {
+  addDomain({...formState}).then(res => {
     notification.open({
       message: res.msg,
     })
