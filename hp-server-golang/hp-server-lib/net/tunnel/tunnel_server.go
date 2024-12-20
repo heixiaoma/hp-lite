@@ -12,10 +12,10 @@ type TunnelServer struct {
 	tcpServer   *TcpServer
 	udpServer   *UdpServer
 	conn        quic.Connection
-	userInfo    *bean.UserConfigInfo
+	userInfo    bean.UserConfigInfo
 }
 
-func NewTunnelServer(connectType bean.ConnectType, port int, conn quic.Connection, userInfo *bean.UserConfigInfo) *TunnelServer {
+func NewTunnelServer(connectType bean.ConnectType, port int, conn quic.Connection, userInfo bean.UserConfigInfo) *TunnelServer {
 	return &TunnelServer{connectType: connectType, port: port, conn: conn, userInfo: userInfo}
 }
 

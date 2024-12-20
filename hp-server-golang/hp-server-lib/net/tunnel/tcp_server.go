@@ -12,10 +12,10 @@ import (
 type TcpServer struct {
 	conn     quic.Connection
 	listener net.Listener
-	userInfo *bean.UserConfigInfo
+	userInfo bean.UserConfigInfo
 }
 
-func NewTcpServer(conn quic.Connection, userInfo *bean.UserConfigInfo) *TcpServer {
+func NewTcpServer(conn quic.Connection, userInfo bean.UserConfigInfo) *TcpServer {
 	return &TcpServer{
 		conn,
 		nil,

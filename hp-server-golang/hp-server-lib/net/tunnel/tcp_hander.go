@@ -20,10 +20,10 @@ type TcpHandler struct {
 	conn      quic.Connection
 	stream    quic.Stream
 	channelId string
-	userInfo  *bean.UserConfigInfo
+	userInfo  bean.UserConfigInfo
 }
 
-func NewTcpHandler(tcpConn net.Conn, conn quic.Connection, userInfo *bean.UserConfigInfo) *TcpHandler {
+func NewTcpHandler(tcpConn net.Conn, conn quic.Connection, userInfo bean.UserConfigInfo) *TcpHandler {
 	return &TcpHandler{conn: conn, channelId: util.NewId(), tcpConn: tcpConn, userInfo: userInfo}
 }
 

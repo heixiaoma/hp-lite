@@ -64,7 +64,7 @@ func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connectio
 	}
 	tunnelType := data.MetaData.Type.String()
 	connectType := bean.ConnectType(tunnelType)
-	newTunnelServer := tunnel.NewTunnelServer(connectType, info.Port, conn, info)
+	newTunnelServer := tunnel.NewTunnelServer(connectType, info.Port, conn, *info)
 	server := newTunnelServer.StartServer()
 	if !server {
 		newTunnelServer.CLose()

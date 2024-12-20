@@ -80,7 +80,8 @@ func (receiver *ConfigService) RemoveData(configId int) bool {
 	if userQuery != nil {
 		var results entity.UserConfigEntity
 		db.DB.Where("id = ?", configId).Delete(&results)
-		return NoticeClientUpdateData(userQuery.DeviceKey)
+		NoticeClientUpdateData(userQuery.DeviceKey)
+		return true
 	}
 	return false
 }
