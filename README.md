@@ -41,6 +41,9 @@ acme:
   http-port: '5634' #证书验证会访问http接口，会通过80转发过来，所以这个端口不用暴露外网
 ```
 
+### 3.0 服务端安装教程
+- https://b23.tv/8JBNOFX
+
 
 ### 2.0 服务端B站安装教程
 - https://www.bilibili.com/video/BV1pAW7eMEPX
