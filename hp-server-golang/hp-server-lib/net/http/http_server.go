@@ -50,9 +50,8 @@ func StartHttpServer() {
 			return
 		}
 		info := value.(*bean.UserConfigInfo)
-
+		clientIP := getClientIP(r)
 		if strings.Compare(info.ProxyVersion, "V3") == 0 {
-			clientIP := getClientIP(r)
 			// 获取当前的 X-Forwarded-For 头部（如果有）
 			xfwd := r.Header.Get("X-Forwarded-For")
 			if xfwd != "" {
@@ -74,7 +73,7 @@ func StartHttpServer() {
 			return
 		}
 		proxy := httputil.NewSingleHostReverseProxy(target)
-		log.Printf("代理地址: %s %s", target, r.URL.Path)
+		log.Printf("来源: %s 访问地址: http://%s%s", clientIP, host, r.URL.Path)
 		proxy.ServeHTTP(w, r)
 	})
 	log.Println("HTTP代理服务启动")

@@ -10,6 +10,7 @@ import (
 	"hp-server-lib/net/acme"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -91,15 +92,17 @@ func (receiver *DomainService) RemoveData(id int) bool {
 }
 
 func (receiver *DomainService) AddData(userDomain entity.UserDomainEntity) error {
+	userDomain.CertificateContent = strings.TrimSpace(userDomain.CertificateContent)
+	userDomain.CertificateKey = strings.TrimSpace(userDomain.CertificateKey)
 	if userDomain.Id == nil {
 		var total int64
-		db.DB.Model(&entity.UserDomainEntity{}).Where("domain = ?", userDomain.Domain).Count(&total)
+		db.DB.Model(&entity.UserDomainEntity{}).Where("domain = ?", strings.TrimSpace(*userDomain.Domain)).Count(&total)
 		if total > 0 {
 			return errors.New("域名已存在")
 		}
 		db.DB.Save(&userDomain)
 	} else {
-		db.DB.Model(&entity.UserDomainEntity{}).Where("id = ?", userDomain.Id).Update("desc", userDomain.Desc)
+		db.DB.Model(&entity.UserDomainEntity{}).Where("id = ?", userDomain.Id).Update("certificate_content", userDomain.CertificateContent).Update("certificate_key", userDomain.CertificateKey).Update("desc", userDomain.Desc)
 	}
 	return nil
 }

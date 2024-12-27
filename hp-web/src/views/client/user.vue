@@ -96,7 +96,7 @@ const edit = (item) => {
 }
 
 const columns = [
-  {title: 'id', dataIndex: 'id', key: 'id'},
+  {title: '编号', dataIndex: 'id', key: 'id'},
   {title: '用户名', dataIndex: 'username', key: 'username'},
   {title: '密码', dataIndex: 'password', key: 'password'},
   {title: '备注', dataIndex: 'desc', key: 'desc'},

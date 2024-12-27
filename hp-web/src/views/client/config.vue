@@ -129,12 +129,12 @@
 
           <a-form-item label="&nbsp;证书KEY&nbsp;&nbsp;" name="certificateKey"
                        :rules="[{ required: false, message: '必须填写证书.key文件'}]">
-            <a-textarea :rows="6" v-model:value="formState.certificateKey"
+            <a-textarea  disabled="disabled" :rows="6" v-model:value="formState.certificateKey"
                         placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;***大概是这样的证书私钥***&#10;-----END RSA PRIVATE KEY-----"/>
           </a-form-item>
-          <a-form-item label="&nbsp;证书内容&nbsp;&nbsp;" name="certificateContent"
+          <a-form-item  label="&nbsp;证书内容&nbsp;&nbsp;" name="certificateContent"
                        :rules="[{ required: false, message: '映射描述必填'}]">
-            <a-textarea :rows="6" v-model:value="formState.certificateContent"
+            <a-textarea disabled="disabled" :rows="6" v-model:value="formState.certificateContent"
                         placeholder="-----BEGIN CERTIFICATE-----&#10;***大概是这样的证书内容***&#10;-----BEGIN CERTIFICATE-----"/>
           </a-form-item>
         </a-form>

@@ -29,29 +29,28 @@
     <a-modal okText="确定" cancelText="取消" v-model:visible="addVisible" title="信息"
              @ok="addOk">
       <a-form :model="formState" ref="formTable" :layout="'vertical'" >
-        <a-form-item label="域名 " v-if="isAdd">
-          <a-input v-model:value="formState.domain" placeholder="域名"/>
+        <a-form-item label="域名 " >
+          <a-input :disabled="!isAdd" v-model:value="formState.domain" placeholder="域名"/>
         </a-form-item>
         <a-form-item label="备注">
           <a-input v-model:value="formState.desc" placeholder="备注"/>
         </a-form-item>
+        <a-form-item label="证书" name="certificateKey"
+                     :rules="[{ required: false, message: '必须填写证书.key文件'}]">
+          <a-textarea :rows="6" v-model:value="formState.certificateKey"
+                       placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;***大概是这样的证书私钥***&#10;-----END RSA PRIVATE KEY-----"/>
+        </a-form-item>
+        <a-form-item  label="证书内容" name="certificateContent"
+                      :rules="[{ required: false, message: '映射描述必填'}]">
+          <a-textarea  :rows="6" v-model:value="formState.certificateContent"
+                      placeholder="-----BEGIN CERTIFICATE-----&#10;***大概是这样的证书内容***&#10;-----BEGIN CERTIFICATE-----"/>
+        </a-form-item>
+
       </a-form>
     </a-modal>
   </div>
 
-  <div>
-    <a-modal okText="确定" cancelText="取消" v-model:visible="sslVisible" title="信息"
-             @ok="addOk">
-      <a-form :model="formState" ref="formTable" :layout="'vertical'" >
-        <a-form-item label="域名 " v-if="isAdd">
-          <a-input v-model:value="formState.domain" placeholder="域名"/>
-        </a-form-item>
-        <a-form-item label="备注">
-          <a-input v-model:value="formState.desc" placeholder="备注"/>
-        </a-form-item>
-      </a-form>
-    </a-modal>
-  </div>
+
 
 </template>
 
@@ -64,7 +63,6 @@ import {notification} from "ant-design-vue";
 const listData = ref();
 const dataLoading = ref(false);
 const addVisible = ref(false);
-const sslVisible = ref(false);
 const isAdd = ref(false);
 
 const formState = reactive({
@@ -108,6 +106,9 @@ const edit = (item) => {
   isAdd.value=false
   formState.desc = item.desc
   formState.id = item.id
+  formState.domain = item.domain
+  formState.certificateKey = item.certificateKey.trim()
+  formState.certificateContent = item.certificateContent.trim()
   addVisible.value = true
 }
 const getSSl = (item) => {
@@ -122,7 +123,7 @@ const getSSl = (item) => {
 }
 
 const columns = [
-  {title: 'id', dataIndex: 'id', key: 'id'},
+  {title: '编号', dataIndex: 'id', key: 'id'},
   {title: '域名', dataIndex: 'domain', key: 'domain'},
   {title: '备注', dataIndex: 'desc', key: 'desc'},
   {title: '证书密钥', dataIndex: 'certificateKey', key: 'certificateKey', ellipsis: true,},
@@ -144,6 +145,8 @@ const addModal = () => {
   isAdd.value=true
   formState.domain = ""
   formState.desc = ""
+  formState.certificateKey = ''
+  formState.certificateContent = ''
   formState.id = undefined
   addVisible.value = true
 }
