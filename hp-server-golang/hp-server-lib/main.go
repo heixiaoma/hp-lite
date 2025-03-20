@@ -41,21 +41,7 @@ func main() {
 		if err2 != nil {
 			log.Printf("证书申请服务启动失败..." + err2.Error())
 		} else {
-			//config.AcmeServer = acmeServer
 		}
-		//cert, err2 := acmeServer.GenCert("nas.hp.hserver.net")
-		//if err2 != nil {
-		//	log.Printf("证书1申请失败..." + err2.Error())
-		//} else {
-		//	log.Printf("证书1申请成功..." + cert.CertURL)
-		//}
-		//cert, err2 = acmeServer.GenCert("qb.hp.hserver.net")
-		//if err2 != nil {
-		//	log.Printf("证书2申请失败..." + err2.Error())
-		//} else {
-		//	log.Printf("证书2申请成功..." + cert.CertURL)
-		//}
-
 	}()
 	select {}
 }

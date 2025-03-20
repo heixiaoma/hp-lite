@@ -11,8 +11,11 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 )
+
+var acmeCheck int32 = 0
 
 type DomainService struct {
 }
@@ -102,6 +105,15 @@ func (receiver *DomainService) AddData(userDomain entity.UserDomainEntity) error
 		}
 		db.DB.Save(&userDomain)
 	} else {
+		//更新代理配置
+		db.DB.Model(&entity.UserConfigEntity{}).Where("domain = ?", *userDomain.Domain).Update("certificate_key", userDomain.CertificateKey).Update("certificate_content", userDomain.CertificateContent)
+		//更新缓存
+		value, ok := DOMAIN_USER_INFO.Load(*userDomain.Domain)
+		if ok {
+			info := value.(*bean.UserConfigInfo)
+			info.CertificateKey = userDomain.CertificateKey
+			info.CertificateContent = userDomain.CertificateContent
+		}
 		db.DB.Model(&entity.UserDomainEntity{}).Where("id = ?", userDomain.Id).Update("certificate_content", userDomain.CertificateContent).Update("certificate_key", userDomain.CertificateKey).Update("desc", userDomain.Desc)
 	}
 	return nil
@@ -111,14 +123,21 @@ func (receiver *DomainService) GenSsl(id int) bool {
 	userQuery := &entity.UserDomainEntity{}
 	db.DB.Where("id = ? ", id).First(userQuery)
 	if userQuery != nil {
+		// 使用atomic.CompareAndSwap原子操作检查和设置值
 		receiver.UpdateStatus(id, "证书获取中...")
 		go func() {
-			cert, err := acme.ConfigAcme.GenCert(*userQuery.Domain)
-			if err != nil {
-				receiver.UpdateStatus(id, "证书获取失败:"+err.Error())
+			if atomic.CompareAndSwapInt32(&acmeCheck, 0, 1) {
+				// 如果值是0（没有值），则设置为1（已设置）并执行代码
+				cert, err := acme.ConfigAcme.GenCert(*userQuery.Domain)
+				if err != nil {
+					receiver.UpdateStatus(id, "证书获取失败:"+err.Error())
+				} else {
+					receiver.UpdateData(id, string(cert.PrivateKey), string(cert.Certificate), *userQuery.Domain)
+					receiver.UpdateStatus(id, "证书获取完成")
+				}
+				atomic.StoreInt32(&acmeCheck, 0)
 			} else {
-				receiver.UpdateData(id, string(cert.PrivateKey), string(cert.Certificate))
-				receiver.UpdateStatus(id, "证书获取完成")
+				receiver.UpdateStatus(id, "已经有证书在生成完成后再试")
 			}
 		}()
 		return true
@@ -126,8 +145,18 @@ func (receiver *DomainService) GenSsl(id int) bool {
 	return false
 }
 
-func (receiver *DomainService) UpdateData(id int, key, content string) error {
+func (receiver *DomainService) UpdateData(id int, key, content string, domain string) error {
+	//更新域名配置
 	db.DB.Model(&entity.UserDomainEntity{}).Where("id = ?", id).Update("certificate_key", key).Update("certificate_content", content)
+	//更新代理配置
+	db.DB.Model(&entity.UserConfigEntity{}).Where("domain = ?", domain).Update("certificate_key", key).Update("certificate_content", content)
+	//更新缓存
+	value, ok := DOMAIN_USER_INFO.Load(domain)
+	if ok {
+		info := value.(*bean.UserConfigInfo)
+		info.CertificateKey = key
+		info.CertificateContent = content
+	}
 	return nil
 }
 
