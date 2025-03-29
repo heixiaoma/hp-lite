@@ -47,7 +47,7 @@ acme:
 sudo docker run --restart=always -d  -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/hserver/hp-lite:latest
 
 # 通过Docker官方源运行
-sudo docker run --restart=always -d -e server=xxx.com 查询服务:16666 -e deviceId=32位的设备ID heixiaoma/hp-lite:latest
+sudo docker run --restart=always -d -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID heixiaoma/hp-lite:latest
 ```
 
 ##### Linux或者win
