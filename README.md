@@ -1,5 +1,4 @@
-# HP-Lite 3.0内网穿透
-
+# HP-Lite 4.0内网穿透
 
 ### 项目介绍
 项目1.0使用的TCP传输 项目2.0升级调整QUIC传输和HP-PRO版本同款传输机制，HP-PRO是商业版本拥有更多的功能和稳定性，内置了关键字过滤，实名认证，微信小程序管理端，集群部署，数据统计，限流套件，智能黑名单防护功能，套餐支付功能，服务节点的动态上架下架管理，等诸多的商业功能
@@ -9,17 +8,13 @@
 QQ群：1065301527
 
 #### HP Lite介绍
-HP-Lite3.0是一个单机方案
+HP-Lite4.0是一个单机方案
 我们采用的是数据转发实现 稳定性可靠性是有保证的即便是极端的环境只要能上网就能实现穿透。
 我们支持TCP和UDP协议，针对 http/https ws/wss 协议做了大量的优化工作可以更加灵活的控制。让用户使用更佳舒服简单。
 
-#### 资源下载地址
-- 3.0服务服务端完全兼容 2.0客户端 https://gitee.com/HServer/hp-lite/releases/tag/3.0 
-- 客户端和2.0的服务服务端:https://gitee.com/HServer/hp-lite/releases/tag/2.0
-- 建议：推荐使用docker，或者命令行运行，UI版本的好像没有命令行的稳定
 
 ### 服务端
-- 下载3.0的二进制文件运行即可
+- 下载4.0的二进制文件运行即可
 - 配置说明 app.yml
 - app.yml文件放在和二进制同目录下即可，不然会默认启动配置
 - 建议：部署时关闭所有防火墙，云厂的安全组，注意UDP端口放开，还有TCP，
@@ -30,7 +25,7 @@ admin:
   port: 9090 #管理后台监听的端口（TCP传输方式）
 
 cmd:
-  port: 6666 #控制指令端口，所有HP-lite 客户端需要连接这个端口（TCP传输方式）
+  port: 16666 #控制指令端口，所有HP-lite 客户端需要连接这个端口（TCP传输方式）
 
 tunnel:
   ip: '127.0.0.1' #隧道监听服务器外网的IP（记得改成你的服务器IP或者解析的域名也可以）
@@ -41,26 +36,21 @@ acme:
   http-port: '5634' #证书验证会访问http接口，会通过80转发过来，所以这个端口不用暴露外网
 ```
 
-### 3.0 服务端安装教程
+### 服务端安装教程
 - https://b23.tv/8JBNOFX
 
-
-### 2.0 服务端B站安装教程
-- https://www.bilibili.com/video/BV1pAW7eMEPX
-- B友可以点点赞，来个好评
 
 ### 客户端运行方式
 ##### docker
 ```shell
 # 通过 docker run 运行容器
-sudo docker run --restart=always -d  -e server=xxx.com穿透服务:6666 -e deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/hserver/hp-lite:latest
-# 通过 docker run 运行容器 ARM
-sudo docker run --restart=always -d  -e server=xxx.com穿透服务:6666 -e deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/hserver/hp-lite:latest-arm64
+sudo docker run --restart=always -d  -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/hserver/hp-lite:latest
 ```
+
 ##### Linux或者win
 ```shell
 chmod -R 777 ./hp-lite-amd64
-./hp-lite-amd64 -server=xxx.com穿透服务:6666 -deviceId=32位的设备ID 
+./hp-lite-amd64 -server=xxx.com穿透服务:16666 -deviceId=32位的设备ID 
 ```
 
 
