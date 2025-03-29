@@ -33,6 +33,7 @@ func (connection *QuicConnection) ConnectHp(host string, port int, handler net2.
 		MaxIncomingUniStreams: 1000000,
 		//空闲时，应该发送心跳包
 		KeepAlivePeriod: time.Duration(5) * time.Second,
+		Allow0RTT:       true,
 	}
 	ctx := context.Background()
 	conn, err := quic.DialAddrEarly(ctx, host+":"+strconv.Itoa(port), tlsConf, q)
