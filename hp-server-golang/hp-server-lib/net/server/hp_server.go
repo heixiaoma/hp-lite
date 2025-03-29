@@ -61,6 +61,7 @@ func (quicServer *HpServer) StartServer(port int) {
 		MaxIncomingUniStreams: 1000000,
 		//空闲时，应该发送心跳包
 		KeepAlivePeriod: time.Duration(5) * time.Second,
+		Allow0RTT:       true,
 	}
 	listener, err := quic.ListenAddr(":"+strconv.Itoa(port), quicServer.generateTLSConfig(), q)
 	if err != nil {
