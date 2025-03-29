@@ -28,7 +28,7 @@ func main() {
 		server = e2
 	}
 	if server == "" {
-		log.Printf("启动失败-缺少服务启动参数 -server=xxxx.com:6666")
+		log.Printf("启动失败-缺少CMD服务启动参数 -server=xxxx.com:16666")
 		for {
 			time.Sleep(time.Duration(10) * time.Second)
 		}
