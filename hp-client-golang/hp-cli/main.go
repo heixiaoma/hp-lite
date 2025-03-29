@@ -15,8 +15,8 @@ func main() {
 	var deviceId string
 	var server string
 	//命令行参数模式
-	flag.StringVar(&deviceId, "deviceId", "123456", "设备ID")
-	flag.StringVar(&server, "server", "47.109.206.174:9091", "穿透服务")
+	flag.StringVar(&deviceId, "deviceId", "", "设备ID")
+	flag.StringVar(&server, "server", "", "穿透服务")
 	flag.Parse()
 	//默认命令行参数大于环境变量参数
 	e1 := os.Getenv("deviceId")
