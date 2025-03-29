@@ -6,7 +6,6 @@ toolchain go1.23.2
 
 require (
 	fyne.io/fyne/v2 v2.4.4
-	github.com/flopp/go-findfont v0.1.0
 	hp-lib v1.0.0
 )
 
@@ -53,6 +52,7 @@ require (
 	golang.org/x/mobile v0.0.0-20230531173138-3c911d8e3eda // indirect
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
