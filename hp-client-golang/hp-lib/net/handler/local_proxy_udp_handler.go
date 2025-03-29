@@ -4,7 +4,6 @@ import (
 	"hp-lib/bean"
 	hpMessage "hp-lib/message"
 	"hp-lib/protol"
-	"log"
 	"net"
 )
 
@@ -30,7 +29,6 @@ func (l *LocalProxyUdpHandler) ChannelRead(conn net.Conn, data interface{}) {
 			ChannelId: l.WToN.ChannelId,
 		},
 	}
-	log.Printf("发送UDP" + l.WToN.ChannelId)
 	err := l.HpClientHandler.writeOutData(l.WToN.W, protol.Encode(message))
 	if err != nil {
 		l.HpClientHandler.CallMsg("UDP内网发送远端错误：" + err.Error())

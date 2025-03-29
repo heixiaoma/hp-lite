@@ -9,7 +9,6 @@ import (
 	hpMessage "hp-lib/message"
 	"hp-lib/net/connect"
 	"hp-lib/protol"
-	"log"
 	"net"
 	"strconv"
 	"sync"
@@ -112,9 +111,6 @@ func (h *HpClientHandler) connected(stream quic.Stream, message *hpMessage.HpMes
 
 	}
 	if message.MetaData.Type == hpMessage.HpMessage_UDP {
-
-		log.Printf("连接UDP" + message.MetaData.ChannelId)
-
 		conn := connect.NewUdpConnection().Connect(h.ProxyAddress, h.ProxyPort, &LocalProxyUdpHandler{
 			HpClientHandler: h,
 			WToN:            n,
