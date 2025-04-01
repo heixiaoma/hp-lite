@@ -14,7 +14,6 @@ import (
 	"log"
 	"math/big"
 	"strconv"
-	"time"
 )
 
 type HpServer struct {
@@ -56,12 +55,12 @@ func (quicServer *HpServer) generateTLSConfig() *tls.Config {
 func (quicServer *HpServer) StartServer(port int) {
 	q := &quic.Config{
 		//最大空闲时间，超过就重连
-		MaxIdleTimeout:        time.Duration(20) * time.Second,
+		//MaxIdleTimeout:        time.Duration(20) * time.Second,
 		MaxIncomingStreams:    1000000,
 		MaxIncomingUniStreams: 1000000,
 		//空闲时，应该发送心跳包
-		KeepAlivePeriod: time.Duration(5) * time.Second,
-		Allow0RTT:       true,
+		//KeepAlivePeriod: time.Duration(5) * time.Second,
+		Allow0RTT: true,
 	}
 	listener, err := quic.ListenAddr(":"+strconv.Itoa(port), quicServer.generateTLSConfig(), q)
 	if err != nil {
