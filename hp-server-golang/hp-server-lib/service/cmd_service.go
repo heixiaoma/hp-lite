@@ -95,6 +95,12 @@ func (receiver CmdService) StoreMemInfo(conn net.Conn, message *cmdMessage.CmdMe
 			CMD_CACHE_CONN.Delete(message.GetKey())
 			CMD_CACHE_CONN.Store(message.GetKey(), conn)
 		}
+	} else {
+		info := &bean.MemoryInfo{}
+		CMD_CACHE_MEMORY_INFO.Delete(message.GetKey())
+		CMD_CACHE_MEMORY_INFO.Store(message.GetKey(), info)
+		CMD_CACHE_CONN.Delete(message.GetKey())
+		CMD_CACHE_CONN.Store(message.GetKey(), conn)
 	}
 }
 
