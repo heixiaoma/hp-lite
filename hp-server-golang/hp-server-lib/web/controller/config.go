@@ -93,3 +93,18 @@ func (receiver ConfigController) RefConfig(w http.ResponseWriter, r *http.Reques
 		json.NewEncoder(w).Encode(bean.ResError(err.Error()))
 	}
 }
+
+func (receiver ConfigController) ChangeStatus(w http.ResponseWriter, r *http.Request) {
+	_, err := receiver.getUserId(w, r)
+	if err == nil {
+		queryParams := r.URL.Query()
+		configId := queryParams.Get("configId")
+		configIdInt, _ := strconv.Atoi(configId)
+		err = receiver.ChangeStatusData(configIdInt)
+		if err == nil {
+			json.NewEncoder(w).Encode(bean.ResOk(nil))
+			return
+		}
+		json.NewEncoder(w).Encode(bean.ResError(err.Error()))
+	}
+}

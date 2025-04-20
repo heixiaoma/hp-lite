@@ -80,6 +80,15 @@ type UserConfigEntity struct {
 	 * 用户ID
 	 */
 	UserId *int `json:"userId"`
+
+	/**
+	 * 内网web类型 http和https
+	 */
+	WebType string `json:"webType"`
+	/**
+	 * 状态 0生效 1 不生效
+	 */
+	Status int `json:"status"`
 }
 
 func (UserConfigEntity) TableName() string {

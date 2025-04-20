@@ -149,3 +149,19 @@ func (receiver *ConfigService) RefData(configId int) error {
 		return errors.New("更新失败")
 	}
 }
+
+func (receiver *ConfigService) ChangeStatusData(configId int) error {
+	userQuery := entity.UserConfigEntity{}
+	db.DB.Where("id = ? ", configId).First(&userQuery)
+	changeTmp := 1
+	if userQuery.Status == 1 {
+		changeTmp = 0
+	} else {
+		changeTmp = 1
+	}
+	if userQuery.Id != nil {
+		db.DB.Model(&entity.UserConfigEntity{}).Where("id = ?", configId).UpdateColumn("status", changeTmp)
+		return receiver.RefData(configId)
+	}
+	return nil
+}

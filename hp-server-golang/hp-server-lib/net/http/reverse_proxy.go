@@ -1,6 +1,7 @@
 package http
 
 import (
+	"crypto/tls"
 	"hp-server-lib/bean"
 	"hp-server-lib/config"
 	"hp-server-lib/net/base"
@@ -52,7 +53,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	base.AddPv(info.ConfigId, 1)
 	base.AddUv(info.ConfigId, r.RemoteAddr)
 	if info.ReverseProxy == nil {
-		target, err := url.Parse("http://127.0.0.1:" + strconv.Itoa(info.Port))
+		if len(info.WebType) == 0 {
+			info.WebType = "http"
+		}
+		target, err := url.Parse(info.WebType + "://127.0.0.1:" + strconv.Itoa(info.Port))
 		if err != nil {
 			http.Error(w, "错误URL地址", http.StatusInternalServerError)
 			return
@@ -62,6 +66,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			MaxIdleConns:        1000,
 			MaxIdleConnsPerHost: 500,
 			IdleConnTimeout:     30 * time.Second,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
 		}
 		info.ReverseProxy = proxy
 	}

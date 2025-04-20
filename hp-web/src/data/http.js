@@ -5,7 +5,7 @@ import userInfo from './userInfo.js'
 
 // create an axios instance
 const service = axios.create({
-    // baseURL: "http://127.0.0.1:9090", // url = base url + request url
+    // baseURL: "http://nas.hp.hserver.net:9090", // url = base url + request url
     // baseURL: "http://38.147.185.236:9090", // url = base url + request url
     // baseURL: "http://xxx.com", // url = base url + request url
     baseURL: "", // url = base url + request url

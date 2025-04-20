@@ -8,6 +8,11 @@
              @change="handleTableChange"
              :scroll="{ x: 10 }">
       <template #bodyCell="{ column ,record}">
+
+        <template v-if="column.key==='status'">
+          <a-switch :checked="!record.status||record.status==0"  @click="changeData(record)"/>
+        </template>
+
         <template v-if="column.key === 'deviceKey'">
           <div>
             设备状态：{{ userKeyByName(record.deviceKey) }}
@@ -70,7 +75,7 @@
     <div>
       <a-modal okText="确定" cancelText="取消" v-model:visible="addConfigVisible" title="添加内网穿透配置"
                @ok="addConfigOk">
-        <a-form :model="formState" ref="formTable">
+        <a-form :model="formState" layout="vertical" ref="formTable">
           <a-form-item label="穿透设备" name="deviceKey" :rules="[{ required: true, message: '穿透设备必填'}]">
             <a-select
                 v-model:value="formState.deviceKey"
@@ -81,6 +86,9 @@
           <a-form-item label="穿透备注" name="remarks" :rules="[{ required: true, message: '穿透备注必填'}]">
             <a-input v-model:value="formState.remarks" placeholder="备注如：个人博客"/>
           </a-form-item>
+
+          <a-divider>端口映射配置</a-divider>
+
           <a-form-item label="穿透协议" name="connectType" :rules="[{ required: true, message: '穿透协议必填'}]">
             <a-select
                 v-model:value="formState.connectType"
@@ -115,6 +123,18 @@
             </a-select>
           </a-form-item>
 
+          <a-divider>域名选项配置</a-divider>
+
+          <a-form-item label="内网WEB类型" name="webType"
+                       :rules="[{ required: true, message: '内网环境下的web类型 http/https'}]">
+            <a-select
+                v-model:value="formState.webType"
+            >
+              <a-select-option value="http">http</a-select-option>
+              <a-select-option value="https">https</a-select-option>
+            </a-select>
+          </a-form-item>
+
           <a-form-item label="&nbsp;穿透域名&nbsp;&nbsp;" name="domain">
             <!--            <a-input v-model:value="formState.domain" placeholder="xxx.com"/>-->
             <a-select
@@ -137,6 +157,16 @@
             <a-textarea disabled="disabled" :rows="6" v-model:value="formState.certificateContent"
                         placeholder="-----BEGIN CERTIFICATE-----&#10;***大概是这样的证书内容***&#10;-----BEGIN CERTIFICATE-----"/>
           </a-form-item>
+
+          <a-form-item label="配置有效" name="status"
+                       :rules="[{ required: true, message: '当前配置是否有效'}]">
+            <a-select
+                v-model:value="formState.status"
+            >
+              <a-select-option value="0">有效</a-select-option>
+              <a-select-option value="1">无效</a-select-option>
+            </a-select>
+          </a-form-item>
         </a-form>
       </a-modal>
     </div>
@@ -146,7 +176,7 @@
 
 <script setup>
 import {onMounted, reactive, ref} from "vue";
-import {removeConfig, getConfigList, getDeviceKey, addConfig, refConfig} from "../../api/client/config";
+import {removeConfig, getConfigList, getDeviceKey, addConfig, refConfig, changeStatus} from "../../api/client/config";
 import {useRoute} from 'vue-router'
 import userInfo from "../../data/userInfo";
 import {queryDomain} from "../../api/client/domain.js";
@@ -181,7 +211,9 @@ const formState = reactive({
   localIp: "",
   localPort: undefined,
   connectType: "",
-  proxyVersion: "",
+  proxyVersion: "NONE",
+  webType: "http",
+  status: '0',
   certificateKey: "",
   certificateContent: "",
 })
@@ -191,6 +223,22 @@ const currentConfigList = ref()
 
 const currentUserKeyList = ref()
 
+const changeData = (item)=>{
+  configLoading.value = true
+  changeStatus({
+    configId: item.id
+  }).then(res => {
+    configLoading.value = false
+    if (res.code===200) {
+      if (!item.status||item.status==0){
+        item.status=1
+      }else {
+        item.status=0
+      }
+    }
+  })
+
+}
 
 const loadDomains=()=>{
   queryDomain({}).then(res => {
@@ -291,6 +339,11 @@ const editConfigData = (item) => {
   formState.proxyVersion = item.proxyVersion
   formState.certificateKey = item.certificateKey
   formState.certificateContent = item.certificateContent
+  if (!item.webType){
+    item.webType="http"
+  }
+  formState.webType = item.webType
+  formState.status = item.status+""
   addConfigVisible.value = true;
 }
 const refConfigData = (item) => {
@@ -315,14 +368,17 @@ const addConfigModal = () => {
   formState.localIp = ""
   formState.localPort = undefined
   formState.connectType = ""
-  formState.proxyVersion = ""
+  formState.proxyVersion = "NONE"
   formState.certificateKey = ""
   formState.certificateContent = ""
+  formState.webType = "http"
+  formState.status = "0"
   addConfigVisible.value = true;
 };
 const addConfigOk = () => {
   formTable.value.validate().then(res => {
     console.log("添加配置表单", formState)
+    formState.status=parseInt(formState.status)
     addConfig(
         {
           packageId: route.query.packageId,
@@ -343,6 +399,7 @@ const columns = [
   {title: '内网端口', dataIndex: 'localPort', key: 'localPort'},
   {title: '外网端口', dataIndex: 'port', key: 'port'},
   {title: '穿透类型', dataIndex: 'connectType', key: 'connectType'},
+  {title: '配置有效', dataIndex: 'status', key: 'status'},
   {title: '域名', dataIndex: 'domain', key: 'domain'},
   {title: '部署设备', dataIndex: 'deviceKey', key: 'deviceKey'},
   {title: '操作', key: 'action'},

@@ -50,7 +50,7 @@ func SendCloseMsg(deviceKey, msg string) bool {
 
 func NoticeClientUpdateData(deviceKey string) bool {
 	var results []entity.UserConfigEntity
-	db.DB.Model(&entity.UserConfigEntity{}).Where("device_key = ?", deviceKey).Find(&results)
+	db.DB.Model(&entity.UserConfigEntity{}).Where("device_key = ? and (status = 0 or status is null) ", deviceKey).Find(&results)
 	if results != nil {
 		var results2 []bean.LocalInnerWear
 		for _, item := range results {

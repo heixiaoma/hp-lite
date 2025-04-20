@@ -24,7 +24,7 @@ type HpService struct {
 func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfigInfo {
 
 	userQuery := &entity.UserConfigEntity{}
-	db.DB.Where("config_key = ? ", configKey).First(userQuery)
+	db.DB.Where("config_key = ?  and  (status = 0 or status is null) ", configKey).First(userQuery)
 	if userQuery == nil || userQuery.LocalPort == nil || userQuery.Port == nil || userQuery.Id == nil {
 		return nil
 	}
@@ -44,6 +44,7 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 		Ip:                 userQuery.ServerIp,
 		CertificateKey:     userQuery.CertificateKey,
 		CertificateContent: userQuery.CertificateContent,
+		WebType:            userQuery.WebType,
 	}
 }
 

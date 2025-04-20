@@ -24,6 +24,14 @@ export function refConfig(query) {
         params: query
     })
 }
+export function changeStatus(query) {
+    return http({
+        url: '/client/config/changeStatus',
+        method: 'get',
+        params: query
+    })
+}
+
 export function addConfig(data) {
     return http({
         url: '/client/config/addConfig',
