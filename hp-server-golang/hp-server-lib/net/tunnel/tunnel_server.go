@@ -1,7 +1,7 @@
 package tunnel
 
 import (
-	"github.com/quic-go/quic-go"
+	"github.com/hashicorp/yamux"
 	"hp-server-lib/bean"
 	"log"
 )
@@ -11,18 +11,18 @@ type TunnelServer struct {
 	port        int
 	tcpServer   *TcpServer
 	udpServer   *UdpServer
-	conn        quic.Connection
+	session     *yamux.Session
 	userInfo    bean.UserConfigInfo
 }
 
-func NewTunnelServer(connectType bean.ConnectType, port int, conn quic.Connection, userInfo bean.UserConfigInfo) *TunnelServer {
-	return &TunnelServer{connectType: connectType, port: port, conn: conn, userInfo: userInfo}
+func NewTunnelServer(connectType bean.ConnectType, port int, session *yamux.Session, userInfo bean.UserConfigInfo) *TunnelServer {
+	return &TunnelServer{connectType: connectType, port: port, session: session, userInfo: userInfo}
 }
 
 func (receiver *TunnelServer) StartServer() bool {
 
 	if receiver.connectType == bean.TCP || receiver.connectType == bean.TCP_UDP {
-		server := NewTcpServer(receiver.conn, receiver.userInfo)
+		server := NewTcpServer(receiver.session, receiver.userInfo)
 		receiver.tcpServer = server
 		if !server.StartServer(receiver.port) {
 			return false
@@ -30,7 +30,7 @@ func (receiver *TunnelServer) StartServer() bool {
 
 	}
 	if receiver.connectType == bean.UDP || receiver.connectType == bean.TCP_UDP {
-		server := NewUdpServer(receiver.conn)
+		server := NewUdpServer(receiver.session)
 		receiver.udpServer = server
 		startServer := server.StartServer(receiver.port)
 		if !startServer {

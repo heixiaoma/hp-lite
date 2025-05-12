@@ -2,7 +2,7 @@ package tunnel
 
 import (
 	"bufio"
-	"github.com/quic-go/quic-go"
+	"github.com/hashicorp/yamux"
 	"hp-server-lib/message"
 	"hp-server-lib/protol"
 	"hp-server-lib/util"
@@ -13,18 +13,18 @@ import (
 
 type UdpHandler struct {
 	udpConn      *net.UDPConn
-	conn         quic.Connection
-	stream       quic.Stream
+	session      *yamux.Session
+	stream       *yamux.Stream
 	addr         *net.UDPAddr
 	channelId    string
 	udpServer    *UdpServer
 	lastActiveAt time.Time
 }
 
-func NewUdpHandler(udpServer *UdpServer, udpConn *net.UDPConn, conn quic.Connection, addr *net.UDPAddr) *UdpHandler {
-	return &UdpHandler{udpServer: udpServer, udpConn: udpConn, conn: conn, channelId: util.NewId(), addr: addr, lastActiveAt: time.Now()}
+func NewUdpHandler(udpServer *UdpServer, udpConn *net.UDPConn, session *yamux.Session, addr *net.UDPAddr) *UdpHandler {
+	return &UdpHandler{udpServer: udpServer, udpConn: udpConn, session: session, channelId: util.NewId(), addr: addr, lastActiveAt: time.Now()}
 }
-func (h *UdpHandler) handlerStream(stream quic.Stream) {
+func (h *UdpHandler) handlerStream(stream *yamux.Stream) {
 	defer stream.Close()
 	reader := bufio.NewReader(stream)
 	//避坑点：多包问题，需要重复读取解包
@@ -52,7 +52,7 @@ func (receiver *UdpHandler) ReadStreamData(data *message.HpMessage) {
 }
 
 func (h *UdpHandler) ChannelActive(udpConn *net.UDPConn) {
-	stream, err := h.conn.OpenStream()
+	stream, err := h.session.OpenStream()
 	if err == nil {
 		m := &message.HpMessage{
 			Type: message.HpMessage_CONNECTED,

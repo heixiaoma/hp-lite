@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/quic-go/quic-go"
+	"github.com/hashicorp/yamux"
 	"hp-server-lib/bean"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
@@ -48,7 +48,7 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 	}
 }
 
-func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connection) {
+func (receiver *HpService) Register(data *message.HpMessage, session *yamux.Session) {
 	configkey := data.MetaData.Key
 	info := receiver.loadUserConfigInfo(configkey)
 	if info == nil {
@@ -65,7 +65,7 @@ func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connectio
 	}
 	tunnelType := data.MetaData.Type.String()
 	connectType := bean.ConnectType(tunnelType)
-	newTunnelServer := tunnel.NewTunnelServer(connectType, info.Port, conn, *info)
+	newTunnelServer := tunnel.NewTunnelServer(connectType, info.Port, session, *info)
 	server := newTunnelServer.StartServer()
 	if !server {
 		newTunnelServer.CLose()
@@ -113,7 +113,7 @@ func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connectio
 		Type:     message.HpMessage_REGISTER_RESULT,
 		MetaData: m,
 	}
-	openStream, err := conn.OpenStream()
+	openStream, err := session.OpenStream()
 	if err == nil {
 		openStream.Write(protol.Encode(hpMessage))
 		util.Print(status)

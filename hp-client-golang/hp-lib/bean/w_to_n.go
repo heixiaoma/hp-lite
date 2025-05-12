@@ -1,7 +1,7 @@
 package bean
 
 import (
-	"github.com/quic-go/quic-go"
+	"github.com/hashicorp/yamux"
 	"net"
 )
 
@@ -11,7 +11,7 @@ type WtoN struct {
 	ChannelId string
 
 	//外网通讯
-	W quic.Stream
+	W *yamux.Stream
 
 	//内网通讯
 	N net.Conn

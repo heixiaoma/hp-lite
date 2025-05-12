@@ -9,9 +9,9 @@ require (
 	github.com/go-acme/lego/v4 v4.20.4
 	github.com/golang/protobuf v1.5.3
 	github.com/google/uuid v1.6.0
+	github.com/hashicorp/yamux v0.1.2
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pires/go-proxyproto v0.8.0
-	github.com/quic-go/quic-go v0.50.1
 	google.golang.org/protobuf v1.35.1
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/gorm v1.25.12
@@ -33,7 +33,6 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	go.uber.org/mock v0.5.0 // indirect
 	golang.org/x/crypto v0.35.0 // indirect
-	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/mod v0.21.0 // indirect
 	golang.org/x/net v0.36.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect

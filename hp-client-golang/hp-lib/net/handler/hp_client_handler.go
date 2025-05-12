@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"github.com/quic-go/quic-go"
+	"github.com/hashicorp/yamux"
 	"golang.org/x/time/rate"
 	"hp-lib/bean"
 	hpMessage "hp-lib/message"
@@ -23,15 +23,15 @@ type HpClientHandler struct {
 	ProxyAddress string
 	ProxyPort    int
 	CallMsg      func(message string)
-	Conn         quic.Connection
+	Session      *yamux.Session
 	Active       bool
 	InLimit      *rate.Limiter
 	OutLimit     *rate.Limiter
 }
 
 // ChannelActive 连接激活时，发送注册信息给云端
-func (h *HpClientHandler) ChannelActive(conn quic.Connection) {
-	h.Conn = conn
+func (h *HpClientHandler) ChannelActive(session *yamux.Session) {
+	h.Session = session
 	h.Active = true
 	message := &hpMessage.HpMessage{
 		Type: hpMessage.HpMessage_REGISTER,
@@ -40,7 +40,7 @@ func (h *HpClientHandler) ChannelActive(conn quic.Connection) {
 		},
 	}
 	message.MetaData.Type = h.MessageType
-	stream, err := conn.OpenStream()
+	stream, err := session.OpenStream()
 	if err != nil {
 		h.CallMsg("获取流错误")
 		return
@@ -55,7 +55,7 @@ func (h *HpClientHandler) ChannelActive(conn quic.Connection) {
 	}
 }
 
-func (h *HpClientHandler) ChannelRead(stream quic.Stream, data interface{}) {
+func (h *HpClientHandler) ChannelRead(stream *yamux.Stream, data interface{}) {
 	message := data.(*hpMessage.HpMessage)
 	switch message.Type {
 	case hpMessage.HpMessage_REGISTER_RESULT:
@@ -82,17 +82,17 @@ func (h *HpClientHandler) ChannelRead(stream quic.Stream, data interface{}) {
 	}
 }
 
-func (h *HpClientHandler) ChannelInactive(stream quic.Stream) {
+func (h *HpClientHandler) ChannelInactive(stream *yamux.Stream) {
 	if stream != nil {
 		stream.Close()
 	} else {
-		h.Conn.CloseWithError(0, "关闭")
+		h.Session.Close()
 		h.Active = false
 	}
 }
 
 // connected 创建内网的独立连接隧道，同时外网也重新建立一个新的
-func (h *HpClientHandler) connected(stream quic.Stream, message *hpMessage.HpMessage) {
+func (h *HpClientHandler) connected(stream *yamux.Stream, message *hpMessage.HpMessage) {
 	//如果是TCP数据包，我们就连接本地的TCP服务器
 	//创建外网的新连接通道
 	id := message.MetaData.ChannelId
@@ -165,7 +165,7 @@ func (h *HpClientHandler) Close(channelId string) {
 }
 
 // writeData 往内网写数据
-func (h *HpClientHandler) WriteData(stream quic.Stream, message *hpMessage.HpMessage) {
+func (h *HpClientHandler) WriteData(stream *yamux.Stream, message *hpMessage.HpMessage) {
 	load, ok := WNConnGroup.Load(message.MetaData.ChannelId)
 	if !ok {
 		println("不存在通道" + message.MetaData.ChannelId)
@@ -217,7 +217,7 @@ func (h HpClientHandler) writeInData(conn net.Conn, data []byte) {
 }
 
 // writeOutData 往外网写数据
-func (h *HpClientHandler) writeOutData(stream quic.Stream, message []byte) error {
+func (h *HpClientHandler) writeOutData(stream *yamux.Stream, message []byte) error {
 	if h.OutLimit != nil {
 		b := h.OutLimit.Burst()
 		for {

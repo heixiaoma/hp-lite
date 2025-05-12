@@ -3,8 +3,8 @@ package tunnel
 import (
 	"bufio"
 	"errors"
+	"github.com/hashicorp/yamux"
 	"github.com/pires/go-proxyproto"
-	"github.com/quic-go/quic-go"
 	"hp-server-lib/bean"
 	"hp-server-lib/message"
 	"hp-server-lib/net/base"
@@ -17,17 +17,17 @@ import (
 
 type TcpHandler struct {
 	tcpConn   net.Conn
-	conn      quic.Connection
-	stream    quic.Stream
+	session   *yamux.Session
+	stream    *yamux.Stream
 	channelId string
 	userInfo  bean.UserConfigInfo
 }
 
-func NewTcpHandler(tcpConn net.Conn, conn quic.Connection, userInfo bean.UserConfigInfo) *TcpHandler {
-	return &TcpHandler{conn: conn, channelId: util.NewId(), tcpConn: tcpConn, userInfo: userInfo}
+func NewTcpHandler(tcpConn net.Conn, session *yamux.Session, userInfo bean.UserConfigInfo) *TcpHandler {
+	return &TcpHandler{session: session, channelId: util.NewId(), tcpConn: tcpConn, userInfo: userInfo}
 }
 
-func (h *TcpHandler) handlerStream(stream quic.Stream) {
+func (h *TcpHandler) handlerStream(stream *yamux.Stream) {
 	defer stream.Close()
 	reader := bufio.NewReader(stream)
 	//避坑点：多包问题，需要重复读取解包
@@ -55,7 +55,7 @@ func (receiver *TcpHandler) ReadStreamData(data *message.HpMessage) {
 
 // ChannelActive 连接激活时，发送注册信息给云端
 func (h *TcpHandler) ChannelActive(conn net.Conn) {
-	stream, err := h.conn.OpenStream()
+	stream, err := h.session.OpenStream()
 	if err == nil {
 		h.stream = stream
 		m := &message.HpMessage{

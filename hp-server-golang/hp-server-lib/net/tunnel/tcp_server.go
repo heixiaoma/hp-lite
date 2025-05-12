@@ -2,7 +2,7 @@ package tunnel
 
 import (
 	"bufio"
-	"github.com/quic-go/quic-go"
+	"github.com/hashicorp/yamux"
 	"hp-server-lib/bean"
 	"log"
 	"net"
@@ -10,14 +10,14 @@ import (
 )
 
 type TcpServer struct {
-	conn     quic.Connection
+	session  *yamux.Session
 	listener net.Listener
 	userInfo bean.UserConfigInfo
 }
 
-func NewTcpServer(conn quic.Connection, userInfo bean.UserConfigInfo) *TcpServer {
+func NewTcpServer(session *yamux.Session, userInfo bean.UserConfigInfo) *TcpServer {
 	return &TcpServer{
-		conn,
+		session,
 		nil,
 		userInfo,
 	}
@@ -49,7 +49,7 @@ func (tcpServer *TcpServer) StartServer(port int) bool {
 func (tcpServer *TcpServer) handler(conn net.Conn) {
 	go func() {
 		defer conn.Close()
-		handler := NewTcpHandler(conn, tcpServer.conn, tcpServer.userInfo)
+		handler := NewTcpHandler(conn, tcpServer.session, tcpServer.userInfo)
 		handler.ChannelActive(conn)
 		reader := bufio.NewReader(conn)
 		for {

@@ -1,7 +1,7 @@
 package tunnel
 
 import (
-	"github.com/quic-go/quic-go"
+	"github.com/hashicorp/yamux"
 	"log"
 	"net"
 	"strconv"
@@ -10,14 +10,14 @@ import (
 
 type UdpServer struct {
 	cache   sync.Map
-	conn    quic.Connection
+	session *yamux.Session
 	udpConn *net.UDPConn
 }
 
-func NewUdpServer(conn quic.Connection) *UdpServer {
+func NewUdpServer(session *yamux.Session) *UdpServer {
 	return &UdpServer{
 		sync.Map{},
-		conn,
+		session,
 		nil,
 	}
 }
@@ -36,7 +36,7 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 		// 创建缓冲区用于接收数据
 		buffer := make([]byte, 1450)
 		for {
-			if udpServer.conn == nil {
+			if udpServer.session == nil {
 				break
 			}
 			n, addr, err := conn.ReadFromUDP(buffer)
@@ -51,7 +51,7 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 			}
 			value, ok := udpServer.cache.Load(addr.String())
 			if !ok {
-				handler := NewUdpHandler(udpServer, conn, udpServer.conn, addr)
+				handler := NewUdpHandler(udpServer, conn, udpServer.session, addr)
 				go handler.ChannelActive(conn)
 				udpServer.cache.Store(addr.String(), handler)
 			} else {
