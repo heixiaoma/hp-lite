@@ -30,9 +30,13 @@ func main() {
 	//指令控制
 	tcpServer := server.NewCmdServer()
 	go tcpServer.StartServer(config.ConfigData.Cmd.Port)
-	//数据传输
-	quicServer := server.NewHPServer(server.NewHPHandler())
+	//数据传输方式1
+	quicServer := server.NewHpQuicServer(server.NewHPHandler())
 	go quicServer.StartServer(config.ConfigData.Tunnel.Port)
+	//数据传输方式2
+	hpTcpServer := server.NewHPTcpServer(server.NewHPHandler())
+	go hpTcpServer.StartServer(config.ConfigData.Tunnel.Port)
+
 	//管理后台
 	go web.StartWebServer(config.ConfigData.Admin.Port)
 	//acme挑战

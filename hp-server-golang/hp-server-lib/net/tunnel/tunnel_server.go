@@ -1,8 +1,8 @@
 package tunnel
 
 import (
-	"github.com/quic-go/quic-go"
 	"hp-server-lib/bean"
+	net2 "hp-server-lib/net/base"
 	"log"
 )
 
@@ -11,11 +11,11 @@ type TunnelServer struct {
 	port        int
 	tcpServer   *TcpServer
 	udpServer   *UdpServer
-	conn        quic.Connection
+	conn        *net2.MuxSession
 	userInfo    bean.UserConfigInfo
 }
 
-func NewTunnelServer(connectType bean.ConnectType, port int, conn quic.Connection, userInfo bean.UserConfigInfo) *TunnelServer {
+func NewTunnelServer(connectType bean.ConnectType, port int, conn *net2.MuxSession, userInfo bean.UserConfigInfo) *TunnelServer {
 	return &TunnelServer{connectType: connectType, port: port, conn: conn, userInfo: userInfo}
 }
 

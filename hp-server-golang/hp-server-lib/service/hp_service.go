@@ -1,11 +1,11 @@
 package service
 
 import (
-	"github.com/quic-go/quic-go"
 	"hp-server-lib/bean"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
 	"hp-server-lib/message"
+	net2 "hp-server-lib/net/base"
 	"hp-server-lib/net/tunnel"
 	"hp-server-lib/protol"
 	"hp-server-lib/util"
@@ -48,7 +48,7 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 	}
 }
 
-func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connection) {
+func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSession) {
 	configkey := data.MetaData.Key
 	info := receiver.loadUserConfigInfo(configkey)
 	if info == nil {
@@ -113,9 +113,18 @@ func (receiver *HpService) Register(data *message.HpMessage, conn quic.Connectio
 		Type:     message.HpMessage_REGISTER_RESULT,
 		MetaData: m,
 	}
-	openStream, err := conn.OpenStream()
-	if err == nil {
-		openStream.Write(protol.Encode(hpMessage))
-		util.Print(status)
+
+	if conn.IsTcp {
+		openStream, err := conn.TcpSession.OpenStream()
+		if err == nil {
+			openStream.Write(protol.Encode(hpMessage))
+			util.Print(status)
+		}
+	} else {
+		openStream, err := conn.QuicSession.OpenStream()
+		if err == nil {
+			openStream.Write(protol.Encode(hpMessage))
+			util.Print(status)
+		}
 	}
 }

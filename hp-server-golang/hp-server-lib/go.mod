@@ -12,6 +12,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pires/go-proxyproto v0.8.0
 	github.com/quic-go/quic-go v0.50.1
+	github.com/xtaci/smux v1.5.24
 	google.golang.org/protobuf v1.35.1
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/gorm v1.25.12

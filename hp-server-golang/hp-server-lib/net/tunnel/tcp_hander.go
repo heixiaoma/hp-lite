@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"github.com/pires/go-proxyproto"
-	"github.com/quic-go/quic-go"
 	"hp-server-lib/bean"
 	"hp-server-lib/message"
 	"hp-server-lib/net/base"
@@ -17,19 +16,31 @@ import (
 
 type TcpHandler struct {
 	tcpConn   net.Conn
-	conn      quic.Connection
-	stream    quic.Stream
+	conn      *base.MuxSession
+	stream    *base.MuxStream
 	channelId string
 	userInfo  bean.UserConfigInfo
 }
 
-func NewTcpHandler(tcpConn net.Conn, conn quic.Connection, userInfo bean.UserConfigInfo) *TcpHandler {
+func NewTcpHandler(tcpConn net.Conn, conn *base.MuxSession, userInfo bean.UserConfigInfo) *TcpHandler {
 	return &TcpHandler{conn: conn, channelId: util.NewId(), tcpConn: tcpConn, userInfo: userInfo}
 }
 
-func (h *TcpHandler) handlerStream(stream quic.Stream) {
-	defer stream.Close()
-	reader := bufio.NewReader(stream)
+func (h *TcpHandler) handlerStream(stream *base.MuxStream) {
+	defer func() {
+		if stream.IsTcp {
+			stream.TcpStream.Close()
+		} else {
+			stream.QuicStream.Close()
+		}
+	}()
+
+	var reader *bufio.Reader
+	if stream.IsTcp {
+		reader = bufio.NewReader(stream.TcpStream)
+	} else {
+		reader = bufio.NewReader(stream.QuicStream)
+	}
 	//避坑点：多包问题，需要重复读取解包
 	for {
 		decode, e := protol.Decode(reader)
@@ -40,6 +51,7 @@ func (h *TcpHandler) handlerStream(stream quic.Stream) {
 			h.ReadStreamData(decode)
 		}
 	}
+
 }
 
 func (receiver *TcpHandler) ReadStreamData(data *message.HpMessage) {
@@ -49,13 +61,28 @@ func (receiver *TcpHandler) ReadStreamData(data *message.HpMessage) {
 	}
 	if data.Type == message.HpMessage_DISCONNECTED {
 		receiver.tcpConn.Close()
-		receiver.stream.Close()
+		if receiver.stream.IsTcp {
+			receiver.stream.TcpStream.Close()
+		} else {
+			receiver.stream.QuicStream.Close()
+		}
 	}
 }
 
 // ChannelActive 连接激活时，发送注册信息给云端
 func (h *TcpHandler) ChannelActive(conn net.Conn) {
-	stream, err := h.conn.OpenStream()
+	var stream *base.MuxStream
+	var err error
+	if h.conn.IsTcp {
+		stream1, err1 := h.conn.TcpSession.OpenStream()
+		err = err1
+		stream = &base.MuxStream{IsTcp: true, TcpStream: stream1}
+
+	} else {
+		stream2, err2 := h.conn.QuicSession.OpenStream()
+		err = err2
+		stream = &base.MuxStream{IsTcp: false, QuicStream: stream2}
+	}
 	if err == nil {
 		h.stream = stream
 		m := &message.HpMessage{
@@ -65,7 +92,12 @@ func (h *TcpHandler) ChannelActive(conn net.Conn) {
 				ChannelId: h.channelId,
 			},
 		}
-		stream.Write(protol.Encode(m))
+
+		if stream.IsTcp {
+			stream.TcpStream.Write(protol.Encode(m))
+		} else {
+			stream.QuicStream.Write(protol.Encode(m))
+		}
 
 		//检查是否开启了v1 v2代理,ton //&&!strings.Contains(conn.RemoteAddr().String(),"127.0.0.1")
 		if len(h.userInfo.ProxyVersion) > 0 {
@@ -97,7 +129,11 @@ func (h *TcpHandler) ChannelActive(conn net.Conn) {
 						},
 						Data: format,
 					}
-					stream.Write(protol.Encode(m))
+					if stream.IsTcp {
+						stream.TcpStream.Write(protol.Encode(m))
+					} else {
+						stream.QuicStream.Write(protol.Encode(m))
+					}
 				}
 			}
 		}
@@ -119,7 +155,11 @@ func (h *TcpHandler) ChannelRead(conn net.Conn, data interface{}) error {
 	if h.stream == nil {
 		return errors.New("流关闭异常")
 	}
-	h.stream.Write(protol.Encode(m))
+	if h.stream.IsTcp {
+		h.stream.TcpStream.Write(protol.Encode(m))
+	} else {
+		h.stream.QuicStream.Write(protol.Encode(m))
+	}
 	return nil
 }
 
@@ -132,8 +172,14 @@ func (h *TcpHandler) ChannelInactive(conn net.Conn) {
 		},
 	}
 	if h.stream != nil {
-		h.stream.Write(protol.Encode(m))
-		h.stream.Close()
+		if h.stream.IsTcp {
+			h.stream.TcpStream.Write(protol.Encode(m))
+			h.stream.TcpStream.Close()
+		} else {
+			h.stream.QuicStream.Write(protol.Encode(m))
+			h.stream.QuicStream.Close()
+		}
+
 	}
 }
 

@@ -1,7 +1,7 @@
 package tunnel
 
 import (
-	"github.com/quic-go/quic-go"
+	net2 "hp-server-lib/net/base"
 	"log"
 	"net"
 	"strconv"
@@ -10,11 +10,11 @@ import (
 
 type UdpServer struct {
 	cache   sync.Map
-	conn    quic.Connection
+	conn    *net2.MuxSession
 	udpConn *net.UDPConn
 }
 
-func NewUdpServer(conn quic.Connection) *UdpServer {
+func NewUdpServer(conn *net2.MuxSession) *UdpServer {
 	return &UdpServer{
 		sync.Map{},
 		conn,

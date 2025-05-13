@@ -2,20 +2,20 @@ package tunnel
 
 import (
 	"bufio"
-	"github.com/quic-go/quic-go"
 	"hp-server-lib/bean"
+	net2 "hp-server-lib/net/base"
 	"log"
 	"net"
 	"strconv"
 )
 
 type TcpServer struct {
-	conn     quic.Connection
+	conn     *net2.MuxSession
 	listener net.Listener
 	userInfo bean.UserConfigInfo
 }
 
-func NewTcpServer(conn quic.Connection, userInfo bean.UserConfigInfo) *TcpServer {
+func NewTcpServer(conn *net2.MuxSession, userInfo bean.UserConfigInfo) *TcpServer {
 	return &TcpServer{
 		conn,
 		nil,

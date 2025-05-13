@@ -16,19 +16,19 @@ import (
 	"strconv"
 )
 
-type HpServer struct {
-	net2.QuicHandler
+type HpQuicServer struct {
+	net2.HpHandler
 	listener *quic.Listener
 }
 
-func NewHPServer(handler net2.QuicHandler) *HpServer {
-	return &HpServer{
+func NewHpQuicServer(handler net2.HpHandler) *HpQuicServer {
+	return &HpQuicServer{
 		handler,
 		nil,
 	}
 }
 
-func (quicServer *HpServer) generateTLSConfig() *tls.Config {
+func (quicServer *HpQuicServer) generateTLSConfig() *tls.Config {
 	key, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		panic(err)
@@ -52,7 +52,7 @@ func (quicServer *HpServer) generateTLSConfig() *tls.Config {
 }
 
 // ConnectLocal 内网服务的TCP链接
-func (quicServer *HpServer) StartServer(port int) {
+func (quicServer *HpQuicServer) StartServer(port int) {
 	q := &quic.Config{
 		//最大空闲时间，超过就重连
 		//MaxIdleTimeout:        time.Duration(20) * time.Second,
@@ -64,7 +64,7 @@ func (quicServer *HpServer) StartServer(port int) {
 	}
 	listener, err := quic.ListenAddr(":"+strconv.Itoa(port), quicServer.generateTLSConfig(), q)
 	if err != nil {
-		log.Println("不能创建QUIC服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
+		log.Println("不能创建UDP隧道服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
 	}
 	quicServer.listener = listener
 	//设置读
@@ -78,12 +78,12 @@ func (quicServer *HpServer) StartServer(port int) {
 				for {
 					stream, err := conn.AcceptStream(context.Background())
 					if err != nil {
-						go quicServer.ChannelInactive(stream, conn)
+						go quicServer.ChannelInactive(&net2.MuxStream{IsTcp: false, QuicStream: stream}, &net2.MuxSession{IsTcp: false, QuicSession: conn})
 						log.Printf("接收流错误：全部关闭:%s", err.Error())
 						return
 					}
 					// 为每个连接启动一个新的处理 goroutine
-					quicServer.handler(stream, conn)
+					quicServer.handler(&net2.MuxStream{IsTcp: false, QuicStream: stream}, &net2.MuxSession{IsTcp: false, QuicSession: conn})
 				}
 			}()
 		}
@@ -91,11 +91,11 @@ func (quicServer *HpServer) StartServer(port int) {
 	log.Printf("数据传输服务启动成功UDP:%d", port)
 }
 
-func (quicServer *HpServer) handler(stream quic.Stream, conn quic.Connection) {
+func (quicServer *HpQuicServer) handler(stream *net2.MuxStream, conn *net2.MuxSession) {
 	go func() {
-		defer stream.Close()
+		defer stream.QuicStream.Close()
 		quicServer.ChannelActive(stream, conn)
-		reader := bufio.NewReader(stream)
+		reader := bufio.NewReader(stream.QuicStream)
 		//避坑点：多包问题，需要重复读取解包
 		for {
 			decode, e := protol.Decode(reader)
@@ -113,7 +113,7 @@ func (quicServer *HpServer) handler(stream quic.Stream, conn quic.Connection) {
 	}()
 }
 
-func (quicServer *HpServer) CLose() {
+func (quicServer *HpQuicServer) CLose() {
 	if quicServer.listener != nil {
 		quicServer.listener.Close()
 		quicServer.listener = nil
