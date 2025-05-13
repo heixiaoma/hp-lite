@@ -3,8 +3,8 @@ package tunnel
 import (
 	"bufio"
 	"errors"
-	"github.com/hashicorp/yamux"
 	"github.com/pires/go-proxyproto"
+	"github.com/xtaci/smux"
 	"hp-server-lib/bean"
 	"hp-server-lib/message"
 	"hp-server-lib/net/base"
@@ -17,17 +17,17 @@ import (
 
 type TcpHandler struct {
 	tcpConn   net.Conn
-	session   *yamux.Session
-	stream    *yamux.Stream
+	session   *smux.Session
+	stream    *smux.Stream
 	channelId string
 	userInfo  bean.UserConfigInfo
 }
 
-func NewTcpHandler(tcpConn net.Conn, session *yamux.Session, userInfo bean.UserConfigInfo) *TcpHandler {
+func NewTcpHandler(tcpConn net.Conn, session *smux.Session, userInfo bean.UserConfigInfo) *TcpHandler {
 	return &TcpHandler{session: session, channelId: util.NewId(), tcpConn: tcpConn, userInfo: userInfo}
 }
 
-func (h *TcpHandler) handlerStream(stream *yamux.Stream) {
+func (h *TcpHandler) handlerStream(stream *smux.Stream) {
 	defer stream.Close()
 	reader := bufio.NewReader(stream)
 	//避坑点：多包问题，需要重复读取解包

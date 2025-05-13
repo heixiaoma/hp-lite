@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/hashicorp/yamux"
+	"github.com/xtaci/smux"
 	"hp-server-lib/bean"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
@@ -48,7 +48,7 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 	}
 }
 
-func (receiver *HpService) Register(data *message.HpMessage, session *yamux.Session) {
+func (receiver *HpService) Register(data *message.HpMessage, session *smux.Session) {
 	configkey := data.MetaData.Key
 	info := receiver.loadUserConfigInfo(configkey)
 	if info == nil {

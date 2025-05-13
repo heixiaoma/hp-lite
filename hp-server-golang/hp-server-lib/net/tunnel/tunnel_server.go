@@ -1,7 +1,7 @@
 package tunnel
 
 import (
-	"github.com/hashicorp/yamux"
+	"github.com/xtaci/smux"
 	"hp-server-lib/bean"
 	"log"
 )
@@ -11,11 +11,11 @@ type TunnelServer struct {
 	port        int
 	tcpServer   *TcpServer
 	udpServer   *UdpServer
-	session     *yamux.Session
+	session     *smux.Session
 	userInfo    bean.UserConfigInfo
 }
 
-func NewTunnelServer(connectType bean.ConnectType, port int, session *yamux.Session, userInfo bean.UserConfigInfo) *TunnelServer {
+func NewTunnelServer(connectType bean.ConnectType, port int, session *smux.Session, userInfo bean.UserConfigInfo) *TunnelServer {
 	return &TunnelServer{connectType: connectType, port: port, session: session, userInfo: userInfo}
 }
 

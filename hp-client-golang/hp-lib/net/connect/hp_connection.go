@@ -2,7 +2,7 @@ package connect
 
 import (
 	"bufio"
-	"github.com/hashicorp/yamux"
+	"github.com/xtaci/smux"
 	net2 "hp-lib/net"
 	"hp-lib/protol"
 	"net"
@@ -16,14 +16,14 @@ func NewQuicConnection() *HpConnection {
 	return &HpConnection{}
 }
 
-func (connection *HpConnection) ConnectHp(host string, port int, handler net2.HpHandler, call func(mgs string)) *yamux.Session {
+func (connection *HpConnection) ConnectHp(host string, port int, handler net2.HpHandler, call func(mgs string)) *smux.Session {
 	conn, err := net.Dial("tcp", host+":"+strconv.Itoa(port))
 	if err != nil {
 		call("不能能连到映射服务器：" + host + ":" + strconv.Itoa(port) + " 原因：" + err.Error())
 		return nil
 	}
 
-	session, err := yamux.Client(conn, nil)
+	session, err := smux.Client(conn, nil)
 	if err != nil {
 		call("不能能连到映射服务器：" + host + ":" + strconv.Itoa(port) + " 原因：" + err.Error())
 		return nil

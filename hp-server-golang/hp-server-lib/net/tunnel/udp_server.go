@@ -1,7 +1,7 @@
 package tunnel
 
 import (
-	"github.com/hashicorp/yamux"
+	"github.com/xtaci/smux"
 	"log"
 	"net"
 	"strconv"
@@ -10,11 +10,11 @@ import (
 
 type UdpServer struct {
 	cache   sync.Map
-	session *yamux.Session
+	session *smux.Session
 	udpConn *net.UDPConn
 }
 
-func NewUdpServer(session *yamux.Session) *UdpServer {
+func NewUdpServer(session *smux.Session) *UdpServer {
 	return &UdpServer{
 		sync.Map{},
 		session,

@@ -2,7 +2,7 @@ package server
 
 import (
 	"bufio"
-	"github.com/hashicorp/yamux"
+	"github.com/xtaci/smux"
 	net2 "hp-server-lib/net/base"
 	"hp-server-lib/protol"
 	"log"
@@ -37,7 +37,7 @@ func (hpServer *HpServer) StartServer(port int) {
 			if err != nil {
 				log.Println("TCP获取连接错误：" + err.Error())
 			}
-			session, _ := yamux.Server(conn, nil)
+			session, _ := smux.Server(conn, nil)
 			go func() {
 				for {
 					stream, err := session.AcceptStream()
@@ -55,7 +55,7 @@ func (hpServer *HpServer) StartServer(port int) {
 	log.Printf("数据传输服务启动成功UDP:%d", port)
 }
 
-func (quicServer *HpServer) handler(stream *yamux.Stream, session *yamux.Session) {
+func (quicServer *HpServer) handler(stream *smux.Stream, session *smux.Session) {
 	go func() {
 		defer stream.Close()
 		quicServer.ChannelActive(stream, session)

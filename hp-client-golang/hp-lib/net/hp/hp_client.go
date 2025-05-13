@@ -1,7 +1,7 @@
 package hp
 
 import (
-	"github.com/hashicorp/yamux"
+	"github.com/xtaci/smux"
 	"golang.org/x/time/rate"
 	"hp-lib/bean"
 	hpMessage "hp-lib/message"
@@ -12,7 +12,7 @@ import (
 
 type HpClient struct {
 	CallMsg func(message string)
-	session *yamux.Session
+	session *smux.Session
 	Data    *bean.LocalInnerWear
 	handler *handler2.HpClientHandler
 }

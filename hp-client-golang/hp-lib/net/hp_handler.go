@@ -1,14 +1,14 @@
 package net
 
 import (
-	"github.com/hashicorp/yamux"
+	"github.com/xtaci/smux"
 )
 
 type HpHandler interface {
 	// ChannelActive 连接激活
-	ChannelActive(session *yamux.Session)
+	ChannelActive(session *smux.Session)
 	// ChannelRead 连接有数据时
-	ChannelRead(stream *yamux.Stream, data interface{})
+	ChannelRead(stream *smux.Stream, data interface{})
 	// ChannelInactive 连接断开
-	ChannelInactive(stream *yamux.Stream)
+	ChannelInactive(stream *smux.Stream)
 }

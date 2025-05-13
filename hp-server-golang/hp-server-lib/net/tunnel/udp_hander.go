@@ -2,7 +2,7 @@ package tunnel
 
 import (
 	"bufio"
-	"github.com/hashicorp/yamux"
+	"github.com/xtaci/smux"
 	"hp-server-lib/message"
 	"hp-server-lib/protol"
 	"hp-server-lib/util"
@@ -13,18 +13,18 @@ import (
 
 type UdpHandler struct {
 	udpConn      *net.UDPConn
-	session      *yamux.Session
-	stream       *yamux.Stream
+	session      *smux.Session
+	stream       *smux.Stream
 	addr         *net.UDPAddr
 	channelId    string
 	udpServer    *UdpServer
 	lastActiveAt time.Time
 }
 
-func NewUdpHandler(udpServer *UdpServer, udpConn *net.UDPConn, session *yamux.Session, addr *net.UDPAddr) *UdpHandler {
+func NewUdpHandler(udpServer *UdpServer, udpConn *net.UDPConn, session *smux.Session, addr *net.UDPAddr) *UdpHandler {
 	return &UdpHandler{udpServer: udpServer, udpConn: udpConn, session: session, channelId: util.NewId(), addr: addr, lastActiveAt: time.Now()}
 }
-func (h *UdpHandler) handlerStream(stream *yamux.Stream) {
+func (h *UdpHandler) handlerStream(stream *smux.Stream) {
 	defer stream.Close()
 	reader := bufio.NewReader(stream)
 	//避坑点：多包问题，需要重复读取解包

@@ -1,7 +1,7 @@
 package bean
 
 import (
-	"github.com/hashicorp/yamux"
+	"github.com/xtaci/smux"
 	"net"
 )
 
@@ -11,7 +11,7 @@ type WtoN struct {
 	ChannelId string
 
 	//外网通讯
-	W *yamux.Stream
+	W *smux.Stream
 
 	//内网通讯
 	N net.Conn

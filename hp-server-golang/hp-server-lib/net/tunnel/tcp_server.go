@@ -2,7 +2,7 @@ package tunnel
 
 import (
 	"bufio"
-	"github.com/hashicorp/yamux"
+	"github.com/xtaci/smux"
 	"hp-server-lib/bean"
 	"log"
 	"net"
@@ -10,12 +10,12 @@ import (
 )
 
 type TcpServer struct {
-	session  *yamux.Session
+	session  *smux.Session
 	listener net.Listener
 	userInfo bean.UserConfigInfo
 }
 
-func NewTcpServer(session *yamux.Session, userInfo bean.UserConfigInfo) *TcpServer {
+func NewTcpServer(session *smux.Session, userInfo bean.UserConfigInfo) *TcpServer {
 	return &TcpServer{
 		session,
 		nil,
