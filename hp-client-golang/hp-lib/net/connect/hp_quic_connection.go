@@ -13,15 +13,15 @@ import (
 	"time"
 )
 
-type QuicConnection struct {
+type HpQuicConnection struct {
 	Enc bool
 }
 
-func NewQuicConnection() *QuicConnection {
-	return &QuicConnection{}
+func NewHpQuicConnection() *HpQuicConnection {
+	return &HpQuicConnection{}
 }
 
-func (connection *QuicConnection) ConnectHp(host string, port int, handler net2.QuicHandler, call func(mgs string)) quic.Connection {
+func (connection *HpQuicConnection) ConnectHpQuic(host string, port int, handler net2.HpHandler, call func(mgs string)) *net2.MuxSession {
 	tlsConf := &tls.Config{
 		InsecureSkipVerify: true,
 		NextProtos:         []string{"HP_LITE"},
@@ -53,13 +53,16 @@ func (connection *QuicConnection) ConnectHp(host string, port int, handler net2.
 		}
 		return nil
 	}
-	handler.ChannelActive(conn)
+
+	session2 := &net2.MuxSession{IsTcp: false, QuicSession: conn}
+
+	handler.ChannelActive(session2)
 	go func() {
 		for {
 			stream, err := conn.AcceptStream(context.Background())
 			if err != nil {
 				call(err.Error())
-				handler.ChannelInactive(stream)
+				handler.ChannelInactive(&net2.MuxStream{IsTcp: false, QuicStream: stream})
 				return
 			}
 			go func() {
@@ -68,16 +71,16 @@ func (connection *QuicConnection) ConnectHp(host string, port int, handler net2.
 				for {
 					decode, e := protol.Decode(reader)
 					if e != nil {
-						handler.ChannelInactive(stream)
+						handler.ChannelInactive(&net2.MuxStream{IsTcp: false, QuicStream: stream})
 						return
 					}
 					if decode != nil {
-						handler.ChannelRead(stream, decode)
+						handler.ChannelRead(&net2.MuxStream{IsTcp: false, QuicStream: stream}, decode)
 					}
 				}
 			}()
 		}
 	}()
 	//设置读
-	return conn
+	return session2
 }

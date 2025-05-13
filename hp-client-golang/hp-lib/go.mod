@@ -9,6 +9,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/quic-go/quic-go v0.50.1
 	github.com/shirou/gopsutil/v3 v3.24.5
+	github.com/xtaci/smux v1.5.34
 	golang.org/x/time v0.5.0
 	google.golang.org/protobuf v1.33.0
 )

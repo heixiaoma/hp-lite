@@ -1,7 +1,7 @@
 package bean
 
 import (
-	"github.com/quic-go/quic-go"
+	net2 "hp-lib/net"
 	"net"
 )
 
@@ -11,7 +11,7 @@ type WtoN struct {
 	ChannelId string
 
 	//外网通讯
-	W quic.Stream
+	W *net2.MuxStream
 
 	//内网通讯
 	N net.Conn

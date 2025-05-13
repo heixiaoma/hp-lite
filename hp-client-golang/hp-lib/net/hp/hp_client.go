@@ -1,10 +1,10 @@
 package hp
 
 import (
-	"github.com/quic-go/quic-go"
 	"golang.org/x/time/rate"
 	"hp-lib/bean"
 	hpMessage "hp-lib/message"
+	"hp-lib/net"
 	"hp-lib/net/connect"
 	handler2 "hp-lib/net/handler"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 
 type HpClient struct {
 	CallMsg func(message string)
-	conn    quic.Connection
+	conn    *net.MuxSession
 	Data    *bean.LocalInnerWear
 	handler *handler2.HpClientHandler
 }
@@ -25,9 +25,12 @@ func NewHpClient(callMsg func(message string)) *HpClient {
 
 func (hpClient *HpClient) Connect(data *bean.LocalInnerWear) {
 	if hpClient.conn != nil {
-		hpClient.conn.CloseWithError(0, "重连关闭")
+		if hpClient.conn.IsTcp {
+			hpClient.conn.QuicSession.CloseWithError(0, "重连关闭")
+		} else {
+			hpClient.conn.TcpSession.Close()
+		}
 	}
-	connection := connect.NewQuicConnection()
 	var hpType hpMessage.HpMessage_MessageType
 	switch data.ConnectType {
 	case bean.TCP:
@@ -53,7 +56,13 @@ func (hpClient *HpClient) Connect(data *bean.LocalInnerWear) {
 	}
 	hpClient.Data = data
 	hpClient.handler = handler
-	hpClient.conn = connection.ConnectHp(data.ServerIp, data.ServerPort, handler, hpClient.CallMsg)
+	if 1 != 1 {
+		connection := connect.NewHpTcpConnection()
+		hpClient.conn = connection.ConnectHpTcp(data.ServerIp, data.ServerPort, handler, hpClient.CallMsg)
+	} else {
+		connection := connect.NewHpQuicConnection()
+		hpClient.conn = connection.ConnectHpQuic(data.ServerIp, data.ServerPort, handler, hpClient.CallMsg)
+	}
 }
 
 func (hpClient *HpClient) GetStatus() bool {
@@ -74,7 +83,12 @@ func (hpClient *HpClient) GetServer() string {
 
 func (hpClient *HpClient) Close() {
 	if hpClient.conn != nil {
-		hpClient.conn.CloseWithError(0, "正常关闭")
+		if hpClient.conn.IsTcp {
+			hpClient.conn.TcpSession.Close()
+
+		} else {
+			hpClient.conn.QuicSession.CloseWithError(0, "正常关闭")
+		}
 		hpClient.handler.CloseAll()
 		hpClient.conn = nil
 	}

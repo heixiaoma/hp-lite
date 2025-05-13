@@ -3,10 +3,10 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"github.com/quic-go/quic-go"
 	"golang.org/x/time/rate"
 	"hp-lib/bean"
 	hpMessage "hp-lib/message"
+	net2 "hp-lib/net"
 	"hp-lib/net/connect"
 	"hp-lib/protol"
 	"net"
@@ -23,14 +23,14 @@ type HpClientHandler struct {
 	ProxyAddress string
 	ProxyPort    int
 	CallMsg      func(message string)
-	Conn         quic.Connection
+	Conn         *net2.MuxSession
 	Active       bool
 	InLimit      *rate.Limiter
 	OutLimit     *rate.Limiter
 }
 
 // ChannelActive 连接激活时，发送注册信息给云端
-func (h *HpClientHandler) ChannelActive(conn quic.Connection) {
+func (h *HpClientHandler) ChannelActive(conn *net2.MuxSession) {
 	h.Conn = conn
 	h.Active = true
 	message := &hpMessage.HpMessage{
@@ -40,22 +40,38 @@ func (h *HpClientHandler) ChannelActive(conn quic.Connection) {
 		},
 	}
 	message.MetaData.Type = h.MessageType
-	stream, err := conn.OpenStream()
-	if err != nil {
-		h.CallMsg("获取流错误")
-		return
-	}
-	_, err = stream.Write(protol.Encode(message))
-	if err != nil {
-		h.CallMsg("连接穿透服务发送数据错误：" + err.Error())
-		return
+	if conn.IsTcp {
+		stream, err := conn.TcpSession.OpenStream()
+		if err != nil {
+			h.CallMsg("获取流错误")
+			return
+		}
+		_, err = stream.Write(protol.Encode(message))
+		if err != nil {
+			h.CallMsg("连接穿透服务发送数据错误：" + err.Error())
+			return
+		} else {
+			h.CallMsg(h.ProxyAddress + ":" + strconv.Itoa(h.ProxyPort) + " 映射请求已经提交等待云端响应，请稍等")
+			stream.Close()
+		}
 	} else {
-		h.CallMsg(h.ProxyAddress + ":" + strconv.Itoa(h.ProxyPort) + " 映射请求已经提交等待云端响应，请稍等")
-		stream.Close()
+		stream, err := conn.QuicSession.OpenStream()
+		if err != nil {
+			h.CallMsg("获取流错误")
+			return
+		}
+		_, err = stream.Write(protol.Encode(message))
+		if err != nil {
+			h.CallMsg("连接穿透服务发送数据错误：" + err.Error())
+			return
+		} else {
+			h.CallMsg(h.ProxyAddress + ":" + strconv.Itoa(h.ProxyPort) + " 映射请求已经提交等待云端响应，请稍等")
+			stream.Close()
+		}
 	}
 }
 
-func (h *HpClientHandler) ChannelRead(stream quic.Stream, data interface{}) {
+func (h *HpClientHandler) ChannelRead(stream *net2.MuxStream, data interface{}) {
 	message := data.(*hpMessage.HpMessage)
 	switch message.Type {
 	case hpMessage.HpMessage_REGISTER_RESULT:
@@ -74,7 +90,11 @@ func (h *HpClientHandler) ChannelRead(stream quic.Stream, data interface{}) {
 		h.WriteData(stream, message)
 	case hpMessage.HpMessage_KEEPALIVE:
 		h.CallMsg("服务器端返回心跳数据")
-		stream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_KEEPALIVE}))
+		if stream.IsTcp {
+			stream.TcpStream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_KEEPALIVE}))
+		} else {
+			stream.QuicStream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_KEEPALIVE}))
+		}
 		break
 	default:
 		marshal, _ := json.Marshal(message)
@@ -82,17 +102,25 @@ func (h *HpClientHandler) ChannelRead(stream quic.Stream, data interface{}) {
 	}
 }
 
-func (h *HpClientHandler) ChannelInactive(stream quic.Stream) {
+func (h *HpClientHandler) ChannelInactive(stream *net2.MuxStream) {
 	if stream != nil {
-		stream.Close()
+		if stream.IsTcp && stream.TcpStream != nil {
+			stream.TcpStream.Close()
+		} else if stream.QuicStream != nil {
+			stream.QuicStream.Close()
+		}
 	} else {
-		h.Conn.CloseWithError(0, "关闭")
+		if h.Conn.IsTcp {
+			h.Conn.TcpSession.Close()
+		} else {
+			h.Conn.QuicSession.CloseWithError(0, "关闭")
+		}
 		h.Active = false
 	}
 }
 
 // connected 创建内网的独立连接隧道，同时外网也重新建立一个新的
-func (h *HpClientHandler) connected(stream quic.Stream, message *hpMessage.HpMessage) {
+func (h *HpClientHandler) connected(stream *net2.MuxStream, message *hpMessage.HpMessage) {
 	//如果是TCP数据包，我们就连接本地的TCP服务器
 	//创建外网的新连接通道
 	id := message.MetaData.ChannelId
@@ -140,7 +168,11 @@ func closeHandler(key, value interface{}) {
 			wToN.N.Close()
 		}
 		if wToN.W != nil {
-			wToN.W.Close()
+			if wToN.W.IsTcp {
+				wToN.W.TcpStream.Close()
+			} else {
+				wToN.W.QuicStream.Close()
+			}
 		}
 		WNConnGroup.Delete(wToN.ChannelId)
 	}
@@ -156,8 +188,14 @@ func (h *HpClientHandler) Close(channelId string) {
 				wToN.N.Close()
 			}
 			if wToN.W != nil {
-				wToN.W.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_DISCONNECTED, MetaData: &hpMessage.HpMessage_MetaData{ChannelId: channelId}}))
-				wToN.W.Close()
+				if wToN.W.IsTcp {
+					wToN.W.TcpStream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_DISCONNECTED, MetaData: &hpMessage.HpMessage_MetaData{ChannelId: channelId}}))
+					wToN.W.TcpStream.Close()
+				} else {
+					wToN.W.QuicStream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_DISCONNECTED, MetaData: &hpMessage.HpMessage_MetaData{ChannelId: channelId}}))
+					wToN.W.QuicStream.Close()
+				}
+
 			}
 			WNConnGroup.Delete(wToN.ChannelId)
 		}
@@ -165,7 +203,7 @@ func (h *HpClientHandler) Close(channelId string) {
 }
 
 // writeData 往内网写数据
-func (h *HpClientHandler) WriteData(stream quic.Stream, message *hpMessage.HpMessage) {
+func (h *HpClientHandler) WriteData(stream *net2.MuxStream, message *hpMessage.HpMessage) {
 	load, ok := WNConnGroup.Load(message.MetaData.ChannelId)
 	if !ok {
 		println("不存在通道" + message.MetaData.ChannelId)
@@ -217,7 +255,7 @@ func (h HpClientHandler) writeInData(conn net.Conn, data []byte) {
 }
 
 // writeOutData 往外网写数据
-func (h *HpClientHandler) writeOutData(stream quic.Stream, message []byte) error {
+func (h *HpClientHandler) writeOutData(stream *net2.MuxStream, message []byte) error {
 	if h.OutLimit != nil {
 		b := h.OutLimit.Burst()
 		for {
@@ -232,15 +270,28 @@ func (h *HpClientHandler) writeOutData(stream quic.Stream, message []byte) error
 			if err != nil {
 				return err
 			}
-			_, err = stream.Write(message[:end])
-			if err != nil {
-				return err
+			if stream.IsTcp {
+				_, err = stream.TcpStream.Write(message[:end])
+				if err != nil {
+					return err
+				}
+				message = message[end:]
+			} else {
+				_, err = stream.QuicStream.Write(message[:end])
+				if err != nil {
+					return err
+				}
+				message = message[end:]
 			}
-			message = message[end:]
 		}
 	} else {
-		_, err := stream.Write(message)
-		return err
+		if stream.IsTcp {
+			_, err := stream.TcpStream.Write(message)
+			return err
+		} else {
+			_, err := stream.QuicStream.Write(message)
+			return err
+		}
 	}
 	return nil
 }

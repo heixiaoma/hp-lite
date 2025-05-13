@@ -56,10 +56,9 @@ func (h *HPClientHandler) ChannelRead(stream *net2.MuxStream, data interface{}, 
 
 func (h *HPClientHandler) ChannelInactive(stream *net2.MuxStream, conn *net2.MuxSession) {
 	if stream != nil {
-
-		if stream.IsTcp {
+		if stream.IsTcp && stream.TcpStream != nil {
 			log.Printf("HP传输断开流：%d", stream.TcpStream.ID())
-		} else {
+		} else if stream.QuicStream != nil {
 			log.Printf("HP传输断开流：%d", stream.QuicStream.StreamID())
 		}
 	}
