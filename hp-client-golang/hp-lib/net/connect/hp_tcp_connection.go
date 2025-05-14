@@ -29,14 +29,14 @@ func (connection *HpTcpConnection) ConnectHpTcp(host string, port int, handler n
 		call("不能能连到映射服务器：" + host + ":" + strconv.Itoa(port) + " 原因：" + err.Error())
 		return nil
 	}
-	session2 := &net2.MuxSession{IsTcp: true, TcpSession: session}
+	session2 := net2.NewTcpMuxSession(session)
 	handler.ChannelActive(session2)
 	go func() {
 		for {
 			stream, err := session.AcceptStream()
 			if err != nil {
 				call(err.Error())
-				handler.ChannelInactive(&net2.MuxStream{IsTcp: true, TcpStream: stream})
+				handler.ChannelInactive(net2.NewTcpMuxStream(stream))
 				return
 			}
 			go func() {
@@ -45,11 +45,11 @@ func (connection *HpTcpConnection) ConnectHpTcp(host string, port int, handler n
 				for {
 					decode, e := protol.Decode(reader)
 					if e != nil {
-						handler.ChannelInactive(&net2.MuxStream{IsTcp: true, TcpStream: stream})
+						handler.ChannelInactive(net2.NewTcpMuxStream(stream))
 						return
 					}
 					if decode != nil {
-						handler.ChannelRead(&net2.MuxStream{IsTcp: true, TcpStream: stream}, decode)
+						handler.ChannelRead(net2.NewTcpMuxStream(stream), decode)
 					}
 				}
 			}()

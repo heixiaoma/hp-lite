@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bufio"
 	"github.com/xtaci/smux"
 	net2 "hp-server-lib/net/base"
 	"hp-server-lib/protol"
@@ -42,12 +41,12 @@ func (tcpServer *HpTcpServer) StartServer(port int) {
 				for {
 					stream, err := session.AcceptStream()
 					if err != nil {
-						go tcpServer.ChannelInactive(&net2.MuxStream{IsTcp: true, TcpStream: stream}, &net2.MuxSession{IsTcp: true, TcpSession: session})
+						go tcpServer.ChannelInactive(net2.NewTcpMuxStream(stream), net2.NewTcpMuxSession(session))
 						log.Printf("接收流错误：全部关闭:%s", err.Error())
 						return
 					}
 					// 为每个连接启动一个新的处理 goroutine
-					tcpServer.handler(&net2.MuxStream{IsTcp: true, TcpStream: stream}, &net2.MuxSession{IsTcp: true, TcpSession: session})
+					tcpServer.handler(net2.NewTcpMuxStream(stream), net2.NewTcpMuxSession(session))
 				}
 			}()
 		}
@@ -57,9 +56,9 @@ func (tcpServer *HpTcpServer) StartServer(port int) {
 
 func (quicServer *HpTcpServer) handler(stream *net2.MuxStream, session *net2.MuxSession) {
 	go func() {
-		defer stream.TcpStream.Close()
+		defer stream.Close()
 		quicServer.ChannelActive(stream, session)
-		reader := bufio.NewReader(stream.TcpStream)
+		reader := stream.GetReader()
 		//避坑点：多包问题，需要重复读取解包
 		for {
 			decode, e := protol.Decode(reader)

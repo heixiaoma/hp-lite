@@ -25,11 +25,7 @@ func NewHpClient(callMsg func(message string)) *HpClient {
 
 func (hpClient *HpClient) Connect(data *bean.LocalInnerWear) {
 	if hpClient.conn != nil {
-		if hpClient.conn.IsTcp {
-			hpClient.conn.QuicSession.CloseWithError(0, "重连关闭")
-		} else {
-			hpClient.conn.TcpSession.Close()
-		}
+		hpClient.conn.Close()
 	}
 	var hpType hpMessage.HpMessage_MessageType
 	switch data.ConnectType {
@@ -83,12 +79,7 @@ func (hpClient *HpClient) GetServer() string {
 
 func (hpClient *HpClient) Close() {
 	if hpClient.conn != nil {
-		if hpClient.conn.IsTcp {
-			hpClient.conn.TcpSession.Close()
-
-		} else {
-			hpClient.conn.QuicSession.CloseWithError(0, "正常关闭")
-		}
+		hpClient.conn.Close()
 		hpClient.handler.CloseAll()
 		hpClient.conn = nil
 	}

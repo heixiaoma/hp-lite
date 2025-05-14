@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bufio"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -78,12 +77,12 @@ func (quicServer *HpQuicServer) StartServer(port int) {
 				for {
 					stream, err := conn.AcceptStream(context.Background())
 					if err != nil {
-						go quicServer.ChannelInactive(&net2.MuxStream{IsTcp: false, QuicStream: stream}, &net2.MuxSession{IsTcp: false, QuicSession: conn})
+						go quicServer.ChannelInactive(net2.NewQuicMuxStream(stream), net2.NewQuicMuxSession(conn))
 						log.Printf("接收流错误：全部关闭:%s", err.Error())
 						return
 					}
 					// 为每个连接启动一个新的处理 goroutine
-					quicServer.handler(&net2.MuxStream{IsTcp: false, QuicStream: stream}, &net2.MuxSession{IsTcp: false, QuicSession: conn})
+					quicServer.handler(net2.NewQuicMuxStream(stream), net2.NewQuicMuxSession(conn))
 				}
 			}()
 		}
@@ -93,9 +92,9 @@ func (quicServer *HpQuicServer) StartServer(port int) {
 
 func (quicServer *HpQuicServer) handler(stream *net2.MuxStream, conn *net2.MuxSession) {
 	go func() {
-		defer stream.QuicStream.Close()
+		defer stream.Close()
 		quicServer.ChannelActive(stream, conn)
-		reader := bufio.NewReader(stream.QuicStream)
+		reader := stream.GetReader()
 		//避坑点：多包问题，需要重复读取解包
 		for {
 			decode, e := protol.Decode(reader)

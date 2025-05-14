@@ -40,34 +40,18 @@ func (h *HpClientHandler) ChannelActive(conn *net2.MuxSession) {
 		},
 	}
 	message.MetaData.Type = h.MessageType
-	if conn.IsTcp {
-		stream, err := conn.TcpSession.OpenStream()
-		if err != nil {
-			h.CallMsg("获取流错误")
-			return
-		}
-		_, err = stream.Write(protol.Encode(message))
-		if err != nil {
-			h.CallMsg("连接穿透服务发送数据错误：" + err.Error())
-			return
-		} else {
-			h.CallMsg(h.ProxyAddress + ":" + strconv.Itoa(h.ProxyPort) + " 映射请求已经提交等待云端响应，请稍等")
-			stream.Close()
-		}
+	stream, err := conn.OpenStream()
+	if err != nil {
+		h.CallMsg("获取流错误")
+		return
+	}
+	_, err = stream.Write(protol.Encode(message))
+	if err != nil {
+		h.CallMsg("连接穿透服务发送数据错误：" + err.Error())
+		return
 	} else {
-		stream, err := conn.QuicSession.OpenStream()
-		if err != nil {
-			h.CallMsg("获取流错误")
-			return
-		}
-		_, err = stream.Write(protol.Encode(message))
-		if err != nil {
-			h.CallMsg("连接穿透服务发送数据错误：" + err.Error())
-			return
-		} else {
-			h.CallMsg(h.ProxyAddress + ":" + strconv.Itoa(h.ProxyPort) + " 映射请求已经提交等待云端响应，请稍等")
-			stream.Close()
-		}
+		h.CallMsg(h.ProxyAddress + ":" + strconv.Itoa(h.ProxyPort) + " 映射请求已经提交等待云端响应，请稍等")
+		stream.Close()
 	}
 }
 
@@ -90,11 +74,7 @@ func (h *HpClientHandler) ChannelRead(stream *net2.MuxStream, data interface{}) 
 		h.WriteData(stream, message)
 	case hpMessage.HpMessage_KEEPALIVE:
 		h.CallMsg("服务器端返回心跳数据")
-		if stream.IsTcp {
-			stream.TcpStream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_KEEPALIVE}))
-		} else {
-			stream.QuicStream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_KEEPALIVE}))
-		}
+		stream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_KEEPALIVE}))
 		break
 	default:
 		marshal, _ := json.Marshal(message)
@@ -104,18 +84,7 @@ func (h *HpClientHandler) ChannelRead(stream *net2.MuxStream, data interface{}) 
 
 func (h *HpClientHandler) ChannelInactive(stream *net2.MuxStream) {
 	if stream != nil {
-		if stream.IsTcp && stream.TcpStream != nil {
-			stream.TcpStream.Close()
-		} else if stream.QuicStream != nil {
-			stream.QuicStream.Close()
-		}
-	} else {
-		if h.Conn.IsTcp {
-			h.Conn.TcpSession.Close()
-		} else {
-			h.Conn.QuicSession.CloseWithError(0, "关闭")
-		}
-		h.Active = false
+		stream.Close()
 	}
 }
 
@@ -168,11 +137,7 @@ func closeHandler(key, value interface{}) {
 			wToN.N.Close()
 		}
 		if wToN.W != nil {
-			if wToN.W.IsTcp {
-				wToN.W.TcpStream.Close()
-			} else {
-				wToN.W.QuicStream.Close()
-			}
+			wToN.W.Close()
 		}
 		WNConnGroup.Delete(wToN.ChannelId)
 	}
@@ -188,14 +153,8 @@ func (h *HpClientHandler) Close(channelId string) {
 				wToN.N.Close()
 			}
 			if wToN.W != nil {
-				if wToN.W.IsTcp {
-					wToN.W.TcpStream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_DISCONNECTED, MetaData: &hpMessage.HpMessage_MetaData{ChannelId: channelId}}))
-					wToN.W.TcpStream.Close()
-				} else {
-					wToN.W.QuicStream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_DISCONNECTED, MetaData: &hpMessage.HpMessage_MetaData{ChannelId: channelId}}))
-					wToN.W.QuicStream.Close()
-				}
-
+				wToN.W.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_DISCONNECTED, MetaData: &hpMessage.HpMessage_MetaData{ChannelId: channelId}}))
+				wToN.W.Close()
 			}
 			WNConnGroup.Delete(wToN.ChannelId)
 		}
@@ -270,28 +229,15 @@ func (h *HpClientHandler) writeOutData(stream *net2.MuxStream, message []byte) e
 			if err != nil {
 				return err
 			}
-			if stream.IsTcp {
-				_, err = stream.TcpStream.Write(message[:end])
-				if err != nil {
-					return err
-				}
-				message = message[end:]
-			} else {
-				_, err = stream.QuicStream.Write(message[:end])
-				if err != nil {
-					return err
-				}
-				message = message[end:]
+			_, err = stream.Write(message[:end])
+			if err != nil {
+				return err
 			}
+			message = message[end:]
 		}
 	} else {
-		if stream.IsTcp {
-			_, err := stream.TcpStream.Write(message)
-			return err
-		} else {
-			_, err := stream.QuicStream.Write(message)
-			return err
-		}
+		_, err := stream.Write(message)
+		return err
 	}
 	return nil
 }

@@ -114,17 +114,9 @@ func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSessi
 		MetaData: m,
 	}
 
-	if conn.IsTcp {
-		openStream, err := conn.TcpSession.OpenStream()
-		if err == nil {
-			openStream.Write(protol.Encode(hpMessage))
-			util.Print(status)
-		}
-	} else {
-		openStream, err := conn.QuicSession.OpenStream()
-		if err == nil {
-			openStream.Write(protol.Encode(hpMessage))
-			util.Print(status)
-		}
+	openStream, err := conn.OpenStream()
+	if err == nil {
+		openStream.Write(protol.Encode(hpMessage))
+		util.Print(status)
 	}
 }

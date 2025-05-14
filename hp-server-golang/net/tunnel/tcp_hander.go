@@ -27,20 +27,9 @@ func NewTcpHandler(tcpConn net.Conn, conn *base.MuxSession, userInfo bean.UserCo
 }
 
 func (h *TcpHandler) handlerStream(stream *base.MuxStream) {
-	defer func() {
-		if stream.IsTcp {
-			stream.TcpStream.Close()
-		} else {
-			stream.QuicStream.Close()
-		}
-	}()
+	defer stream.Close()
 
-	var reader *bufio.Reader
-	if stream.IsTcp {
-		reader = bufio.NewReader(stream.TcpStream)
-	} else {
-		reader = bufio.NewReader(stream.QuicStream)
-	}
+	reader := stream.GetReader()
 	//避坑点：多包问题，需要重复读取解包
 	for {
 		decode, e := protol.Decode(reader)
@@ -61,28 +50,13 @@ func (receiver *TcpHandler) ReadStreamData(data *message.HpMessage) {
 	}
 	if data.Type == message.HpMessage_DISCONNECTED {
 		receiver.tcpConn.Close()
-		if receiver.stream.IsTcp {
-			receiver.stream.TcpStream.Close()
-		} else {
-			receiver.stream.QuicStream.Close()
-		}
+		receiver.stream.Close()
 	}
 }
 
 // ChannelActive 连接激活时，发送注册信息给云端
 func (h *TcpHandler) ChannelActive(conn net.Conn) {
-	var stream *base.MuxStream
-	var err error
-	if h.conn.IsTcp {
-		stream1, err1 := h.conn.TcpSession.OpenStream()
-		err = err1
-		stream = &base.MuxStream{IsTcp: true, TcpStream: stream1}
-
-	} else {
-		stream2, err2 := h.conn.QuicSession.OpenStream()
-		err = err2
-		stream = &base.MuxStream{IsTcp: false, QuicStream: stream2}
-	}
+	stream, err := h.conn.OpenStream()
 	if err == nil {
 		h.stream = stream
 		m := &message.HpMessage{
@@ -92,13 +66,7 @@ func (h *TcpHandler) ChannelActive(conn net.Conn) {
 				ChannelId: h.channelId,
 			},
 		}
-
-		if stream.IsTcp {
-			stream.TcpStream.Write(protol.Encode(m))
-		} else {
-			stream.QuicStream.Write(protol.Encode(m))
-		}
-
+		stream.Write(protol.Encode(m))
 		//检查是否开启了v1 v2代理,ton //&&!strings.Contains(conn.RemoteAddr().String(),"127.0.0.1")
 		if len(h.userInfo.ProxyVersion) > 0 {
 			var version byte = 0
@@ -129,11 +97,7 @@ func (h *TcpHandler) ChannelActive(conn net.Conn) {
 						},
 						Data: format,
 					}
-					if stream.IsTcp {
-						stream.TcpStream.Write(protol.Encode(m))
-					} else {
-						stream.QuicStream.Write(protol.Encode(m))
-					}
+					stream.Write(protol.Encode(m))
 				}
 			}
 		}
@@ -155,11 +119,7 @@ func (h *TcpHandler) ChannelRead(conn net.Conn, data interface{}) error {
 	if h.stream == nil {
 		return errors.New("流关闭异常")
 	}
-	if h.stream.IsTcp {
-		h.stream.TcpStream.Write(protol.Encode(m))
-	} else {
-		h.stream.QuicStream.Write(protol.Encode(m))
-	}
+	h.stream.Write(protol.Encode(m))
 	return nil
 }
 
@@ -172,14 +132,8 @@ func (h *TcpHandler) ChannelInactive(conn net.Conn) {
 		},
 	}
 	if h.stream != nil {
-		if h.stream.IsTcp {
-			h.stream.TcpStream.Write(protol.Encode(m))
-			h.stream.TcpStream.Close()
-		} else {
-			h.stream.QuicStream.Write(protol.Encode(m))
-			h.stream.QuicStream.Close()
-		}
-
+		h.stream.Write(protol.Encode(m))
+		h.stream.Close()
 	}
 }
 

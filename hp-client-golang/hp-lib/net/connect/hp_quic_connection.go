@@ -54,7 +54,7 @@ func (connection *HpQuicConnection) ConnectHpQuic(host string, port int, handler
 		return nil
 	}
 
-	session2 := &net2.MuxSession{IsTcp: false, QuicSession: conn}
+	session2 := net2.NewQuicMuxSession(conn)
 
 	handler.ChannelActive(session2)
 	go func() {
@@ -62,7 +62,7 @@ func (connection *HpQuicConnection) ConnectHpQuic(host string, port int, handler
 			stream, err := conn.AcceptStream(context.Background())
 			if err != nil {
 				call(err.Error())
-				handler.ChannelInactive(&net2.MuxStream{IsTcp: false, QuicStream: stream})
+				handler.ChannelInactive(net2.NewQuicMuxStream(stream))
 				return
 			}
 			go func() {
@@ -71,11 +71,11 @@ func (connection *HpQuicConnection) ConnectHpQuic(host string, port int, handler
 				for {
 					decode, e := protol.Decode(reader)
 					if e != nil {
-						handler.ChannelInactive(&net2.MuxStream{IsTcp: false, QuicStream: stream})
+						handler.ChannelInactive(net2.NewQuicMuxStream(stream))
 						return
 					}
 					if decode != nil {
-						handler.ChannelRead(&net2.MuxStream{IsTcp: false, QuicStream: stream}, decode)
+						handler.ChannelRead(net2.NewQuicMuxStream(stream), decode)
 					}
 				}
 			}()
