@@ -52,7 +52,7 @@ func (hpClient *HpClient) Connect(data *bean.LocalInnerWear) {
 	}
 	hpClient.Data = data
 	hpClient.handler = handler
-	if 1 == 1 {
+	if data.TunType == "TCP" {
 		connection := connect.NewHpTcpConnection()
 		hpClient.conn = connection.ConnectHpTcp(data.ServerIp, data.ServerPort, handler, hpClient.CallMsg)
 	} else {

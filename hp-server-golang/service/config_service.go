@@ -114,8 +114,20 @@ func (receiver *ConfigService) AddData(configEntity entity.UserConfigEntity) err
 				return errors.New("域名被使用了，请换一个")
 			}
 		}
+	} else {
+		var total int64
+		db.DB.Model(&entity.UserConfigEntity{}).Where("port = ? and id != ?", configEntity.Port, configEntity.Id).Count(&total)
+		if total > 0 {
+			return errors.New("外网端口已被其他配置占用")
+		}
+		if configEntity.Domain != nil && len(*configEntity.Domain) > 0 {
+			total = 0
+			db.DB.Model(&entity.UserConfigEntity{}).Where("domain = ? and id != ?", configEntity.Domain, configEntity.Id).Count(&total)
+			if total > 0 {
+				return errors.New("域名被使用了，请换一个")
+			}
+		}
 	}
-
 	newUUID, err := uuid.NewUUID()
 	if err != nil {
 		return errors.New(err.Error())

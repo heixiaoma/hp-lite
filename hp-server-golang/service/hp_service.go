@@ -34,6 +34,15 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 	} else if userQuery.ProxyVersion == bean.V2 {
 		s = "V2"
 	}
+	//如果域名不能空就查询证书
+	key := ""
+	content := ""
+	if userQuery.Domain != nil && len(*userQuery.Domain) > 0 {
+		userDomain := &entity.UserDomainEntity{}
+		db.DB.Where("domain = ?  ", *userQuery.Domain).First(userDomain)
+		key = userDomain.CertificateKey
+		content = userDomain.CertificateContent
+	}
 	return &bean.UserConfigInfo{
 		ProxyVersion:       s,
 		Domain:             userQuery.Domain,
@@ -42,9 +51,10 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 		ConfigId:           *userQuery.Id,
 		Port:               *userQuery.Port,
 		Ip:                 userQuery.ServerIp,
-		CertificateKey:     userQuery.CertificateKey,
-		CertificateContent: userQuery.CertificateContent,
+		CertificateKey:     key,
+		CertificateContent: content,
 		WebType:            userQuery.WebType,
+		TunType:            userQuery.TunType,
 	}
 }
 

@@ -13,5 +13,6 @@ type UserConfigInfo struct {
 	CertificateKey     string                 `json:"certificateKey"`
 	CertificateContent string                 `json:"certificateContent"`
 	WebType            string                 `json:"webType"`
+	TunType            string                 `json:"TunType"`
 	ReverseProxy       *httputil.ReverseProxy `json:"-"`
 }

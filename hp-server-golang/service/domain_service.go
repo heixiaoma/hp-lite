@@ -105,8 +105,6 @@ func (receiver *DomainService) AddData(userDomain entity.UserDomainEntity) error
 		}
 		db.DB.Save(&userDomain)
 	} else {
-		//更新代理配置
-		db.DB.Model(&entity.UserConfigEntity{}).Where("domain = ?", *userDomain.Domain).Update("certificate_key", userDomain.CertificateKey).Update("certificate_content", userDomain.CertificateContent)
 		//更新缓存
 		value, ok := DOMAIN_USER_INFO.Load(*userDomain.Domain)
 		if ok {
@@ -148,8 +146,6 @@ func (receiver *DomainService) GenSsl(id int) bool {
 func (receiver *DomainService) UpdateData(id int, key, content string, domain string) error {
 	//更新域名配置
 	db.DB.Model(&entity.UserDomainEntity{}).Where("id = ?", id).Update("certificate_key", key).Update("certificate_content", content)
-	//更新代理配置
-	db.DB.Model(&entity.UserConfigEntity{}).Where("domain = ?", domain).Update("certificate_key", key).Update("certificate_content", content)
 	//更新缓存
 	value, ok := DOMAIN_USER_INFO.Load(domain)
 	if ok {

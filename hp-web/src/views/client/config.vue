@@ -12,6 +12,17 @@
         <template v-if="column.key==='status'">
           <a-switch :checked="!record.status||record.status==0"  @click="changeData(record)"/>
         </template>
+        <template v-if="column.key==='tunType'">
+          <div v-if="record.tunType&&record.tunType==='TCP'">
+            TCP多路复用
+          </div>
+          <div v-else-if="record.tunType&&record.tunType==='QUIC'">
+            QUIC多路复用
+          </div>
+          <div v-else>
+            QUIC多路复用
+          </div>
+        </template>
 
         <template v-if="column.key === 'deviceKey'">
           <div>
@@ -136,27 +147,16 @@
           </a-form-item>
 
           <a-form-item label="&nbsp;穿透域名&nbsp;&nbsp;" name="domain">
-            <!--            <a-input v-model:value="formState.domain" placeholder="xxx.com"/>-->
             <a-select
                 v-model:value="formState.domain"
                 show-search
                 placeholder="选择一个域名"
                 :options="domainOptions"
-                @change="handleChange"
             ></a-select>
 
           </a-form-item>
 
-          <a-form-item label="&nbsp;证书KEY&nbsp;&nbsp;" name="certificateKey"
-                       :rules="[{ required: false, message: '必须填写证书.key文件'}]">
-            <a-textarea  disabled="disabled" :rows="6" v-model:value="formState.certificateKey"
-                        placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;***大概是这样的证书私钥***&#10;-----END RSA PRIVATE KEY-----"/>
-          </a-form-item>
-          <a-form-item  label="&nbsp;证书内容&nbsp;&nbsp;" name="certificateContent"
-                       :rules="[{ required: false, message: '映射描述必填'}]">
-            <a-textarea disabled="disabled" :rows="6" v-model:value="formState.certificateContent"
-                        placeholder="-----BEGIN CERTIFICATE-----&#10;***大概是这样的证书内容***&#10;-----BEGIN CERTIFICATE-----"/>
-          </a-form-item>
+          <a-divider>其他选项配置</a-divider>
 
           <a-form-item label="配置有效" name="status"
                        :rules="[{ required: true, message: '当前配置是否有效'}]">
@@ -167,6 +167,18 @@
               <a-select-option value="1">无效</a-select-option>
             </a-select>
           </a-form-item>
+
+          <a-form-item label="隧道模式" name="tunType"
+                       :rules="[{ required: true, message: '选择隧道模式'}]">
+            <a-select
+                v-model:value="formState.tunType"
+            >
+              <a-select-option value="TCP">TCP多路复用模式</a-select-option>
+              <a-select-option value="QUIC">QUIC多路复用模式</a-select-option>
+            </a-select>
+          </a-form-item>
+
+
         </a-form>
       </a-modal>
     </div>
@@ -214,8 +226,7 @@ const formState = reactive({
   proxyVersion: "NONE",
   webType: "http",
   status: '0',
-  certificateKey: "",
-  certificateContent: "",
+  tunType:"TCP",
 })
 
 
@@ -248,23 +259,10 @@ const loadDomains=()=>{
         domainOptions.value.push({
           value: r.domain,
           label: r.domain,
-          certificateContent: r.certificateContent,
-          certificateKey: r.certificateKey,
         });
       });
   })
 }
-
-
-const handleChange = val => {
-  const data = domainOptions.value.filter((item)=>{return item.value===val})
-  console.log(data)
-  if (data.length===1){
-    formState.certificateKey=data[0].certificateKey.trim()
-    formState.certificateContent=data[0].certificateContent.trim()
-  }
-};
-
 
 const loadDeviceKey = () => {
   getDeviceKey().then(res => {
@@ -337,11 +335,13 @@ const editConfigData = (item) => {
   formState.localPort = item.localPort
   formState.connectType = item.connectType
   formState.proxyVersion = item.proxyVersion
-  formState.certificateKey = item.certificateKey
-  formState.certificateContent = item.certificateContent
   if (!item.webType){
     item.webType="http"
   }
+  if (!item.tunType){
+    item.tunType="QUIC"
+  }
+  formState.tunType = item.tunType
   formState.webType = item.webType
   formState.status = item.status+""
   addConfigVisible.value = true;
@@ -369,9 +369,8 @@ const addConfigModal = () => {
   formState.localPort = undefined
   formState.connectType = ""
   formState.proxyVersion = "NONE"
-  formState.certificateKey = ""
-  formState.certificateContent = ""
   formState.webType = "http"
+  formState.tunType=''
   formState.status = "0"
   addConfigVisible.value = true;
 };
@@ -395,6 +394,7 @@ const addConfigOk = () => {
 const columns = [
   {title: '配置ID', dataIndex: 'id', key: 'id'},
   {title: '备注', dataIndex: 'remarks', key: 'remarks'},
+  {title: '隧道模式', dataIndex: 'tunType', key: 'tunType'},
   {title: '内网IP', dataIndex: 'localIp', key: 'localIp'},
   {title: '内网端口', dataIndex: 'localPort', key: 'localPort'},
   {title: '外网端口', dataIndex: 'port', key: 'port'},

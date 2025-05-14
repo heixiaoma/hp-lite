@@ -45,6 +45,11 @@ type LocalInnerWear struct {
 	ConnectType ConnectType `json:"connectType"`
 
 	/**
+	 * QUIC、TCP、“”默认QUIC
+	 */
+	TunType string `json:"tunType"`
+
+	/**
 	 * 配置的MD5值
 	 */
 	Md5 string `json:"md5"`

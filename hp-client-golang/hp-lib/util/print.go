@@ -20,12 +20,12 @@ func PrintStatus(data []*bean.LocalInnerWear) string {
 	buffer := bytes.NewBuffer(nil)
 	table := tablewriter.NewWriter(buffer)
 	// 设置标题行
-	table.SetHeader([]string{"远端服务", "内网服务", "映射类型", "状态"})
+	table.SetHeader([]string{"远端服务", "内网服务", "映射类型", "隧道类型", "状态"})
 	for _, wear := range data {
 		if wear == nil {
 			return "暂无穿配置"
 		}
-		msg := []string{"", "", "", ""}
+		msg := []string{"", "", "", "", ""}
 		msg[0] = wear.ServerIp
 		msg[1] = wear.LocalIp + ":" + strconv.Itoa(wear.LocalPort)
 		switch wear.ConnectType {
@@ -36,7 +36,8 @@ func PrintStatus(data []*bean.LocalInnerWear) string {
 		case bean.TCP_UDP:
 			msg[2] = "TCP_UDP"
 		}
-		msg[3] = strconv.FormatBool(wear.Status)
+		msg[3] = wear.TunType
+		msg[4] = strconv.FormatBool(wear.Status)
 		table.Append(msg)
 	}
 	// 渲染表格

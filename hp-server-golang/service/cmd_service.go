@@ -57,6 +57,7 @@ func NoticeClientUpdateData(deviceKey string) bool {
 			wear := bean.LocalInnerWear{
 				OutLimit:    -1,
 				InLimit:     -1,
+				TunType:     item.TunType,
 				ConnectType: *item.ConnectType,
 				ConfigKey:   item.ConfigKey,
 				LocalIp:     item.LocalIp,

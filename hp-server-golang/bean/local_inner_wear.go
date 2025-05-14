@@ -32,6 +32,11 @@ type LocalInnerWear struct {
 	ConnectType ConnectType `json:"connectType"`
 
 	/**
+	 * 链接方式
+	 */
+	TunType string `json:"tunType"`
+
+	/**
 	 * 内网速度
 	 */
 	InLimit int `json:"inLimit"`

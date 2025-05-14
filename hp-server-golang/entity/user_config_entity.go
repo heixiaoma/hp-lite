@@ -67,16 +67,6 @@ type UserConfigEntity struct {
 	ProxyVersion bean.ProxyVersion `json:"proxyVersion"`
 
 	/**
-	 * SSL证书Key
-	 */
-	CertificateKey string `json:"certificateKey"`
-
-	/**
-	 * 证书内容
-	 */
-	CertificateContent string `json:"certificateContent"`
-
-	/**
 	 * 用户ID
 	 */
 	UserId *int `json:"userId"`
@@ -85,6 +75,11 @@ type UserConfigEntity struct {
 	 * 内网web类型 http和https
 	 */
 	WebType string `json:"webType"`
+
+	/**
+	 * 隧道类型QUIC/TCP
+	 */
+	TunType string `json:"tunType"`
 	/**
 	 * 状态 0生效 1 不生效
 	 */
