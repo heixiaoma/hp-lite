@@ -56,11 +56,10 @@ chmod -R 777 ./hp-lite-amd64
 
 
 ## 运行截图
-<img src="https://gitee.com/HServer/hp-lite/raw/main/doc/img/img.png"  />
-<img src="https://gitee.com/HServer/hp-lite/raw/main/doc/img/img_1.png"  />
-<img src="https://gitee.com/HServer/hp-lite/raw/main/doc/img/img_4.png"  />
-<img src="https://gitee.com/HServer/hp-lite/raw/main/doc/img/img_5.png"  />
-<img src="https://gitee.com/HServer/hp-lite/raw/main/doc/img/img_6.png"  />
-<img src="https://gitee.com/HServer/hp-lite/raw/main/doc/img/img_7.png"  />
-<img src="https://gitee.com/HServer/hp-lite/raw/main/doc/img/img_8.png"  />
+<img src="./doc/img/img.png"  />
+<img src="./doc/img/img_1.png"  />
+<img src="./doc/img/img_4.png"  />
+<img src="./doc/img/img_5.png"  />
+<img src="./doc/img/img_6.png"  />
+<img src="./doc/img/img_8.png"  />
 
