@@ -11,10 +11,24 @@ HP-Lite5.0是一个单机方案
 
 
 ### 服务端
+
+#### 二进制文件下载方式
 - 下载5.0的二进制文件运行即可
 - 配置说明 app.yml
 - app.yml文件放在和二进制同目录下即可，不然会默认启动配置
 - 建议：部署时关闭所有防火墙，云厂的安全组，注意UDP端口放开，还有TCP，
+
+#### docker 运行方式
+- 提前在主机建好 /data/app.yml文件 然后映射过去
+```shell
+# 通过 阿里云源 docker run 运行容器
+sudo docker run --net=host --restart=always -d  -v /data/app.yml:/hp-lite-server/app.yml  registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite-server:latest
+
+# 通过Docker官方源运行
+sudo docker run --net=host --restart=always -d  -v /data/app.yml:/hp-lite-server/app.yml  heixiaoma/hp-lite-server:latest
+```
+
+
 ```yaml
 
 admin:
@@ -42,7 +56,7 @@ acme:
 ##### docker
 ```shell
 # 通过 阿里云源 docker run 运行容器
-sudo docker run --restart=always -d  -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/hserver/hp-lite:latest
+sudo docker run --restart=always -d  -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite:latest
 
 # 通过Docker官方源运行
 sudo docker run --restart=always -d -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID heixiaoma/hp-lite:latest
