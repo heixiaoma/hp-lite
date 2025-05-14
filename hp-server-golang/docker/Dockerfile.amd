@@ -1,0 +1,4 @@
+FROM golang:1.17-alpine
+WORKDIR /hp-lite-server
+COPY --chmod=777 hp-lite-server-amd64  /hp-lite-server/hp-lite-server
+CMD ./hp-lite-server
