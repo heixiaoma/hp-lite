@@ -1,6 +1,6 @@
 variable "registry" {
-//   default = "docker.io"  # 默认值，可被环境变量覆盖
-  default = "registry.cn-shenzhen.aliyuncs.com"  # 默认值，可被环境变量覆盖
+  default = "docker.io"  # 默认值，可被环境变量覆盖
+//   default = "registry.cn-shenzhen.aliyuncs.com"  # 默认值，可被环境变量覆盖
 }
 
 variable "image_name" {
@@ -35,6 +35,7 @@ target "amd64" {
 
 target "manifest" {
   inherits = ["arm64", "amd64"]
+  platforms = ["linux/arm64", "linux/amd64"]
   tags = ["${registry}/${image_name}:latest"]
   type = "manifest"
   push = true
