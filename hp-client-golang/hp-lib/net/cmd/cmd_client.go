@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-var version = "hp-lite:4.0"
+var version = "hp-lite:5.0"
 
 type CmdClient struct {
 	CallMsg func(message string)
