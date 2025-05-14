@@ -22,10 +22,10 @@ HP-Lite5.0是一个单机方案
 - 提前在主机建好 /data/app.yml文件 然后映射过去
 ```shell
 # 通过 阿里云源 docker run 运行容器
-sudo docker run --net=host --restart=always -d  -v /data/app.yml:/hp-lite-server/app.yml  registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite-server:latest
+sudo docker run --net=host --restart=always -d  -v /data/app.yml:/hp-lite-server/app.yml  -v /data/data:/hp-lite-server/data registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite-server:latest
 
 # 通过Docker官方源运行
-sudo docker run --net=host --restart=always -d  -v /data/app.yml:/hp-lite-server/app.yml  heixiaoma/hp-lite-server:latest
+sudo docker run --net=host --restart=always -d  -v /data/app.yml:/hp-lite-server/app.yml  -v /data/data:/hp-lite-server/data  heixiaoma/hp-lite-server:latest
 ```
 
 

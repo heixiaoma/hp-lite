@@ -7,13 +7,16 @@ import (
 	"gorm.io/gorm/logger"
 	"hp-server-lib/entity"
 	"log"
+	"os"
+	"path/filepath"
 )
 
 var DB *gorm.DB
 var err error
 
 func init() {
-	DB, err = gorm.Open(sqlite.Open("hp-lite.db"), &gorm.Config{
+	EnsureDirExists("./data", 0755, true)
+	DB, err = gorm.Open(sqlite.Open("./data/hp-lite.db"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info), // 设置日志级别为 Info
 	})
 	if err != nil {
@@ -36,4 +39,27 @@ func init() {
 	DB.AutoMigrate(&entity.UserConfigEntity{})
 	DB.AutoMigrate(&entity.UserStatisticsEntity{})
 	DB.AutoMigrate(&entity.UserDomainEntity{})
+}
+
+func EnsureDirExists(dirPath string, perm os.FileMode, createParent bool) error {
+	// 规范化路径
+	dirPath = filepath.Clean(dirPath)
+	// 检查目录是否存在
+	stat, err := os.Stat(dirPath)
+	// 目录存在
+	if err == nil {
+		if !stat.IsDir() {
+			return fmt.Errorf("路径存在但不是目录: %s", dirPath)
+		}
+		return nil
+	}
+	// 目录不存在，创建它
+	if os.IsNotExist(err) {
+		if createParent {
+			return os.MkdirAll(dirPath, perm)
+		}
+		return os.Mkdir(dirPath, perm)
+	}
+	// 其他错误（如权限不足）
+	return err
 }
