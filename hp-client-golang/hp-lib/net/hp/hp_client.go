@@ -62,8 +62,24 @@ func (hpClient *HpClient) Connect(data *bean.LocalInnerWear) {
 }
 
 func (hpClient *HpClient) GetStatus() bool {
-	if hpClient.handler != nil {
-		return hpClient.handler.Active
+	if hpClient.handler != nil && hpClient.conn != nil {
+		if hpClient.conn.IsTcp() {
+			if hpClient.conn.TcpSession != nil {
+				return !hpClient.conn.TcpSession.IsClosed()
+			} else {
+				return false
+			}
+		} else {
+			stream, err := hpClient.conn.QuicSession.OpenUniStream()
+			if err != nil {
+				return false
+			}
+			err = stream.Close()
+			if err != nil {
+				hpClient.CallMsg("关闭检查流失败:" + err.Error())
+			}
+			return true
+		}
 	} else {
 		return false
 	}

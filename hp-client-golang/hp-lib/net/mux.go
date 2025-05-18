@@ -97,6 +97,13 @@ func (receiver *MuxSession) Close() error {
 	return nil
 }
 
+func (receiver *MuxSession) IsTcp() bool {
+	if receiver != nil {
+		return receiver.isTcp
+	}
+	return false
+}
+
 func (receiver *MuxSession) RemoteAddr() net.Addr {
 	if receiver.isTcp && receiver.TcpSession != nil {
 		return receiver.TcpSession.RemoteAddr()
