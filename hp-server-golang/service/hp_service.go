@@ -17,6 +17,7 @@ import (
 // 端口->隧道服务
 var HP_CACHE_TUN = sync.Map{}
 var DOMAIN_USER_INFO = sync.Map{}
+var mu sync.Mutex // 创建一个互斥锁
 
 type HpService struct {
 }
@@ -59,6 +60,9 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 }
 
 func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSession) {
+	mu.Lock()         // 上锁
+	defer mu.Unlock() // 解锁
+
 	configkey := data.MetaData.Key
 	info := receiver.loadUserConfigInfo(configkey)
 	if info == nil {

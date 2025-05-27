@@ -1,6 +1,6 @@
 variable "registry" {
-  default = "docker.io"  # 默认值，可被环境变量覆盖
-//   default = "registry.cn-shenzhen.aliyuncs.com"  # 默认值，可被环境变量覆盖
+//     default = "docker.io"  # 默认值，可被环境变量覆盖
+default = "registry.cn-shenzhen.aliyuncs.com"  # 默认值，可被环境变量覆盖
 }
 
 variable "image_name" {
