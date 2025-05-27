@@ -35,6 +35,7 @@ target "amd64" {
 
 target "manifest" {
   inherits = ["arm64", "amd64"]
+  platforms = ["linux/arm64", "linux/amd64"]
   tags = ["${registry}/${image_name}:latest"]
   type = "manifest"
   push = true
