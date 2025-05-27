@@ -38,7 +38,7 @@ func (receiver *MuxStream) StreamID() interface{} {
 	} else if receiver.QuicStream != nil {
 		return receiver.QuicStream.StreamID()
 	}
-	return -1
+	return nil
 }
 
 func (receiver *MuxStream) Close() error {
