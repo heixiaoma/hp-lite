@@ -7,7 +7,6 @@ import (
 	"hp-server-lib/config"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
-	"log"
 )
 
 type ConfigService struct {
@@ -51,7 +50,6 @@ func (receiver *ConfigService) DeviceKey(userId int) []*bean.ResUserDeviceInfo {
 			for _, item := range data {
 				customEntity := userMap[item.UserId]
 				if customEntity != nil {
-					log.Printf(customEntity.Username)
 					item.Username = customEntity.Username
 					item.UserDesc = customEntity.Desc
 				}

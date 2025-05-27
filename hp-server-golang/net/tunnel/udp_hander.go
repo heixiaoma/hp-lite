@@ -40,7 +40,6 @@ func (h *UdpHandler) handlerStream(stream *base.MuxStream) {
 
 func (receiver *UdpHandler) ReadStreamData(data *message.HpMessage) {
 	if data.Type == message.HpMessage_DATA {
-		log.Printf(string(data.Data))
 		receiver.lastActiveAt = time.Now()
 		receiver.udpConn.WriteToUDP(data.Data, receiver.addr)
 	}
