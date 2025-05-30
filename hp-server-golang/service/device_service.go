@@ -3,8 +3,11 @@ package service
 import (
 	"errors"
 	"hp-server-lib/bean"
+	"hp-server-lib/config"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
+	"hp-server-lib/util"
+	"strconv"
 )
 
 type DeviceService struct {
@@ -64,6 +67,8 @@ func (receiver *DeviceService) ListData(userId int) []*bean.ResDeviceInfo {
 			info.MemoryInfo = value.(*bean.MemoryInfo)
 		}
 		info.UserId = *item.UserId
+		//新增connectKey 将deviceId和server二合一
+		info.ConnectKey = util.EncodeToLowerCaseBase32(config.ConfigData.Tunnel.IP + ":" + strconv.Itoa(config.ConfigData.Cmd.Port) + "," + info.DeviceId)
 		result2 = append(result2, info)
 		userIds = append(userIds, *item.UserId)
 	}

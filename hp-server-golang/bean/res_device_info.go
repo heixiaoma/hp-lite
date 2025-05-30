@@ -9,6 +9,8 @@ type ResDeviceInfo struct {
 
 	DeviceId string `json:"deviceId"`
 
+	ConnectKey string `json:"connectKey"`
+
 	Desc string `json:"desc"`
 
 	Online bool `json:"online"`

@@ -14,13 +14,32 @@ import (
 func main() {
 	var deviceId string
 	var server string
+	var c string
 	//命令行参数模式
+	flag.StringVar(&c, "c", "", "连接码")
 	flag.StringVar(&deviceId, "deviceId", "", "设备ID")
 	flag.StringVar(&server, "server", "", "穿透服务")
 	flag.Parse()
 	//默认命令行参数大于环境变量参数
 	e1 := os.Getenv("deviceId")
 	e2 := os.Getenv("server")
+	e3 := os.Getenv("c")
+
+	//优先使用连码解析
+	if c == "" && e3 != "" {
+		c = e3
+	}
+	if c != "" {
+		log.Printf("使用连接码模式连接")
+		base32 := util.DecodeFromLowerCaseBase32(c)
+		log.Printf(base32)
+		split := strings.Split(base32, ",")
+		server = split[0]
+		deviceId = split[1]
+	} else {
+		log.Printf("使用旧模式连接")
+	}
+
 	if deviceId == "" && e1 != "" {
 		deviceId = e1
 	}
@@ -39,6 +58,7 @@ func main() {
 			time.Sleep(time.Duration(10) * time.Second)
 		}
 	}
+
 	split := strings.Split(server, ":")
 	serverPort, _ := strconv.Atoi(split[1])
 	serverIp := split[0]

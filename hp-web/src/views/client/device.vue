@@ -1,55 +1,54 @@
 <template>
-  <div>
+  <div style="padding: 0 20px">
 
     <div>
       <a-button type="primary" style="margin-bottom: 10px;margin-left: 10px" @click="addDeviceModal">添加设备</a-button>
       <a-button type="primary" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
     </div>
 
-    <a-list :loading="listLoading" :locale="{emptyText: '暂无设备,请添加后在客户端'}" item-layout="horizontal"
-            :data-source="deviceList">
-      <template #renderItem="{ item }">
+
+    <a-result v-if="deviceList&&deviceList.length===0" title="暂无设备信息">
+    </a-result>
+
+    <a-collapse :loading="listLoading" >
+      <a-collapse-panel :header="'设备：'+item.desc + (item.online ? '[在线中]': '[未在线]')" v-for="item in deviceList">
         <div style="padding: 30px" :class="[!item.online?'onRead':'']">
-          <a-card :title="'备注：'+item.desc" :bordered="false">
-            <p style="overflow-wrap: break-word;">设备ID：{{ item.deviceId }}</p>
-            <p v-if="item.memoryInfo">总内存：{{ (item.memoryInfo.total / 1024 / 1024).toFixed(2) }}/MB</p>
-            <p v-if="item.memoryInfo">使用内存：{{ (item.memoryInfo.useMem / 1024 / 1024).toFixed(2) }}/MB </p>
-            <p v-if="item.memoryInfo">CPU：{{ (item.memoryInfo.cpuRate).toFixed(2) }}%</p>
-            <p v-if="item.memoryInfo">HP占用内存：{{ (item.memoryInfo.hpTotalMem / 1024 / 1024).toFixed(2) }}/MB </p>
-            <p v-if="item.memoryInfo">HP实际使用内存：{{ (item.memoryInfo.hpUseMem / 1024 / 1024).toFixed(2) }}/MB </p>
-            <p>是否在线：{{ item.online ? "在线中" : "未在线" }}</p>
+          <p style="overflow-wrap: break-word;">设备ID：{{ item.deviceId }}</p>
+          <p style="overflow-wrap: break-word;">连接码：{{ item.connectKey }}</p>
+          <p v-if="item.memoryInfo">总内存：{{ (item.memoryInfo.total / 1024 / 1024).toFixed(2) }}/MB</p>
+          <p v-if="item.memoryInfo">使用内存：{{ (item.memoryInfo.useMem / 1024 / 1024).toFixed(2) }}/MB </p>
+          <p v-if="item.memoryInfo">CPU：{{ (item.memoryInfo.cpuRate).toFixed(2) }}%</p>
+          <p v-if="item.memoryInfo">HP占用内存：{{ (item.memoryInfo.hpTotalMem / 1024 / 1024).toFixed(2) }}/MB </p>
+          <p v-if="item.memoryInfo">HP实际使用内存：{{ (item.memoryInfo.hpUseMem / 1024 / 1024).toFixed(2) }}/MB </p>
+          <p>是否在线：{{ item.online ? "在线中" : "未在线" }}</p>
+          <div v-if="userInfo.getUserInfo().role==='ADMIN'">
+            <p v-if="item.username">归属用户：{{item.username}}</p>
+            <p v-if="item.userDesc">归属用户备注：{{item.userDesc}}</p>
+          </div>
 
-            <div v-if="userInfo.getUserInfo().role==='ADMIN'">
-              <p v-if="item.username">归属用户：{{item.username}}</p>
-              <p v-if="item.userDesc">归属用户备注：{{item.userDesc}}</p>
-            </div>
-
-            <div class="op-btn">
-              <a-popconfirm
-                  title="你真的要删除？"
-                  ok-text="是的我删除"
-                  cancel-text="点错了"
-                  @confirm="()=>{removeData(item)}"
-              >
-                <a-button type="primary">删除</a-button>
-              </a-popconfirm>
-              <a-popconfirm
-                  title="你真的要强制停止程序？"
-                  ok-text="是的我要停止"
-                  cancel-text="点错了"
-                  @confirm="()=>{stopData(item)}"
-              >
-                <a-button type="danger">强制停止</a-button>
-              </a-popconfirm>
-              <a-button type="dashed" @click="showQr(item)">查看设备码</a-button>
-              <a-button type="dashed" @click="edit(item)">编辑</a-button>
-              </div>
-          </a-card>
+          <div class="op-btn">
+            <a-popconfirm
+                title="你真的要删除？"
+                ok-text="是的我删除"
+                cancel-text="点错了"
+                @confirm="()=>{removeData(item)}"
+            >
+              <a-button type="primary">删除</a-button>
+            </a-popconfirm>
+            <a-popconfirm
+                title="你真的要强制停止程序？"
+                ok-text="是的我要停止"
+                cancel-text="点错了"
+                @confirm="()=>{stopData(item)}"
+            >
+              <a-button type="danger">强制停止</a-button>
+            </a-popconfirm>
+            <a-button type="dashed" @click="showQr(item)">查看连接码</a-button>
+            <a-button type="dashed" @click="edit(item)">编辑</a-button>
+          </div>
         </div>
-      </template>
-    </a-list>
-
-
+      </a-collapse-panel>
+    </a-collapse>
     <div>
       <a-modal :destroyOnClose="true" cancelText="取消" okText="我已知晓" v-model:visible="qrModalVisible" @ok="closeQr" title="设备二维码">
         <qr :text="deviceId"/>
@@ -58,8 +57,6 @@
         </template>
       </a-modal>
     </div>
-
-
     <div>
       <a-modal okText="确定" cancelText="取消" v-model:visible="addDeviceModalVisible" title="设备信息"
                @ok="addDeviceOk">
@@ -87,7 +84,6 @@
         </a-form>
       </a-modal>
     </div>
-
   </div>
 </template>
 
@@ -126,7 +122,7 @@ const edit=(item)=>{
 
 const showQr = (item)=>{
   qrModalVisible.value = true;
-  deviceId.value = item.deviceId;
+  deviceId.value = item.connectKey;
 }
 const closeQr = ()=>{
   qrModalVisible.value = false;
