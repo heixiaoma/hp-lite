@@ -65,14 +65,14 @@ func (tcpServer *TcpServer) handler(conn net.Conn) {
 
 			decode, e := handler.Decode(reader)
 			if e != nil {
-				log.Println(e)
+				log.Println("TCP解码错误:" + e.Error())
 				handler.ChannelInactive(conn)
 				return
 			}
 			if decode != nil {
 				err := handler.ChannelRead(conn, decode)
 				if err != nil {
-					log.Println(e)
+					log.Println("TCP发送内网端错误:" + err.Error())
 					return
 				}
 			}

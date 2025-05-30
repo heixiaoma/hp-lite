@@ -62,7 +62,7 @@ func (tcpServer *CmdServer) handler(conn net.Conn) {
 
 			decode, e := handler.Decode(reader)
 			if e != nil {
-				log.Println(e)
+				log.Println("CMD解码错误:" + e.Error())
 				handler.ChannelInactive(conn)
 				return
 			}
