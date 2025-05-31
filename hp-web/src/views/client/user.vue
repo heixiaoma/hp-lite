@@ -6,7 +6,7 @@
              :locale="{emptyText: '暂无数据,添加一个试试看看'}"
              :pagination="pagination"
              @change="handleTableChange"
-             :scroll="{ x: 10 }">
+             :scroll="{ x: 'max-content' }">
 
       <template #bodyCell="{ column ,record}">
 

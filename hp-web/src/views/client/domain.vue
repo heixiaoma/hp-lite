@@ -7,9 +7,42 @@
              :locale="{emptyText: '暂无数据,添加一个试试看看'}"
              :pagination="pagination"
              @change="handleTableChange"
-             :scroll="{ x: 10 }">
+             :scroll="{ x: 'max-content' }">
 
       <template #bodyCell="{ column ,record}">
+        <template v-if="column.key === 'certificateKey'">
+          <a-popconfirm
+              v-if="record.certificateKey"
+              okText="好的"
+              :showCancel="false"
+          >
+            <template #icon></template>
+            <template #title>
+              <div style="max-width: 80vw;white-space: pre-line;max-height: 50vh;overflow: scroll">
+                {{record.certificateKey}}
+              </div>
+            </template>
+
+            <a href="#">密钥</a>
+          </a-popconfirm>
+        </template>
+
+        <template v-if="column.key === 'certificateContent'"  >
+          <a-popconfirm
+              v-if="record.certificateContent"
+             okText="好的"
+              :showCancel="false"
+          >
+            <template #icon></template>
+            <template #title>
+              <div style="max-width: 80vw;white-space: pre-line;max-height: 50vh;overflow: scroll">
+                {{record.certificateContent}}
+              </div>
+            </template>
+            <a href="#">证书</a>
+          </a-popconfirm>
+        </template>
+
 
         <template v-if="column.key === 'createTime'">
           {{new Date(record.createTime).toLocaleString()}}
@@ -126,8 +159,8 @@ const columns = [
   {title: '编号', dataIndex: 'id', key: 'id'},
   {title: '域名', dataIndex: 'domain', key: 'domain'},
   {title: '备注', dataIndex: 'desc', key: 'desc'},
-  {title: '证书密钥', dataIndex: 'certificateKey', key: 'certificateKey', ellipsis: true,},
-  {title: '证书内容', dataIndex: 'certificateContent', key: 'certificateContent' ,ellipsis: true,},
+  {title: '证书密钥', dataIndex: 'certificateKey', key: 'certificateKey', },
+  {title: '证书内容', dataIndex: 'certificateContent', key: 'certificateContent' ,},
   {title: '状态', dataIndex: 'status', key: 'status'},
   {title: '提示', dataIndex: 'tips', key: 'tips'},
   {title: '操作', key: 'action'},
@@ -168,5 +201,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-
+div::-webkit-scrollbar {
+  display: none;
+}
 </style>

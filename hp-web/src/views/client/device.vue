@@ -1,14 +1,13 @@
 <template>
-  <div style="padding: 0 20px">
+  <div>
 
     <div>
-      <a-button type="primary" style="margin-bottom: 10px;margin-left: 10px" @click="addDeviceModal">添加设备</a-button>
+      <a-button type="primary" style="margin-bottom: 10px;" @click="addDeviceModal">添加设备</a-button>
       <a-button type="primary" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
     </div>
 
 
-    <a-result v-if="deviceList&&deviceList.length===0" title="暂无设备信息">
-    </a-result>
+    <a-empty  v-if="deviceList&&deviceList.length===0"  />
 
     <a-collapse :loading="listLoading" >
       <a-collapse-panel :header="'设备：'+item.desc + (item.online ? '[在线中]': '[未在线]')" v-for="item in deviceList">

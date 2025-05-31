@@ -1,12 +1,12 @@
 <template>
   <div>
-    <a-button type="primary" style="margin-bottom: 10px;margin-left: 10px" @click="addConfigModal">添加穿透</a-button>
+    <a-button type="primary" style="margin-bottom: 10px;" @click="addConfigModal">添加穿透</a-button>
     <a-button type="primary" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
     <a-table :loading="configLoading" :columns="columns" rowKey="id" :data-source="currentConfigList"
              :locale="{emptyText: '暂无配置,添加一个试试看看'}"
              :pagination="pagination"
              @change="handleTableChange"
-             :scroll="{ x: 10 }">
+             :scroll="{ x: 'max-content' }">
       <template #bodyCell="{ column ,record}">
 
         <template v-if="column.key==='status'">

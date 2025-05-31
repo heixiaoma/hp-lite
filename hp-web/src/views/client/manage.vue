@@ -13,7 +13,6 @@
             </a-menu>
           </template>
         </a-dropdown>
-        <span style="margin-left: 10px" class="name">{{ userInfo.auth === "NO_AUTH" ? "未认证" : "已认证" }}</span>
       </div>
 
       <div class="user-mini">
@@ -46,7 +45,7 @@
             <router-link to="/client/monitor">穿透监控</router-link>
           </a-menu-item>
           <a-menu-item key="teach">
-            <router-link to="/client/teach">穿透教程</router-link>
+            <router-link to="/client/teach">穿透说明</router-link>
           </a-menu-item>
         </a-menu>
       </a-layout-sider>
@@ -155,8 +154,14 @@ export default {
   background-color: #4b6ff6;
 }
 
+
 .content {
-  padding: 24px;
+  height: 90vh;
+  overflow-y: scroll;
+  padding: 24px 50px ;
+}
+.content::-webkit-scrollbar {
+  display: none;
 }
 
 @media only screen and (max-width: 767px) {
