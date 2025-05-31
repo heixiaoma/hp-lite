@@ -7,3 +7,10 @@ export function monitorList(query) {
         params: query
     })
 }
+export function monitorDetail(query) {
+    return http({
+        url: '/client/monitor/detail',
+        method: 'get',
+        params: query
+    })
+}

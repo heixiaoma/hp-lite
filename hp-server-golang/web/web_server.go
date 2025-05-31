@@ -65,6 +65,7 @@ func StartWebServer(port int) {
 
 	monitorController := controller.MonitorController{}
 	mux.HandleFunc("/client/monitor/list", monitorController.List)
+	mux.HandleFunc("/client/monitor/detail", monitorController.Detail)
 
 	domainController := controller.DomainController{}
 	mux.HandleFunc("/client/domain/list", domainController.GetDomainList)

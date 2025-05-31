@@ -9,6 +9,13 @@
              :scroll="{ x: 'max-content' }">
       <template #bodyCell="{ column ,record}">
 
+        <template v-if="column.key === 'local'">
+          {{record.localIp}}:{{record.localPort}}
+        </template>
+        <template v-if="column.key === 'server'">
+          {{record.serverIp}}:{{record.serverPort}}
+        </template>
+
         <template v-if="column.key==='status'">
           <a-switch :checked="!record.status||record.status==0"  @click="changeData(record)"/>
         </template>
@@ -395,9 +402,8 @@ const columns = [
   {title: '配置ID', dataIndex: 'id', key: 'id'},
   {title: '备注', dataIndex: 'remarks', key: 'remarks'},
   {title: '隧道模式', dataIndex: 'tunType', key: 'tunType'},
-  {title: '内网IP', dataIndex: 'localIp', key: 'localIp'},
-  {title: '内网端口', dataIndex: 'localPort', key: 'localPort'},
-  {title: '外网端口', dataIndex: 'port', key: 'port'},
+  {title: '内网服务', dataIndex: 'local', key: 'local'},
+  {title: '外网服务', dataIndex: 'server', key: 'server'},
   {title: '穿透类型', dataIndex: 'connectType', key: 'connectType'},
   {title: '配置有效', dataIndex: 'status', key: 'status'},
   {title: '域名', dataIndex: 'domain', key: 'domain'},

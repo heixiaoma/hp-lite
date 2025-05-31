@@ -8,8 +8,8 @@ import (
 type MonitorService struct {
 }
 
-func (receiver MonitorService) ListData(userId int) map[int][]entity.UserStatisticsEntity {
-	var results2 []entity.UserStatisticsEntity
+func (receiver MonitorService) ListData(userId int) []entity.UserConfigEntity {
+	var results2 []int
 	if userId > 0 {
 		var configIds []int
 		var results []entity.UserConfigEntity
@@ -17,16 +17,18 @@ func (receiver MonitorService) ListData(userId int) map[int][]entity.UserStatist
 		for _, result := range results {
 			configIds = append(configIds, *result.Id)
 		}
-		db.DB.Model(&entity.UserStatisticsEntity{}).Where("config_id in ?", configIds).Find(&results2)
+		db.DB.Model(&entity.UserStatisticsEntity{}).Distinct("config_id").Where("config_id in ?", configIds).Pluck("config_id", &results2)
 	} else {
-		db.DB.Model(&entity.UserStatisticsEntity{}).Find(&results2)
+		db.DB.Model(&entity.UserStatisticsEntity{}).Distinct("config_id").Pluck("config_id", &results2)
 	}
 
-	result := make(map[int][]entity.UserStatisticsEntity)
+	var resultsConfig []entity.UserConfigEntity
+	db.DB.Model(entity.UserConfigEntity{}).Where("id in ?", results2).Find(&resultsConfig)
+	return resultsConfig
+}
 
-	for _, user := range results2 {
-		// 使用 configId 作为 key，将 UserStatisticsEntity 添加到对应的列表中
-		result[user.ConfigId] = append(result[user.ConfigId], user)
-	}
-	return result
+func (receiver MonitorService) DetailData(id string) []entity.UserStatisticsEntity {
+	var results2 []entity.UserStatisticsEntity
+	db.DB.Model(&entity.UserStatisticsEntity{}).Where("config_id = ?", id).Find(&results2)
+	return results2
 }

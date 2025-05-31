@@ -35,3 +35,15 @@ func (receiver MonitorController) List(w http.ResponseWriter, r *http.Request) {
 
 	}
 }
+
+func (receiver MonitorController) Detail(w http.ResponseWriter, r *http.Request) {
+	queryParams := r.URL.Query()
+	id := queryParams.Get("id")
+	data := receiver.DetailData(id)
+	if data != nil {
+		json.NewEncoder(w).Encode(bean.ResOk(data))
+		return
+	} else {
+		json.NewEncoder(w).Encode(bean.ResError("登陆失败"))
+	}
+}

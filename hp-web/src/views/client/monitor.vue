@@ -1,262 +1,93 @@
 <template>
   <div>
-    <div id="chat">
+    <a-button type="primary" style="margin-bottom: 10px;" @click="loadData">刷新列表</a-button>
+    <a-table :loading="dataLoading" :columns="columns" rowKey="id" :data-source="monitorData"
+             :locale="{emptyText: '暂无数据'}"
+             :scroll="{ x: 'max-content' }">
 
-    </div>
+      <template #bodyCell="{ column ,record}">
+        <template v-if="column.key === 'local'">
+        {{record.localIp}}:{{record.localPort}}
+        </template>
+        <template v-if="column.key === 'remote'">
+          {{record.serverIp}}:{{record.serverPort}}
+        </template>
+        <template v-if="column.key==='tunType'">
+          <div v-if="record.tunType&&record.tunType==='TCP'">
+            TCP多路复用
+          </div>
+          <div v-else-if="record.tunType&&record.tunType==='QUIC'">
+            QUIC多路复用
+          </div>
+          <div v-else>
+            QUIC多路复用
+          </div>
+        </template>
+        <template v-if="column.key === 'action'">
+          <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="show(record)">查看统计</a-button>
+        </template>
+      </template>
+    </a-table>
 
-    <div v-if="monitorData&&Object.keys(monitorData).length===0">
-      暂无穿透数据统计
-    </div>
-
-
+    <a-modal
+        v-model:visible="open"
+        title="统计图"
+        :footer="null"
+        width="100%"
+        wrap-class-name="full-modal"
+    >
+      <monitor_chart v-if="currentData.value" :value="currentData.value" :name="currentData.name"></monitor_chart>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
 
-import * as echarts from 'echarts/core';
-import {
-  TitleComponent,
-  ToolboxComponent,
-  TooltipComponent,
-  GridComponent,
-  LegendComponent,
-  DataZoomComponent,
-  MarkAreaComponent
-} from 'echarts/components';
-import {LineChart} from 'echarts/charts';
-import {UniversalTransition} from 'echarts/features';
-import {CanvasRenderer} from 'echarts/renderers';
-import {onMounted, ref} from 'vue'
-import {monitorList} from "../../api/client/monitor";
+import {onMounted, reactive, ref} from "vue";
+import {monitorDetail, monitorList} from "../../api/client/monitor.js";
+import {message} from "ant-design-vue";
+import Monitor_chart from "./monitor_chart.vue";
 
-echarts.use([
-  TitleComponent,
-  ToolboxComponent,
-  TooltipComponent,
-  GridComponent,
-  LegendComponent,
-  DataZoomComponent,
-  MarkAreaComponent,
-  LineChart,
-  CanvasRenderer,
-  UniversalTransition
-]);
-
-
-const monitorData = ref();
+const monitorData = ref([]);
+const dataLoading = ref(false);
 
 const loadData = async () => {
+  dataLoading.value=true
   let data = await monitorList()
   monitorData.value = data.data
+  dataLoading.value=false
 }
 
-const formatTimestamp = (timestamp) => {
-  const date = new Date(timestamp);
-  const year = date.getFullYear();
-  const month = padZero(date.getMonth() + 1);
-  const day = padZero(date.getDate());
-  const hours = padZero(date.getHours());
-  const minutes = padZero(date.getMinutes());
-  const seconds = padZero(date.getSeconds());
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
-const padZero=(num) =>{
-  return num.toString().padStart(2, '0');
-}
+const columns = [
+  {title: '备注', dataIndex: 'remarks', key: 'remarks'},
+  {title: '域名', dataIndex: 'domain', key: 'domain'},
+  {title: '内网', dataIndex: 'local', key: 'local'},
+  {title: '外网', dataIndex: 'remote', key: 'remote'},
+  {title: '隧道类型', dataIndex: 'tunType', key: 'tunType'},
+  {title: '操作', key: 'action'},
+];
 
-const showFlow = (key, dataList) => {
-  var chartDom = document.getElementById('chat');
-  let flow = document.createElement("div");
-  flow.id = "flow" + key
-  flow.style.width = "100%"
-  flow.style.height = "40vh"
-  chartDom.appendChild(
-      flow
-  )
+const open=ref(false)
+const currentData=reactive({
+  name:null,
+  value:null
+})
 
-  let option = {
-    title: {
-      text: '配置ID:' + key + '、下载/上传',
-      left: 'center'
-    },
-    grid: {
-      bottom: 80
-    },
-    toolbox: {
-      feature: {
-        dataZoom: {
-          yAxisIndex: 'none'
-        },
-        restore: {},
-        saveAsImage: {}
-      }
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'cross',
-        animation: false,
-        label: {
-          backgroundColor: '#505765'
-        }
-      }
-    },
-    legend: {
-      data: ['下载', '上传'],
-      left: '30%',
-      top:30
-    },
-    dataZoom: [
-      {
-        show: true,
-        realtime: true,
-        start: 0,
-        end: 100
-      },
-      {
-        type: 'inside',
-        realtime: true,
-        start: 0,
-        end: 100
-      }
-    ],
-    xAxis: [
-      {
-        type: 'category',
-        boundaryGap: false,
-        axisLine: {onZero: false},
-        // prettier-ignore
-        data: dataList.map(item => formatTimestamp(item.time))
-      }
-    ],
-    yAxis: [
-      {
-        name: '下载/MB',
-        type: 'value'
-      },
-      {
-        name: '上传/MB',
-        nameLocation: 'start',
-        alignTicks: true,
-        type: 'value',
-        inverse: true
-      }
-    ],
-    series: [
-      {
-        name: '下载',
-        type: 'line',
-        areaStyle: {},
-        lineStyle: {
-          width: 1
-        },
-        emphasis: {
-          focus: 'series'
-        },
-        // prettier-ignore
-        data: dataList.map(item => (item.download / 1024/1024).toFixed(2))
-      },
-      {
-        name: '上传',
-        type: 'line',
-        yAxisIndex: 1,
-        areaStyle: {},
-        lineStyle: {
-          width: 1
-        },
-        emphasis: {
-          focus: 'series'
-        },
-        // prettier-ignore
-        data: dataList.map(item => (item.upload / 1024/1024).toFixed(2))
-
-      }
-    ]
-  };
-
-
-  let myChart = echarts.init(document.getElementById(flow.id));
-  option && myChart.setOption(option);
-
-
-}
-
-const showAccess = (key, dataList) => {
-  var chartDom = document.getElementById('chat');
-  let flow = document.createElement("div");
-  flow.id = "access" + key
-  flow.style.width = "100%"
-  flow.style.height = "40vh"
-  chartDom.appendChild(
-      flow
-  )
-
-  let option = {
-    title: {
-      text: '配置ID:' + key + '、pv/uv 统计',
-      left: 'center'
-    },
-    tooltip: {
-      trigger: 'axis'
-    },
-    legend: {
-      data: ['pv', 'uv'],
-      right: 10,
-      top:30
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    toolbox: {
-      feature: {
-        saveAsImage: {}
-      }
-    },
-    xAxis: {
-      type: 'category',
-      boundaryGap: false,
-      data: dataList.map(item => formatTimestamp(item.time))
-    },
-    yAxis: [
-      {
-        name: '访问量/人数',
-        type: 'value'
-      },
-    ],
-
-    series: [
-      {
-        name: 'pv',
-        type: 'line',
-        data: dataList.map(item => item.pv)
-      },
-      {
-        name: 'uv',
-        type: 'line',
-        data: dataList.map(item => item.uv)
-      },
-
-    ]
-  };
-
-
-  let myChart = echarts.init(document.getElementById(flow.id));
-  option && myChart.setOption(option);
-
-
+const show = (record) => {
+  monitorDetail({id:record.id}).then(res=>{
+    if (res.data){
+      currentData.value=res.data
+      currentData.name=record.remarks
+      open.value=true
+    }else {
+      message.warn("暂无数据")
+    }
+  })
 }
 
 
 onMounted(async () => {
   await loadData()
-  for (let monitorDataKey in monitorData.value) {
-    showFlow(monitorDataKey, monitorData.value[monitorDataKey])
-    showAccess(monitorDataKey, monitorData.value[monitorDataKey])
-  }
 })
 
 
