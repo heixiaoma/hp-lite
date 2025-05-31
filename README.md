@@ -57,9 +57,13 @@ acme:
 ```shell
 # 通过 阿里云源 docker run 运行容器
 sudo docker run --restart=always -d  -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite:latest
+#直接连接码
+sudo docker run --restart=always -d  -e c=连接码 registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite:latest
 
 # 通过Docker官方源运行
 sudo docker run --restart=always -d -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID heixiaoma/hp-lite:latest
+#直接连接码
+sudo docker run --restart=always -d -e  c=连接码 heixiaoma/hp-lite:latest
 ```
 
 ##### Linux或者win
