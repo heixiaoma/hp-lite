@@ -156,9 +156,9 @@ export default {
 
 
 .content {
-  height: 90vh;
+  max-height: 90vh;
   overflow-y: scroll;
-  padding: 24px 50px ;
+  padding: 20px 40px;
 }
 .content::-webkit-scrollbar {
   display: none;

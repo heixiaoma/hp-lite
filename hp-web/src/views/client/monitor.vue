@@ -10,7 +10,7 @@
         {{record.localIp}}:{{record.localPort}}
         </template>
         <template v-if="column.key === 'remote'">
-          {{record.serverIp}}:{{record.serverPort}}
+          {{record.serverIp}}:{{record.port}}
         </template>
         <template v-if="column.key==='tunType'">
           <div v-if="record.tunType&&record.tunType==='TCP'">

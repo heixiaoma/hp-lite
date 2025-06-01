@@ -10,6 +10,7 @@ import (
 	"hp-server-lib/protol"
 	"hp-server-lib/util"
 	"io"
+	"log"
 	"net"
 	"strings"
 )
@@ -101,8 +102,13 @@ func (h *TcpHandler) ChannelActive(conn net.Conn) {
 				}
 			}
 		}
-
 		go h.handlerStream(stream)
+	} else {
+		log.Println("TCP服务激活创建流失败:" + err.Error())
+		err := h.conn.Close()
+		if err != nil {
+			log.Println("TCP服务关闭失败:" + err.Error())
+		}
 	}
 }
 

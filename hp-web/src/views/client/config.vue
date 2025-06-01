@@ -13,7 +13,7 @@
           {{record.localIp}}:{{record.localPort}}
         </template>
         <template v-if="column.key === 'server'">
-          {{record.serverIp}}:{{record.serverPort}}
+          {{record.serverIp}}:{{record.port}}
         </template>
 
         <template v-if="column.key==='status'">
