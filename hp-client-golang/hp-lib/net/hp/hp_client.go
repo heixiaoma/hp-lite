@@ -60,9 +60,11 @@ func (hpClient *HpClient) Connect(data *bean.LocalInnerWear) {
 	hpClient.handler = handler
 	if data.TunType == "TCP" {
 		connection := connect.NewHpTcpConnection()
+		hpClient.tcpStream = nil
 		hpClient.conn = connection.ConnectHpTcp(data.ServerIp, data.ServerPort, handler, hpClient.CallMsg)
 	} else {
 		connection := connect.NewHpQuicConnection()
+		hpClient.quicStream = nil
 		hpClient.conn = connection.ConnectHpQuic(data.ServerIp, data.ServerPort, handler, hpClient.CallMsg)
 	}
 }
@@ -83,6 +85,7 @@ func (hpClient *HpClient) GetStatus() bool {
 				if err != nil {
 					hpClient.CallMsg("TCP发送心跳包错误:" + err.Error())
 					hpClient.tcpStream.Close()
+					hpClient.tcpStream = nil
 					return false
 				}
 				return true
@@ -102,6 +105,7 @@ func (hpClient *HpClient) GetStatus() bool {
 			if err != nil {
 				hpClient.CallMsg("QUIC发送心跳包错误:" + err.Error())
 				hpClient.quicStream.Close()
+				hpClient.quicStream = nil
 				return false
 			}
 			return true
