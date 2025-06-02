@@ -65,18 +65,27 @@ func (hpClient *HpClient) GetStatus() bool {
 	if hpClient.handler != nil && hpClient.conn != nil {
 		if hpClient.conn.IsTcp() {
 			if hpClient.conn.TcpSession != nil {
-				return !hpClient.conn.TcpSession.IsClosed()
+				stream, err := hpClient.conn.TcpSession.OpenStream()
+				if err != nil {
+					hpClient.CallMsg("创建TCP检查流失败:" + err.Error())
+					return false
+				}
+				err = stream.Close()
+				if err != nil {
+					hpClient.CallMsg("TCP关闭检查流失败:" + err.Error())
+				}
 			} else {
 				return false
 			}
 		} else {
 			stream, err := hpClient.conn.QuicSession.OpenUniStream()
 			if err != nil {
+				hpClient.CallMsg("创建QUIC检查流失败:" + err.Error())
 				return false
 			}
 			err = stream.Close()
 			if err != nil {
-				hpClient.CallMsg("关闭检查流失败:" + err.Error())
+				hpClient.CallMsg("QUIC关闭检查流失败:" + err.Error())
 			}
 			return true
 		}
