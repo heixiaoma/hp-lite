@@ -69,7 +69,10 @@ sudo docker run --restart=always -d -e  c=连接码 heixiaoma/hp-lite:latest
 ##### Linux或者win
 ```shell
 chmod -R 777 ./hp-lite-amd64
-./hp-lite-amd64 -server=xxx.com穿透服务:16666 -deviceId=32位的设备ID 
+#方式1
+./hp-lite-amd64 -server=xxx.com穿透服务:16666 -deviceId=32位的设备ID
+#方式2
+./hp-lite-amd64 -c=连接码
 ```
 
 
