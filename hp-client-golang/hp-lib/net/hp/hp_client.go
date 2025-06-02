@@ -92,6 +92,7 @@ func (hpClient *HpClient) GetStatus() bool {
 	} else {
 		return false
 	}
+	return false
 }
 
 func (hpClient *HpClient) GetProxyServer() string {
