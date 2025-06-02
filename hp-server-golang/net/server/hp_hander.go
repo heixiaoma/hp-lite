@@ -30,7 +30,9 @@ func (h *HPClientHandler) ChannelRead(stream *net2.MuxStream, data interface{}, 
 		stream.Close()
 		return errors.New("HP消息类型:解码异常")
 	}
-	log.Printf("流ID:%d|HP消息类型:%s|IP:%s", stream.StreamID(), message.Type.String(), conn.RemoteAddr())
+	if message.Type != hpMessage.HpMessage_KEEPALIVE {
+		log.Printf("流ID:%d|HP消息类型:%s|IP:%s", stream.StreamID(), message.Type.String(), conn.RemoteAddr())
+	}
 	switch message.Type {
 	case hpMessage.HpMessage_REGISTER:
 		{
