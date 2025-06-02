@@ -1,6 +1,8 @@
 package hp
 
 import (
+	"github.com/quic-go/quic-go"
+	"github.com/xtaci/smux"
 	"golang.org/x/time/rate"
 	"hp-lib/bean"
 	hpMessage "hp-lib/message"
@@ -12,8 +14,11 @@ import (
 )
 
 type HpClient struct {
-	CallMsg func(message string)
-	conn    *net.MuxSession
+	CallMsg    func(message string)
+	conn       *net.MuxSession
+	quicStream quic.Stream
+	tcpStream  *smux.Stream
+
 	Data    *bean.LocalInnerWear
 	handler *handler2.HpClientHandler
 }
@@ -66,40 +71,38 @@ func (hpClient *HpClient) GetStatus() bool {
 	if hpClient.handler != nil && hpClient.conn != nil {
 		if hpClient.conn.IsTcp() {
 			if hpClient.conn.TcpSession != nil {
-				stream, err := hpClient.conn.TcpSession.OpenStream()
-				if err != nil {
-					hpClient.CallMsg("创建TCP检查流失败:" + err.Error())
-					return false
+				if hpClient.tcpStream == nil {
+					stream, err := hpClient.conn.TcpSession.OpenStream()
+					if err != nil {
+						hpClient.CallMsg("创建TCP检查流失败:" + err.Error())
+						return false
+					}
+					hpClient.tcpStream = stream
 				}
-				_, err = stream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_KEEPALIVE}))
+				_, err := hpClient.tcpStream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_KEEPALIVE}))
 				if err != nil {
 					hpClient.CallMsg("TCP发送心跳包错误:" + err.Error())
-					stream.Close()
+					hpClient.tcpStream.Close()
 					return false
-				}
-				err = stream.Close()
-				if err != nil {
-					hpClient.CallMsg("TCP关闭检查流失败:" + err.Error())
 				}
 				return true
 			} else {
 				return false
 			}
 		} else {
-			stream, err := hpClient.conn.QuicSession.OpenStream()
-			if err != nil {
-				hpClient.CallMsg("创建QUIC检查流失败:" + err.Error())
-				return false
+			if hpClient.quicStream == nil {
+				stream, err := hpClient.conn.QuicSession.OpenStream()
+				if err != nil {
+					hpClient.CallMsg("创建QUIC检查流失败:" + err.Error())
+					return false
+				}
+				hpClient.quicStream = stream
 			}
-			_, err = stream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_KEEPALIVE}))
+			_, err := hpClient.quicStream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_KEEPALIVE}))
 			if err != nil {
 				hpClient.CallMsg("QUIC发送心跳包错误:" + err.Error())
-				stream.Close()
+				hpClient.quicStream.Close()
 				return false
-			}
-			err = stream.Close()
-			if err != nil {
-				hpClient.CallMsg("QUIC关闭检查流失败:" + err.Error())
 			}
 			return true
 		}
