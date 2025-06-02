@@ -74,7 +74,6 @@ func (h *HpClientHandler) ChannelRead(stream *net2.MuxStream, data interface{}) 
 		h.WriteData(stream, message)
 	case hpMessage.HpMessage_KEEPALIVE:
 		h.CallMsg("服务器端返回心跳数据")
-		stream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_KEEPALIVE}))
 		break
 	default:
 		marshal, _ := json.Marshal(message)

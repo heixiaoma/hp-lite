@@ -7,6 +7,7 @@ import (
 	"hp-lib/net"
 	"hp-lib/net/connect"
 	handler2 "hp-lib/net/handler"
+	"hp-lib/protol"
 	"strconv"
 )
 
@@ -70,10 +71,17 @@ func (hpClient *HpClient) GetStatus() bool {
 					hpClient.CallMsg("创建TCP检查流失败:" + err.Error())
 					return false
 				}
+				_, err = stream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_KEEPALIVE}))
+				if err != nil {
+					hpClient.CallMsg("TCP发送心跳包错误:" + err.Error())
+					stream.Close()
+					return false
+				}
 				err = stream.Close()
 				if err != nil {
 					hpClient.CallMsg("TCP关闭检查流失败:" + err.Error())
 				}
+				return true
 			} else {
 				return false
 			}
@@ -81,6 +89,12 @@ func (hpClient *HpClient) GetStatus() bool {
 			stream, err := hpClient.conn.QuicSession.OpenUniStream()
 			if err != nil {
 				hpClient.CallMsg("创建QUIC检查流失败:" + err.Error())
+				return false
+			}
+			_, err = stream.Write(protol.Encode(&hpMessage.HpMessage{Type: hpMessage.HpMessage_KEEPALIVE}))
+			if err != nil {
+				hpClient.CallMsg("QUIC发送心跳包错误:" + err.Error())
+				stream.Close()
 				return false
 			}
 			err = stream.Close()
@@ -92,7 +106,6 @@ func (hpClient *HpClient) GetStatus() bool {
 	} else {
 		return false
 	}
-	return false
 }
 
 func (hpClient *HpClient) GetProxyServer() string {
