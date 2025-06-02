@@ -86,7 +86,7 @@ func (hpClient *HpClient) GetStatus() bool {
 				return false
 			}
 		} else {
-			stream, err := hpClient.conn.QuicSession.OpenUniStream()
+			stream, err := hpClient.conn.QuicSession.OpenStream()
 			if err != nil {
 				hpClient.CallMsg("创建QUIC检查流失败:" + err.Error())
 				return false
