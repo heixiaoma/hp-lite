@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"github.com/flopp/go-findfont"
 	"hp-lib/net/cmd"
+	"hp-lib/util"
 	"log"
 	"os"
 	"strconv"
@@ -16,7 +19,6 @@ func init() {
 	//设置中文字体:解决中文乱码问题
 	fontPaths := findfont.List()
 	for _, path := range fontPaths {
-		log.Println(path)
 		if strings.Contains(path, "Arial Unicode.ttf") || strings.Contains(path, "msyh.ttf") || strings.Contains(path, "simhei.ttf") || strings.Contains(path, "simsun.ttc") || strings.Contains(path, "simkai.ttf") {
 			os.Setenv("FYNE_FONT", path)
 			break
@@ -32,15 +34,13 @@ func main() {
 
 	serverIp := ""
 	serverPort := 0
+	deviceId := ""
 
 	a := app.New()
 	w := a.NewWindow("HP-LITE映射工具")
 
-	serverInput := widget.NewEntry()
-	serverInput.SetPlaceHolder("请输入服务地址:如 xxx.com:6666")
-
-	deviceIdInput := widget.NewEntry()
-	deviceIdInput.SetPlaceHolder("请输入设备ID...")
+	connectCode := widget.NewEntry()
+	connectCode.SetPlaceHolder("请输入连接码")
 
 	var connectBtn *widget.Button
 	var cmdClient *cmd.CmdClient
@@ -70,39 +70,42 @@ func main() {
 			cmdClient.Close()
 			cmdClient = nil
 			connectBtn.SetText("连接云端")
-			deviceIdInput.Enable()
-			serverInput.Enable()
+			connectCode.Enable()
 		} else {
 			cmdClient = cmd.NewCmdClient(func(message string) {
 				if len(logs) > 20 {
 					logs = logs[20:]
 				}
-				logs = append(logs, strings.TrimSpace(message))
+				logs = append(logs, message)
 				list.Refresh()
 				list.ScrollToBottom()
 				log.Printf(message)
 			})
-			split := strings.Split(serverInput.Text, ":")
-			serverPort, _ := strconv.Atoi(split[1])
-			serverIp := split[0]
-			cmdClient.Connect(serverIp, serverPort, deviceIdInput.Text)
+			if len(connectCode.Text) == 0 {
+				return
+			}
+			base32 := util.DecodeFromLowerCaseBase32(connectCode.Text)
+			i := strings.Split(base32, ",")
+			split := strings.Split(i[0], ":")
+			serverPort, _ = strconv.Atoi(split[1])
+			serverIp = split[0]
+			deviceId = i[1]
+			cmdClient.Connect(serverIp, serverPort, deviceId)
 			connectBtn.SetText("断开连接")
-			deviceIdInput.Disable()
-			serverInput.Disable()
+			connectCode.Disable()
 		}
 	})
 
 	go func() {
 		for {
 			if cmdClient != nil && !cmdClient.GetStatus() && strings.Contains(connectBtn.Text, "断开连接") {
-				cmdClient.Connect(serverIp, serverPort, deviceIdInput.Text)
+				cmdClient.Connect(serverIp, serverPort, deviceId)
 			}
 			time.Sleep(time.Duration(10) * time.Second)
 		}
 	}()
 	vBox := container.NewVBox(
-		serverInput,
-		deviceIdInput,
+		connectCode,
 		connectBtn,
 	)
 	stack := container.NewPadded(

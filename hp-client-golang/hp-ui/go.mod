@@ -6,6 +6,8 @@ toolchain go1.23.2
 
 require (
 	fyne.io/fyne/v2 v2.4.4
+	github.com/flopp/go-findfont v0.1.0
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	hp-lib v1.0.0
 )
 
@@ -43,6 +45,7 @@ require (
 	github.com/tevino/abool v1.2.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
+	github.com/xtaci/smux v1.5.34 // indirect
 	github.com/yuin/goldmark v1.5.5 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.uber.org/mock v0.5.0 // indirect
