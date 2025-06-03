@@ -63,6 +63,12 @@ func (h *UdpHandler) ChannelActive(udpConn *net.UDPConn) {
 		log.Printf("通知内网连接")
 		h.stream = stream
 		go h.handlerStream(stream)
+	} else {
+		log.Println("UDP服务激活创建流失败:" + err.Error())
+		err := h.conn.Close()
+		if err != nil {
+			log.Println("UDP服务关闭失败:" + err.Error())
+		}
 	}
 	go func() {
 		// 创建一个每 5 秒触发一次的定时器
@@ -73,7 +79,7 @@ func (h *UdpHandler) ChannelActive(udpConn *net.UDPConn) {
 			select {
 			case <-ticker.C:
 				sub := time.Now().Sub(h.lastActiveAt)
-				if sub.Seconds() > 20 {
+				if sub.Seconds() > 60 {
 					value, ok := h.udpServer.cache.Load(h.addr.String())
 					if ok {
 						handler := value.(*UdpHandler)

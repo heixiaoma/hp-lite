@@ -41,12 +41,6 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 			}
 			n, addr, err := conn.ReadFromUDP(buffer)
 			if err != nil {
-				udpServer.cache.Range(func(key, value any) bool {
-					handler := value.(*UdpHandler)
-					go handler.ChannelInactive(conn)
-					udpServer.cache.Delete(key)
-					return true
-				})
 				break
 			}
 			value, ok := udpServer.cache.Load(addr.String())
