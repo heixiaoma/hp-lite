@@ -8,6 +8,7 @@ import (
 	"hp-lib/util"
 	"net"
 	"os"
+	"time"
 )
 
 type CmdClientHandler struct {
@@ -27,7 +28,28 @@ func (h *CmdClientHandler) ChannelActive(conn net.Conn) {
 		Key:     h.Key,
 		Data:    util.SysInfo(),
 	}
-	conn.Write(protol.CmdEncode(message))
+	_, err := conn.Write(protol.CmdEncode(message))
+	if err != nil {
+		conn.Close()
+		h.Active = false
+		return
+	}
+
+	go func() {
+		defer func() {
+			conn.Close()
+			h.Active = false
+			h.CmdClient.CallMsg("中心节点连接关闭")
+		}()
+		for {
+			_, err := conn.Write(protol.CmdEncode(&cmdMessage.CmdMessage{Version: version, Key: h.Key, Type: cmdMessage.CmdMessage_TIPS, Data: util.SysInfo()}))
+			if err != nil {
+				h.CmdClient.CallMsg("中心节点发送连接异常:" + err.Error())
+				return
+			}
+			time.Sleep(time.Duration(60) * time.Second)
+		}
+	}()
 }
 
 func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
@@ -40,9 +62,7 @@ func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
 		break
 	case cmdMessage.CmdMessage_TIPS:
 		h.CmdClient.CallMsg(message.Data)
-		conn.Write(protol.CmdEncode(&cmdMessage.CmdMessage{Version: version, Key: h.Key, Type: cmdMessage.CmdMessage_TIPS, Data: util.SysInfo()}))
 		break
-
 	case cmdMessage.CmdMessage_LOCAL_INNER_WEAR:
 		h.CmdClient.CallMsg("正在检查本地映射配置关系")
 		h.connected(message)
