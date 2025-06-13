@@ -71,7 +71,6 @@ const loadData = () => {
   }).then(res => {
     dataLoading.value = false
     listData.value = res.data.records
-    pagination.current = res.data.current
     pagination.total = res.data.total
   })
 }
@@ -103,7 +102,6 @@ const columns = [
   {title: '创建时间', dataIndex: 'createTime', key: 'createTime'},
   {title: '操作', key: 'action'},
 ];
-
 
 const handleTableChange = (item) => {
   pagination.current = item.current

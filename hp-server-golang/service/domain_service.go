@@ -96,7 +96,7 @@ func (receiver *DomainService) DomainListByKey(userId int, keyword string) *bean
 			tx.Where("(user_config.domain is null or user_config.domain='')")
 		}
 
-		tx.Order("id desc").Find(&results)
+		tx.Order("user_domain.id desc").Find(&results)
 	} else {
 		model := db.DB.Model(&entity.UserDomainEntity{})
 		model.Joins("LEFT JOIN user_config ON user_domain.domain = user_config.domain")
@@ -105,7 +105,7 @@ func (receiver *DomainService) DomainListByKey(userId int, keyword string) *bean
 		} else {
 			model.Where("(user_config.domain is null or user_config.domain='') and user_id = ?", userId)
 		}
-		model.Order("id desc").Find(&results)
+		model.Order("user_domain.id desc").Find(&results)
 	}
 	return bean.ResOk(results)
 }

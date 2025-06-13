@@ -48,6 +48,16 @@
           {{new Date(record.createTime).toLocaleString()}}
         </template>
 
+        <template v-if="column.key === 'user'">
+          <div v-if="record.userId==-1">
+            官方用户
+          </div>
+          <div v-else>
+            <div>归属用户：{{record.userDesc}}</div>
+            <div>归属用户备注：{{record.username}}</div>
+          </div>
+        </template>
+
         <template v-if="column.key === 'action'">
           <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="getSSl(record)">获取SSL证书</a-button>
           <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="edit(record)">编辑</a-button>
@@ -163,6 +173,7 @@ const columns = [
   {title: '证书内容', dataIndex: 'certificateContent', key: 'certificateContent' ,},
   {title: '状态', dataIndex: 'status', key: 'status'},
   {title: '提示', dataIndex: 'tips', key: 'tips'},
+  {title: '归属', dataIndex: 'user', key: 'user'},
   {title: '操作', key: 'action'},
 ];
 
