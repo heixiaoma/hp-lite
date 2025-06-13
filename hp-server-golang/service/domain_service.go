@@ -91,7 +91,7 @@ func (receiver *DomainService) DomainListByKey(userId int, keyword string) *bean
 		tx := db.DB.Model(&entity.UserDomainEntity{})
 		tx.Joins("LEFT JOIN user_config ON user_domain.domain = user_config.domain")
 		if len(keyword) > 0 {
-			tx.Where("(user_config.domain is null or user_config.domain='') and domain like ?", "%"+keyword+"%")
+			tx.Where("(user_config.domain is null or user_config.domain='') and user_domain.domain like ?", "%"+keyword+"%")
 		} else {
 			tx.Where("(user_config.domain is null or user_config.domain='')")
 		}
@@ -101,9 +101,9 @@ func (receiver *DomainService) DomainListByKey(userId int, keyword string) *bean
 		model := db.DB.Model(&entity.UserDomainEntity{})
 		model.Joins("LEFT JOIN user_config ON user_domain.domain = user_config.domain")
 		if len(keyword) > 0 {
-			model.Where("(user_config.domain is null or user_config.domain='') and domain like ? and user_id = ? ", "%"+keyword+"%", userId)
+			model.Where("(user_config.domain is null or user_config.domain='') and user_domain.domain like ? and user_domain.user_id = ? ", "%"+keyword+"%", userId)
 		} else {
-			model.Where("(user_config.domain is null or user_config.domain='') and user_id = ?", userId)
+			model.Where("(user_config.domain is null or user_config.domain='') and user_domain.user_id = ?", userId)
 		}
 		model.Order("user_domain.id desc").Find(&results)
 	}

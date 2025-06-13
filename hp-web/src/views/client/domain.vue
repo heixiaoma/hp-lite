@@ -49,8 +49,8 @@
         </template>
 
         <template v-if="column.key === 'user'">
-          <div v-if="record.userId==-1">
-            官方用户
+          <div v-if="!record.userDesc&&!record.username">
+            自用域名
           </div>
           <div v-else>
             <div>归属用户：{{record.userDesc}}</div>
