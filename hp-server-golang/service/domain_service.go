@@ -59,6 +59,28 @@ func (receiver *DomainService) DomainList(userId int, page int, pageSize int) *b
 			data.Tips = "无证书"
 		}
 	}
+
+	if userId < 0 {
+		var userIds []int
+		for _, item := range results {
+			userIds = append(userIds, *item.UserId)
+		}
+		var users []*entity.UserCustomEntity
+		if err := db.DB.Model(&entity.UserCustomEntity{}).Where("id IN ?", userIds).Find(&users).Error; err == nil {
+			// 将查询结果转换成 map[int]User
+			userMap := make(map[int]*entity.UserCustomEntity)
+			for _, user := range users {
+				userMap[*user.Id] = user
+			}
+			for _, item := range results {
+				customEntity := userMap[*item.UserId]
+				if customEntity != nil {
+					item.Username = customEntity.Username
+					item.UserDesc = customEntity.Desc
+				}
+			}
+		}
+	}
 	// 计算总记录数并执行分页查询
 	return bean.PageOk(total, results)
 }
@@ -67,16 +89,20 @@ func (receiver *DomainService) DomainListByKey(userId int, keyword string) *bean
 	var results []entity.UserDomainEntity
 	if userId < 0 {
 		tx := db.DB.Model(&entity.UserDomainEntity{})
+		tx.Joins("LEFT JOIN user_config ON user_domain.domain = user_config.domain")
 		if len(keyword) > 0 {
-			tx.Where("domain like ?", "%"+keyword+"%")
+			tx.Where("(user_config.domain is null or user_config.domain='') and domain like ?", "%"+keyword+"%")
+		} else {
+			tx.Where("(user_config.domain is null or user_config.domain='')")
 		}
 		tx.Order("id desc").Find(&results)
 	} else {
 		model := db.DB.Model(&entity.UserDomainEntity{})
+		model.Joins("LEFT JOIN user_config ON user_domain.domain = user_config.domain")
 		if len(keyword) > 0 {
-			model.Where("domain like ? and user_id = ? ", "%"+keyword+"%", userId)
+			model.Where("(user_config.domain is null or user_config.domain='') and domain like ? and user_id = ? ", "%"+keyword+"%", userId)
 		} else {
-			model.Where("user_id = ?", userId)
+			model.Where("(user_config.domain is null or user_config.domain='') and user_id = ?", userId)
 		}
 		model.Order("id desc").Find(&results)
 	}

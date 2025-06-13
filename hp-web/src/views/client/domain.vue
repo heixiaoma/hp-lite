@@ -111,13 +111,13 @@ const pagination = reactive({
 
 const loadData = () => {
   dataLoading.value = true
+  console.log(pagination)
   getDomain({
     current: pagination.current,
     pageSize: pagination.pageSize
   }).then(res => {
     dataLoading.value = false
     listData.value = res.data.records
-    pagination.current = res.data.current
     pagination.total = res.data.total
   })
 }

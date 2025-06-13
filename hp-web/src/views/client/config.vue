@@ -303,12 +303,12 @@ const userKeyByUserInfo = (deviceKey) => {
 
 
 const loadData = () => {
+  loadDomains()
   currentConfigList.value = []
   configLoading.value = true
   getConfigList(pagination).then(res => {
     configLoading.value = false
     currentConfigList.value = res.data.records
-    pagination.current = res.data.current
     pagination.total = res.data.total
   }).catch(e => {
     configLoading.value = false
@@ -317,7 +317,6 @@ const loadData = () => {
 
 onMounted(() => {
   loadDeviceKey();
-  loadDomains();
   loadData()
 })
 

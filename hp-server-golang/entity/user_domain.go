@@ -40,6 +40,10 @@ type UserDomainEntity struct {
 	 * 提示
 	 */
 	Tips string `json:"tips"`
+
+	Username string `json:"username" gorm:"-"`
+
+	UserDesc string `json:"userDesc"  gorm:"-"`
 }
 
 func (UserDomainEntity) TableName() string {
