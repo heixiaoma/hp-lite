@@ -34,7 +34,7 @@ func (cmdClient *CmdClient) Connect(serverIp string, serverPort int, key string)
 
 func (cmdClient *CmdClient) GetStatus() bool {
 	if cmdClient.handler != nil {
-		return cmdClient.handler.Active
+		return cmdClient.handler.Ide()
 	} else {
 		return false
 	}

@@ -8,7 +8,6 @@ import (
 	"hp-lib/util"
 	"net"
 	"os"
-	"time"
 )
 
 type CmdClientHandler struct {
@@ -30,26 +29,25 @@ func (h *CmdClientHandler) ChannelActive(conn net.Conn) {
 	}
 	_, err := conn.Write(protol.CmdEncode(message))
 	if err != nil {
-		conn.Close()
 		h.Active = false
+		conn.Close()
 		return
 	}
+	h.Ide()
+}
 
-	go func() {
-		defer func() {
-			conn.Close()
+func (h *CmdClientHandler) Ide() bool {
+	if h.Active {
+		_, err := h.Conn.Write(protol.CmdEncode(&cmdMessage.CmdMessage{Version: version, Key: h.Key, Type: cmdMessage.CmdMessage_TIPS, Data: util.SysInfo()}))
+		if err != nil {
+			h.CmdClient.CallMsg("中心节点心跳异常:" + err.Error())
 			h.Active = false
-			h.CmdClient.CallMsg("中心节点连接关闭")
-		}()
-		for {
-			_, err := conn.Write(protol.CmdEncode(&cmdMessage.CmdMessage{Version: version, Key: h.Key, Type: cmdMessage.CmdMessage_TIPS, Data: util.SysInfo()}))
-			if err != nil {
-				h.CmdClient.CallMsg("中心节点发送连接异常:" + err.Error())
-				return
-			}
-			time.Sleep(time.Duration(60) * time.Second)
+			h.Conn.Close()
+			return false
 		}
-	}()
+		return true
+	}
+	return false
 }
 
 func (h *CmdClientHandler) ChannelRead(conn net.Conn, data interface{}) {
