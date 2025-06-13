@@ -95,6 +95,7 @@ func (receiver *DomainService) DomainListByKey(userId int, keyword string) *bean
 		} else {
 			tx.Where("(user_config.domain is null or user_config.domain='')")
 		}
+
 		tx.Order("id desc").Find(&results)
 	} else {
 		model := db.DB.Model(&entity.UserDomainEntity{})
