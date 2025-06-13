@@ -5,6 +5,8 @@ import (
 	"hp-lib/net/cmd"
 	"hp-lib/util"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"strconv"
 	"strings"
@@ -19,11 +21,13 @@ func main() {
 	flag.StringVar(&c, "c", "", "连接码")
 	flag.StringVar(&deviceId, "deviceId", "", "设备ID")
 	flag.StringVar(&server, "server", "", "穿透服务")
+	flag.StringVar(&server, "debug", "0", "debug模式")
 	flag.Parse()
 	//默认命令行参数大于环境变量参数
 	e1 := os.Getenv("deviceId")
 	e2 := os.Getenv("server")
 	e3 := os.Getenv("c")
+	debug := os.Getenv("debug")
 
 	//优先使用连码解析
 	if c == "" && e3 != "" {
@@ -76,6 +80,12 @@ func main() {
 			time.Sleep(time.Duration(10) * time.Second)
 		}
 	}()
+	if debug == "1" {
+		go func() {
+			util.Print("debug模式启动:监听13690")
+			http.ListenAndServe(":13690", nil)
+		}()
+	}
 	select {}
 
 }
