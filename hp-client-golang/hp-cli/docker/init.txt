@@ -1,0 +1,4 @@
+# 初始化Buildx
+docker buildx create --use
+
+docker buildx ls

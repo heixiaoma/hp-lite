@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine
+FROM alpine:latest
 WORKDIR /hp-lite-arm64
 COPY --chmod=777 hp-lite-arm64  /hp-lite-arm64/hp-lite-arm64
 CMD ./hp-lite-arm64
