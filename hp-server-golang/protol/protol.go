@@ -81,8 +81,10 @@ func decode(reader *bufio.Reader) ([]byte, error) {
 }
 
 func bytesToInt(bys []byte) int {
-	bytebuffer := bytes.NewBuffer(bys)
 	var data int32
-	binary.Read(bytebuffer, binary.BigEndian, &data)
+	data |= int32(bys[0]) << 24
+	data |= int32(bys[1]) << 16
+	data |= int32(bys[2]) << 8
+	data |= int32(bys[3])
 	return int(data)
 }
