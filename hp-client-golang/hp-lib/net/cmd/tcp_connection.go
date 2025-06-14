@@ -9,10 +9,13 @@ import (
 )
 
 type TcpConnection struct {
+	IsClose bool
 }
 
 func NewTcpConnection() *TcpConnection {
-	return &TcpConnection{}
+	return &TcpConnection{
+		false,
+	}
 }
 
 func (connection *TcpConnection) Connect(host string, port int, handler net2.Handler, call func(mgs string)) net.Conn {
@@ -26,6 +29,10 @@ func (connection *TcpConnection) Connect(host string, port int, handler net2.Han
 	go func() {
 		reader := bufio.NewReader(conn)
 		for {
+			if connection.IsClose {
+				handler.ChannelInactive(conn)
+				return
+			}
 			//尝试读检查连接激活
 			_, err := reader.Peek(1)
 			if err != nil {
@@ -44,4 +51,8 @@ func (connection *TcpConnection) Connect(host string, port int, handler net2.Han
 		}
 	}()
 	return conn
+}
+
+func (receiver *TcpConnection) Close()  {
+	receiver.IsClose=true
 }

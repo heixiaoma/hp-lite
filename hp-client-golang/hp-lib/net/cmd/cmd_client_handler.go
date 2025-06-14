@@ -30,7 +30,6 @@ func (h *CmdClientHandler) ChannelActive(conn net.Conn) {
 	_, err := conn.Write(protol.CmdEncode(message))
 	if err != nil {
 		h.Active = false
-		conn.Close()
 		return
 	}
 	h.Ide()
@@ -42,7 +41,6 @@ func (h *CmdClientHandler) Ide() bool {
 		if err != nil {
 			h.CmdClient.CallMsg("中心节点心跳异常:" + err.Error())
 			h.Active = false
-			h.Conn.Close()
 			return false
 		}
 		return true
