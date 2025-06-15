@@ -6,16 +6,17 @@ import (
 	"hp-lib/protol"
 	"net"
 	"strconv"
+	"sync/atomic"
 )
 
 type TcpConnection struct {
-	IsClose bool
+	IsClose atomic.Value
 }
 
 func NewTcpConnection() *TcpConnection {
-	return &TcpConnection{
-		false,
-	}
+	t := &TcpConnection{}
+	t.IsClose.Store(false)
+	return t
 }
 
 func (connection *TcpConnection) Connect(host string, port int, handler net2.Handler, call func(mgs string)) net.Conn {
@@ -29,7 +30,7 @@ func (connection *TcpConnection) Connect(host string, port int, handler net2.Han
 	go func() {
 		reader := bufio.NewReader(conn)
 		for {
-			if connection.IsClose {
+			if connection.IsClosed() {
 				handler.ChannelInactive(conn)
 				return
 			}
@@ -52,7 +53,10 @@ func (connection *TcpConnection) Connect(host string, port int, handler net2.Han
 	}()
 	return conn
 }
+func (receiver *TcpConnection) IsClosed() bool {
+	return receiver.IsClose.Load().(bool)
+}
 
-func (receiver *TcpConnection) Close()  {
-	receiver.IsClose=true
+func (receiver *TcpConnection) Close() {
+	receiver.IsClose.Store(true)
 }
