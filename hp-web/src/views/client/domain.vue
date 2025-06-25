@@ -53,8 +53,8 @@
             自用域名
           </div>
           <div v-else>
-            <div>归属用户：{{record.userDesc}}</div>
-            <div>归属用户备注：{{record.username}}</div>
+            <div>归属用户：{{record.username}}</div>
+            <div>归属用户备注：{{record.userDesc}}</div>
           </div>
         </template>
 
