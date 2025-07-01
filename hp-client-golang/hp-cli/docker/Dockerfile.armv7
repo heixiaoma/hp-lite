@@ -1,4 +1,4 @@
-FROM --platform=linux/arm/v7 alpine:latest
+FROM alpine:latest
 WORKDIR /hp-lite-armv7
 COPY --chmod=777 hp-lite-armv7  /hp-lite-armv7/hp-lite-armv7
 CMD ./hp-lite-armv7

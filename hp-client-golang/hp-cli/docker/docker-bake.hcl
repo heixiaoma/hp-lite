@@ -8,7 +8,7 @@ variable "image_name" {
 }
 
 group "default" {
-  targets = ["arm64", "amd64","armv7","manifest"]
+  targets = ["arm64", "amd64","arm7","manifest"]
 }
 
 target "arm64" {
@@ -36,18 +36,18 @@ target "amd64" {
 target "armv7" {
   context = "."
   dockerfile = "Dockerfile.armv7"
-  platforms = ["linux/armv7"]
+  platforms = ["linux/arm/v7"]
   args = {
-    TARGETARCH = "armv7"
+    TARGETARCH = "arm7"
   }
-  tags = ["${registry}/${image_name}-armv7:latest"]
+  tags = ["${registry}/${image_name}-arm7:latest"]
   push = true
 }
 
 
 
 target "manifest" {
-  inherits = ["arm64", "amd64","armv7"]
+  inherits = ["arm64", "amd64","arm7"]
   platforms = ["linux/arm64", "linux/amd64","linux/arm/v7"]
   tags = ["${registry}/${image_name}:latest"]
   type = "manifest"
