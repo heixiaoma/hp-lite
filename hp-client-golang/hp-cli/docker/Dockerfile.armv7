@@ -1,5 +1,0 @@
-FROM alpine:latest
-WORKDIR /hp-lite-armv7
-COPY --chmod=777 hp-lite-armv7  /hp-lite-armv7/hp-lite-armv7
-CMD ./hp-lite-armv7
-#docker build -t hp-client .
