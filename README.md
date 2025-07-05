@@ -47,6 +47,7 @@ sudo docker run --net=host --restart=always -d  -v /data/app.yml:/hp-lite-server
 ```
 
 
+- app.yml文件
 ```yaml
 
 admin:
