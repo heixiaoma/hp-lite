@@ -5,6 +5,9 @@
     <a >
         <img src="https://img.shields.io/badge/hp_lite-5.0-red.svg?style=flat" />
     </a>
+   <a >
+        <img src="https://img.shields.io/badge/QQ群-1065301527-blue.svg?style=flat" />
+    </a>
     <a >
         <img src="https://img.shields.io/badge/Licence-MIT-green.svg?style=flat" />
     </a>
