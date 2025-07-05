@@ -1,3 +1,18 @@
+<p align="center">
+<img src="/doc/img/logo.png" width="200" />
+</p>
+<p align="center">
+    <a >
+        <img src="https://img.shields.io/badge/hp_lite-5.0-red.svg?style=flat" />
+    </a>
+    <a >
+        <img src="https://img.shields.io/badge/Licence-MIT-green.svg?style=flat" />
+    </a>
+
+<p align="center">    
+    <b>如果对您有帮助，您可以点右上角 "Star" 支持一下 谢谢！</b>
+</p>
+
 # HP-Lite 5.0内网穿透
 
 如果你是非常感兴趣，可以通过QQ群进行交流

@@ -20,7 +20,7 @@
         通过域名进行外网访问
       </div>
       <div style="margin-top: 3rem">
-        <a-button size="large" ghost><a target="_blank" href="https://gitee.com/HServer/hp-lite">下载客服端</a></a-button>
+        <a-button size="large" ghost><a target="_blank" href="https://gitee.com/HServer/hp-lite">开源地址</a></a-button>
       </div>
     </div>
   </div>
@@ -76,7 +76,7 @@
       </div>
     </div>
     <div style="font-size: 35px;text-align: center;margin-bottom: 50px">
-      <img style="width: 40vw;" src="/teach/img.png">
+      <img style="width: 40vw;" src="/wx.png">
     </div>
     <div class="foot">
       <div style="text-align: center;">
