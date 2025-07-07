@@ -158,7 +158,6 @@ const handleSubmit = () => {
         });
         // 存储用户信息
         userInfo.setUserInfo(res.data);
-        debugger
         // 记住登录状态
         if (rememberMe.value) {
           localStorage.setItem('hp-lite-user', JSON.stringify({

@@ -6,7 +6,7 @@
              :locale="{emptyText: '暂无配置,添加一个试试看看'}"
              :pagination="pagination"
              @change="handleTableChange"
-             :scroll="{ x: 'max-content' }">
+             :scroll="{ x: 'max-content'}">
       <template #bodyCell="{ column ,record}">
 
         <template v-if="column.key === 'local'">
