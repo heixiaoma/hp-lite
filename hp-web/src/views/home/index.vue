@@ -4,7 +4,7 @@
     <nav class="navbar" :class="{ 'scrolled': isScrolled }">
       <div class="container">
         <div class="navbar-logo" @click="scrollToTop">
-          <img src="/logo.png" alt="HP-Lite Logo">
+          <img src="/logo-back.png" alt="HP-Lite Logo">
           <span class="navbar-logo-text">HP-Lite</span>
         </div>
 

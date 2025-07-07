@@ -1,7 +1,9 @@
 package tunnel
 
 import (
+	"hp-server-lib/bean"
 	net2 "hp-server-lib/net/base"
+	"hp-server-lib/util"
 	"log"
 	"net"
 	"strconv"
@@ -9,16 +11,18 @@ import (
 )
 
 type UdpServer struct {
-	cache   sync.Map
-	conn    *net2.MuxSession
-	udpConn *net.UDPConn
+	cache    sync.Map
+	conn     *net2.MuxSession
+	udpConn  *net.UDPConn
+	userInfo bean.UserConfigInfo
 }
 
-func NewUdpServer(conn *net2.MuxSession) *UdpServer {
+func NewUdpServer(conn *net2.MuxSession, userInfo bean.UserConfigInfo) *UdpServer {
 	return &UdpServer{
 		sync.Map{},
 		conn,
 		nil,
+		userInfo,
 	}
 }
 
@@ -40,6 +44,31 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 				break
 			}
 			n, addr, err := conn.ReadFromUDP(buffer)
+
+			ip := util.GetClientIPFromUDP(addr)
+			if len(udpServer.userInfo.AllowedIps) > 0 {
+				ips := udpServer.userInfo.AllowedIps
+				flag := true
+				for _, item := range ips {
+					if util.IsIPInCIDR(ip, item) {
+						flag = false
+						break
+					}
+				}
+				if flag {
+					return
+				}
+			}
+
+			if len(udpServer.userInfo.BlockedIps) > 0 {
+				ips := udpServer.userInfo.BlockedIps
+				for _, item := range ips {
+					if util.IsIPInCIDR(ip, item) {
+						break
+					}
+				}
+			}
+
 			if err != nil {
 				break
 			}

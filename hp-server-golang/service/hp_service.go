@@ -44,7 +44,8 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 		key = userDomain.CertificateKey
 		content = userDomain.CertificateContent
 	}
-	return &bean.UserConfigInfo{
+
+	b := &bean.UserConfigInfo{
 		ProxyVersion:       s,
 		Domain:             userQuery.Domain,
 		ProxyIp:            userQuery.LocalIp,
@@ -56,7 +57,23 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 		CertificateContent: content,
 		WebType:            userQuery.WebType,
 		TunType:            userQuery.TunType,
+		MaxConn:            -1,
 	}
+	//防火墙参数配置
+	waf := &entity.UserWafEntity{}
+	db.DB.Where("config_id = ?", userQuery.Id).First(waf)
+	if waf != nil {
+		if len(waf.AllowedIPs) > 0 {
+			b.AllowedIps = waf.AllowedIPs
+		}
+		if len(waf.BlockedIPs) > 0 {
+			b.BlockedIps = waf.BlockedIPs
+		}
+		if waf.RateLimit > 0 {
+			b.MaxConn = waf.RateLimit
+		}
+	}
+	return b
 }
 
 func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSession) {

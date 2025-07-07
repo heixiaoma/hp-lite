@@ -7,6 +7,7 @@ import (
 	"hp-server-lib/config"
 	"hp-server-lib/net/base"
 	"hp-server-lib/service"
+	"hp-server-lib/util"
 	"io"
 	"log"
 	"mime"
@@ -42,7 +43,34 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	info := value.(*bean.UserConfigInfo)
+
 	clientIP := getClientIP(r)
+
+	if len(info.AllowedIps) > 0 {
+		ips := info.AllowedIps
+		flag := true
+		for _, item := range ips {
+			if util.IsIPInCIDR(clientIP, item) {
+				flag = false
+				break
+			}
+		}
+		if flag {
+			http.Error(w, "不在白名单:"+clientIP, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if len(info.BlockedIps) > 0 {
+		ips := info.BlockedIps
+		for _, item := range ips {
+			if util.IsIPInCIDR(clientIP, item) {
+				http.Error(w, "已经黑名单:"+clientIP, http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
 	if strings.Compare(info.ProxyVersion, "V3") == 0 {
 		// 获取当前的 X-Forwarded-For 头部（如果有）
 		xfwd := r.Header.Get("X-Forwarded-For")

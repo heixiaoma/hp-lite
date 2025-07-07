@@ -46,12 +46,6 @@
                     <span class="info-label">连接码:</span>
                     <span class="info-value">{{ item.connectKey }}</span>
                   </div>
-                  <div class="info-row">
-                    <span class="info-label">状态:</span>
-                    <span class="info-value status" :class="item.online ? 'online' : 'offline'">
-                    {{ item.online ? '在线' : '离线' }}
-                  </span>
-                  </div>
                 </div>
 
                 <!-- 性能监控 -->

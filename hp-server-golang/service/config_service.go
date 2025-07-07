@@ -73,6 +73,8 @@ func (receiver *ConfigService) ConfigList(userId int, page int, pageSize int) *b
 }
 
 func (receiver *ConfigService) RemoveData(configId int) bool {
+	//删除防火墙的配置
+	db.DB.Where("config_id = ?", configId).Delete(&entity.UserWafEntity{})
 	userQuery := &entity.UserConfigEntity{}
 	db.DB.Where("id = ? ", configId).First(userQuery)
 	if userQuery != nil {

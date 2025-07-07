@@ -51,12 +51,39 @@ func SendCloseMsg(deviceKey, msg string) bool {
 func NoticeClientUpdateData(deviceKey string) bool {
 	var results []entity.UserConfigEntity
 	db.DB.Model(&entity.UserConfigEntity{}).Where("device_key = ? and (status = 0 or status is null) ", deviceKey).Find(&results)
+
+	//读取防火墙安全规则
+	var configIds []int
+	for _, item := range results {
+		configIds = append(configIds, *item.Id)
+	}
+	var configItems []*entity.UserWafEntity
+	configMap := make(map[int]*entity.UserWafEntity)
+	if err := db.DB.Model(&entity.UserWafEntity{}).Where("config_id IN ?", configIds).Find(&configItems).Error; err == nil {
+		// 将查询结果转换成 map[int]User
+		for _, conf := range configItems {
+			configMap[conf.ConfigId] = conf
+		}
+	}
+
 	if results != nil {
 		var results2 []bean.LocalInnerWear
 		for _, item := range results {
+			//设置防火墙安全规则下发客户端
+			OutLimit := -1
+			InLimit := -1
+			customEntity := configMap[*item.Id]
+			if customEntity != nil {
+				if customEntity.OutLimit > 0 {
+					OutLimit = customEntity.OutLimit
+				}
+				if customEntity.InLimit > 0 {
+					InLimit = customEntity.InLimit
+				}
+			}
 			wear := bean.LocalInnerWear{
-				OutLimit:    -1,
-				InLimit:     -1,
+				OutLimit:    OutLimit,
+				InLimit:     InLimit,
 				TunType:     item.TunType,
 				ConnectType: *item.ConnectType,
 				ConfigKey:   item.ConfigKey,

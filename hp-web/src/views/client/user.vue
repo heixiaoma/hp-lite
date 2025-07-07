@@ -1,6 +1,6 @@
 <template>
   <div>
-    <a-button  style="margin-bottom: 10px" class="btn view" @click="addModal">添加用户</a-button>
+    <a-button  style="margin-bottom: 10px" class="btn edit" @click="addModal">添加用户</a-button>
 
     <a-table :loading="dataLoading" :columns="columns" rowKey="id" :data-source="listData"
              :locale="{emptyText: '暂无数据,添加一个试试看看'}"

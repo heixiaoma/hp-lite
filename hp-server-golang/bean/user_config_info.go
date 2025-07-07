@@ -1,6 +1,8 @@
 package bean
 
-import "net/http/httputil"
+import (
+	"net/http/httputil"
+)
 
 type UserConfigInfo struct {
 	ProxyVersion       string                 `json:"proxyVersion"`
@@ -14,5 +16,8 @@ type UserConfigInfo struct {
 	CertificateContent string                 `json:"certificateContent"`
 	WebType            string                 `json:"webType"`
 	TunType            string                 `json:"TunType"`
+	MaxConn            int                    `json:"maxConn"`
+	BlockedIps         []string               `json:"blockedIps"`
+	AllowedIps         []string               `json:"allowedIps"`
 	ReverseProxy       *httputil.ReverseProxy `json:"-"`
 }

@@ -12,6 +12,7 @@ const client_teach = () => import('../views/client/teach.vue');
 const manage = () => import('../views/client/manage.vue');
 const client_user = () => import('../views/client/user.vue');
 const client_domain = () => import('../views/client/domain.vue');
+const client_waf = () => import('../views/client/waf.vue');
 
 const routes = [
     {path: '/', component: home},
@@ -26,6 +27,7 @@ const routes = [
             {path: 'user', component: client_user, name: "user"},
             {path: 'config', component: client_config, name: "config"},
             {path: 'device', component: client_device, name: "device"},
+            {path: 'waf', component: client_waf, name: "waf"},
             {path: 'teach', component: client_teach, name: "teach"},
             {path: 'domain', component: client_domain, name: "domain"},
         ],

@@ -74,6 +74,11 @@ func StartWebServer(port int) {
 	mux.HandleFunc("/client/domain/gen", domainController.Gen)
 	mux.HandleFunc("/client/domain/query", domainController.Query)
 
+	wafController := controller.WafController{}
+	mux.HandleFunc("/client/waf/saveUser", wafController.Add)
+	mux.HandleFunc("/client/waf/list", wafController.List)
+	mux.HandleFunc("/client/waf/removeUser", wafController.Del)
+
 	muxWithRecovery := recoveryMiddleware(mux)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), muxWithRecovery))
 }
