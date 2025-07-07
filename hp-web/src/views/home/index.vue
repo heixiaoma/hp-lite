@@ -76,7 +76,7 @@
       </div>
     </div>
     <div style="font-size: 35px;text-align: center;margin-bottom: 50px">
-      <img style="width: 40vw;" src="/wx.png">
+      <img style="height: 40vh;" src="/wx.png">
     </div>
     <div class="foot">
       <div style="text-align: center;">
