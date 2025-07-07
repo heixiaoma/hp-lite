@@ -16,7 +16,6 @@
               <div v-else>
                 <a-tag color="#87d068">无配置</a-tag>
               </div>
-
             </template>
           </template>
           <template v-if="column.key === 'blockedIps'">
