@@ -10,14 +10,21 @@
         <template #bodyCell="{ column ,record}">
           <template v-if="column.key === 'allowedIps'">
             <template v-if="column.key === 'allowedIps'">
-              <div v-for="(item,index) in record.allowedIps">
+              <div v-if="record.allowedIps.length>0" v-for="(item,index) in record.allowedIps">
                 <a-tag color="#87d068">{{item}}</a-tag>
               </div>
+              <div v-else>
+                <a-tag color="#87d068">无配置</a-tag>
+              </div>
+
             </template>
           </template>
           <template v-if="column.key === 'blockedIps'">
-            <div v-for="(item,index) in record.blockedIps">
+            <div v-if="record.blockedIps.length>0" v-for="(item,index) in record.blockedIps">
               <a-tag color="#f50">{{item}}</a-tag>
+            </div>
+            <div v-else>
+              <a-tag color="#87d068">无配置</a-tag>
             </div>
           </template>
           <template v-if="column.key === 'action'">
@@ -38,10 +45,10 @@
         <a-form-item label="并发限制">
           <a-input v-model:value="formState.rateLimit" placeholder="每分钟最大连接数(-1不限制)"/>
         </a-form-item>
-        <a-form-item label="上传限制">
+        <a-form-item label="上传限制(字节)">
           <a-input v-model:value="formState.inLimit" placeholder="上传限制字节单位(-1不限制)"/>
         </a-form-item>
-        <a-form-item label="下载限制">
+        <a-form-item label="下载限制(字节)">
           <a-input v-model:value="formState.outLimit" placeholder="下载限制字节单位(-1不限制)"/>
         </a-form-item>
 
