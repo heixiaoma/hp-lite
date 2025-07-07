@@ -1,6 +1,6 @@
 <template>
   <div>
-    <a-button type="primary" style="margin-bottom: 10px" @click="addModal">添加用户</a-button>
+    <a-button  style="margin-bottom: 10px" class="btn view" @click="addModal">添加用户</a-button>
 
     <a-table :loading="dataLoading" :columns="columns" rowKey="id" :data-source="listData"
              :locale="{emptyText: '暂无数据,添加一个试试看看'}"
@@ -15,8 +15,8 @@
         </template>
 
         <template v-if="column.key === 'action'">
-          <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="edit(record)">编辑</a-button>
-          <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="removeData(record)">删除</a-button>
+          <a-button  class="btn edit" style="margin-bottom: 5px;margin-left: 5px" @click="edit(record)">编辑</a-button>
+          <a-button  class="btn delete" style="margin-bottom: 5px;margin-left: 5px" @click="removeData(record)">删除</a-button>
         </template>
       </template>
     </a-table>
@@ -24,8 +24,8 @@
 
 
   <div>
-    <a-modal okText="确定" cancelText="取消" v-model:visible="addVisible" title="添加"
-             @ok="addOk">
+    <a-modal  v-model:visible="addVisible" title="添加"
+             >
       <a-form :model="formState" ref="formTable" :layout="'vertical'" >
         <a-form-item label="用户名 ">
           <a-input v-model:value="formState.username" placeholder="用户名"/>
@@ -37,6 +37,10 @@
           <a-input v-model:value="formState.desc" placeholder="备注"/>
         </a-form-item>
       </a-form>
+      <template #footer>
+        <a-button class="btn view" @click="addVisible=!addVisible">取消</a-button>
+        <a-button class="btn edit" @click="addOk">确定</a-button>
+      </template>
     </a-modal>
   </div>
 

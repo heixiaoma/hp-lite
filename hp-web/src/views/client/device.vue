@@ -2,63 +2,174 @@
   <div>
 
     <div>
-      <a-button type="primary" style="margin-bottom: 10px;" @click="addDeviceModal">添加设备</a-button>
-      <a-button type="primary" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
+      <a-button class="btn edit" style="margin-bottom: 10px;" @click="addDeviceModal">添加设备</a-button>
+      <a-button class="btn view" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
     </div>
 
 
     <a-empty  v-if="deviceList&&deviceList.length===0"  />
 
-    <a-collapse :loading="listLoading" >
-      <a-collapse-panel :header="'设备：'+item.desc + (item.online ? '[在线中]': '[未在线]')" v-for="item in deviceList">
-        <div style="padding: 30px" :class="[!item.online?'onRead':'']">
-          <p style="overflow-wrap: break-word;">设备ID：{{ item.deviceId }}</p>
-          <p style="overflow-wrap: break-word;">连接码：{{ item.connectKey }}</p>
-          <p v-if="item.memoryInfo">总内存：{{ (item.memoryInfo.total / 1024 / 1024).toFixed(2) }}/MB</p>
-          <p v-if="item.memoryInfo">使用内存：{{ (item.memoryInfo.useMem / 1024 / 1024).toFixed(2) }}/MB </p>
-          <p v-if="item.memoryInfo">CPU：{{ (item.memoryInfo.cpuRate).toFixed(2) }}%</p>
-          <p v-if="item.memoryInfo">HP占用内存：{{ (item.memoryInfo.hpTotalMem / 1024 / 1024).toFixed(2) }}/MB </p>
-          <p v-if="item.memoryInfo">HP实际使用内存：{{ (item.memoryInfo.hpUseMem / 1024 / 1024).toFixed(2) }}/MB </p>
-          <p>是否在线：{{ item.online ? "在线中" : "未在线" }}</p>
-          <div v-if="userInfo.getUserInfo().role==='ADMIN'">
-            <p v-if="item.username">归属用户：{{item.username}}</p>
-            <p v-if="item.userDesc">归属用户备注：{{item.userDesc}}</p>
-          </div>
+    <div class="device-list-container">
+      <a-spin :spinning="listLoading" tip="加载中...">
+        <a-collapse accordion class="custom-collapse">
+          <a-collapse-panel
+              v-for="item in deviceList"
+              :key="item.deviceId"
+              class="device-panel"
+          >
+            <!-- 使用正确的插槽语法 -->
+            <template #header>
+              <div class="panel-header">
+                <div class="device-info">
+                  <div class="device-status">
+                    <span class="status-dot" :class="item.online ? 'online' : 'offline'"></span>
+                    <span class="status-text" :class="item.online ? 'online' : 'offline'">
+                    {{ item.online ? '在线中' : '未在线' }}
+                  </span>
+                  </div>
+                  <div class="device-name">{{ item.desc }}</div>
+                </div>
+              </div>
+            </template>
 
-          <div class="op-btn">
-            <a-popconfirm
-                title="你真的要删除？"
-                ok-text="是的我删除"
-                cancel-text="点错了"
-                @confirm="()=>{removeData(item)}"
-            >
-              <a-button type="primary">删除</a-button>
-            </a-popconfirm>
-            <a-popconfirm
-                title="你真的要强制停止程序？"
-                ok-text="是的我要停止"
-                cancel-text="点错了"
-                @confirm="()=>{stopData(item)}"
-            >
-              <a-button type="danger">强制停止</a-button>
-            </a-popconfirm>
-            <a-button type="dashed" @click="showQr(item)">查看连接码</a-button>
-            <a-button type="dashed" @click="edit(item)">编辑</a-button>
-          </div>
-        </div>
-      </a-collapse-panel>
-    </a-collapse>
+            <!-- 面板内容 -->
+            <div class="panel-content">
+              <div class="device-details">
+                <!-- 基础信息 -->
+                <div class="info-section">
+                  <h3 class="section-title">设备信息</h3>
+                  <div class="info-row" style="flex-direction: column">
+                    <span class="info-label">设备ID:</span>
+                    <span class="info-value">{{ item.deviceId }}</span>
+                  </div>
+                  <div class="info-row" style="flex-direction: column">
+                    <span class="info-label">连接码:</span>
+                    <span class="info-value">{{ item.connectKey }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">状态:</span>
+                    <span class="info-value status" :class="item.online ? 'online' : 'offline'">
+                    {{ item.online ? '在线' : '离线' }}
+                  </span>
+                  </div>
+                </div>
+
+                <!-- 性能监控 -->
+                <div v-if="item.memoryInfo" class="performance-section">
+                  <h3 class="section-title">性能监控</h3>
+
+                  <!-- 内存使用率 -->
+                  <div class="metric-item">
+                    <div class="metric-header">
+                      <span class="metric-label">内存使用率</span>
+                      <span class="metric-value">
+                      {{ ((item.memoryInfo.useMem / item.memoryInfo.total) * 100).toFixed(1) }}%
+                    </span>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-track">
+                        <div
+                            class="progress-fill memory"
+                            :style="{ width: ((item.memoryInfo.useMem / item.memoryInfo.total) * 100) + '%' }"
+                        ></div>
+                      </div>
+                    </div>
+                    <div class="memory-details">
+                      <span class="memory-used">{{ (item.memoryInfo.useMem / 1024 / 1024).toFixed(2) }} MB</span>
+                      <span class="memory-total">{{ (item.memoryInfo.total / 1024 / 1024).toFixed(2) }} MB</span>
+                    </div>
+                  </div>
+
+                  <!-- CPU使用率 -->
+                  <div class="metric-item">
+                    <div class="metric-header">
+                      <span class="metric-label">CPU使用率</span>
+                      <span class="metric-value">{{ item.memoryInfo.cpuRate.toFixed(1) }}%</span>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-track">
+                        <div
+                            class="progress-fill cpu"
+                            :style="{ width: item.memoryInfo.cpuRate + '%' }"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- HP内存信息 -->
+                  <div class="hp-memory-info">
+                    <div class="info-row">
+                      <span class="info-label">HP占用内存:</span>
+                      <span class="info-value">{{ (item.memoryInfo.hpTotalMem / 1024 / 1024).toFixed(2) }} MB</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="info-label">HP实际使用:</span>
+                      <span class="info-value">{{ (item.memoryInfo.hpUseMem / 1024 / 1024).toFixed(2) }} MB</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 管理员信息 -->
+                <div v-if="userInfo.getUserInfo().role === 'ADMIN'" class="admin-section">
+                  <h3 class="section-title">归属信息</h3>
+                  <div class="info-row">
+                    <span class="info-label">归属用户:</span>
+                    <span class="info-value">{{ item.username || '无' }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">用户备注:</span>
+                    <span class="info-value">{{ item.userDesc || '无' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 操作按钮 -->
+              <div class="action-buttons">
+                <a-popconfirm
+                    title="确定要删除该设备？"
+                    ok-text="删除"
+                    cancel-text="取消"
+                    @confirm="() => removeData(item)"
+                >
+                  <a-button class="btn delete">
+                     删除
+                  </a-button>
+                </a-popconfirm>
+
+                <a-popconfirm
+                    title="确定要强制停止程序？"
+                    ok-text="停止"
+                    cancel-text="取消"
+                    @confirm="() => stopData(item)"
+                >
+                  <a-button class="btn stop">
+                     强制停止
+                  </a-button>
+                </a-popconfirm>
+
+                <a-button class="btn view" @click="showQr(item)">
+                  查看连接码
+                </a-button>
+
+                <a-button class="btn edit" @click="edit(item)">
+                  编辑
+                </a-button>
+              </div>
+            </div>
+          </a-collapse-panel>
+        </a-collapse>
+      </a-spin>
+    </div>
     <div>
-      <a-modal :destroyOnClose="true" cancelText="取消" okText="我已知晓" v-model:visible="qrModalVisible" @ok="closeQr" title="设备二维码">
+      <a-modal :destroyOnClose="true"  v-model:visible="qrModalVisible" title="设备二维码">
         <qr :text="deviceId"/>
-        <template slot="footer">
-          <a-button @click="qrModalVisible=false"></a-button>
+        <template #footer>
+          <a-button class="btn view" @click="closeQr">我已知晓</a-button>
         </template>
       </a-modal>
     </div>
     <div>
-      <a-modal okText="确定" cancelText="取消" v-model:visible="addDeviceModalVisible" title="设备信息"
-               @ok="addDeviceOk">
+      <a-modal  v-model:visible="addDeviceModalVisible" title="设备信息">
         <a-form :model="formState" ref="formTable" :layout="'vertical'" >
           <a-form-item label="设备编号" name="deviceId" :rules="[{ required: true, message: '设备编号必填'}]">
             <a-input style="width: 70%" v-model:value="formState.deviceId" placeholder="设备ID：32位"/>
@@ -68,11 +179,14 @@
             <a-input style="width: 70%" v-model:value="formState.desc" placeholder="备注如：nas中的HP"/>
           </a-form-item>
         </a-form>
+        <template #footer>
+          <a-button class="btn view" @click="addDeviceModalVisible=!addDeviceModalVisible">取消</a-button>
+          <a-button class="btn edit" @click="addDeviceOk">确定</a-button>
+        </template>
       </a-modal>
     </div>
     <div>
-      <a-modal okText="确定" cancelText="取消" v-model:visible="updateDeviceModalVisible" title="设备信息"
-               @ok="updateDeviceOk">
+      <a-modal v-model:visible="updateDeviceModalVisible" title="设备信息">
         <a-form :model="formState" ref="formTable" :layout="'vertical'" >
           <a-form-item label="设备编号"  name="deviceId" :rules="[{ required: true, message: '设备编号必填'}]">
             <a-input style="width: 70%" disabled="disabled" v-model:value="formState.deviceId" placeholder="设备ID：32位"/>
@@ -81,6 +195,12 @@
             <a-input style="width: 70%" v-model:value="formState.desc" placeholder="备注如：nas中的HP"/>
           </a-form-item>
         </a-form>
+
+        <template #footer>
+          <a-button class="btn view" @click="updateDeviceModalVisible=!updateDeviceModalVisible">取消</a-button>
+          <a-button class="btn edit" @click="updateDeviceOk">确定</a-button>
+        </template>
+
       </a-modal>
     </div>
   </div>
@@ -247,6 +367,241 @@ const removeData = (item) => {
 
   .ant-modal-body {
     flex: 1;
+  }
+}
+
+/* 整体容器 */
+.device-list-container {
+  padding: 20px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+.ant-collapse{
+  border: none;
+}
+
+/* 折叠面板样式 */
+.custom-collapse .ant-collapse-item {
+  margin-bottom: 16px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: none;
+}
+
+/* 面板头部 */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.device-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.device-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.device-status {
+  display: flex;
+  align-items: center;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.status-dot.online {
+  background-color: #10b981;
+  animation: pulse 2s infinite;
+}
+
+.status-dot.offline {
+  background-color: #ef4444;
+}
+
+.status-text {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.status-text.online {
+  color: #10b981;
+}
+
+.status-text.offline {
+  color: #ef4444;
+}
+
+.more-button {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.more-button:hover {
+  background-color: #e5e7eb;
+  color: #4b5563;
+}
+
+/* 面板内容 */
+.panel-content {
+  padding: 20px;
+  background-color: #ffffff;
+  border-top: 1px solid #e5e7eb;
+}
+
+.device-details {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .device-details {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.info-label {
+  width: 120px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.info-value {
+  flex: 1;
+  color: #1f2937;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.status.online {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.status.offline {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.info-section{
+  grid-column: 1 / -1;
+}
+
+/* 性能监控部分 */
+.performance-section {
+  grid-column: 1 / -1;
+}
+
+.metric-item {
+  margin-bottom: 16px;
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.metric-label {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.metric-value {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.progress-bar {
+  height: 8px;
+  border-radius: 4px;
+  background-color: #f3f4f6;
+  overflow: hidden;
+}
+
+.progress-track {
+  height: 100%;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  position: absolute;
+  transition: width 0.5s ease;
+}
+
+.progress-fill.memory {
+  background-color: #3b82f6;
+}
+
+.progress-fill.cpu {
+  background-color: #f97316;
+}
+
+.memory-details {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.hp-memory-info {
+  margin-top: 16px;
+}
+
+/* 管理员信息 */
+.admin-section {
+  grid-column: 1 / -1;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+
+/* 动画效果 */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
   }
 }
 

@@ -1,7 +1,7 @@
 <template>
   <div>
-    <a-button type="primary" style="margin-bottom: 10px;" @click="addConfigModal">添加穿透</a-button>
-    <a-button type="primary" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
+    <a-button class="btn edit" style="margin-bottom: 10px;" @click="addConfigModal">添加穿透</a-button>
+    <a-button class="btn view" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
     <a-table :loading="configLoading" :columns="columns" rowKey="id" :data-source="currentConfigList"
              :locale="{emptyText: '暂无配置,添加一个试试看看'}"
              :pagination="pagination"
@@ -45,11 +45,11 @@
           </div>
         </template>
         <template v-if="column.key === 'action'">
-          <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="removeConfigData(record)">删除
+          <a-button class="btn delete" style="margin-bottom: 5px;margin-left: 5px" @click="removeConfigData(record)">删除
           </a-button>
-          <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="editConfigData(record)">编辑
+          <a-button class="btn edit" style="margin-bottom: 5px;margin-left: 5px" @click="editConfigData(record)">编辑
           </a-button>
-          <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="refConfigData(record)">重连配置
+          <a-button class="btn view" style="margin-bottom: 5px;margin-left: 5px" @click="refConfigData(record)">重连配置
           </a-button>
         </template>
       </template>
@@ -91,8 +91,7 @@
 
 
     <div>
-      <a-modal okText="确定" cancelText="取消" v-model:visible="addConfigVisible" title="添加内网穿透配置"
-               @ok="addConfigOk">
+      <a-modal v-model:visible="addConfigVisible" title="添加内网穿透配置">
         <a-form :model="formState" layout="vertical" ref="formTable">
           <a-form-item label="穿透设备" name="deviceKey" :rules="[{ required: true, message: '穿透设备必填'}]">
             <a-select
@@ -184,9 +183,13 @@
               <a-select-option value="QUIC">QUIC多路复用模式</a-select-option>
             </a-select>
           </a-form-item>
-
-
         </a-form>
+        
+        <template #footer>
+          <a-button class="btn view" @click="addConfigVisible=!addConfigVisible">取消</a-button>
+          <a-button class="btn edit" @click="addConfigOk">确定</a-button>
+        </template>
+
       </a-modal>
     </div>
 

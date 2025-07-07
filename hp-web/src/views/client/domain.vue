@@ -1,7 +1,7 @@
 <template>
   <div>
-    <a-button type="primary" style="margin-bottom: 10px" @click="addModal">添加域名</a-button>
-    <a-button type="primary" style="margin-bottom: 10px;margin-left: 5px" @click="loadData">刷新</a-button>
+    <a-button class="btn edit" style="margin-bottom: 10px" @click="addModal">添加域名</a-button>
+    <a-button class="btn view" style="margin-bottom: 10px;margin-left: 5px" @click="loadData">刷新</a-button>
 
     <a-table :loading="dataLoading" :columns="columns" rowKey="id" :data-source="listData"
              :locale="{emptyText: '暂无数据,添加一个试试看看'}"
@@ -59,9 +59,9 @@
         </template>
 
         <template v-if="column.key === 'action'">
-          <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="getSSl(record)">获取SSL证书</a-button>
-          <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="edit(record)">编辑</a-button>
-          <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="removeData(record)">删除</a-button>
+          <a-button class="btn view" style="margin-bottom: 5px;margin-left: 5px" @click="getSSl(record)">获取SSL证书</a-button>
+          <a-button class="btn edit" style="margin-bottom: 5px;margin-left: 5px" @click="edit(record)">编辑</a-button>
+          <a-button class="btn delete" style="margin-bottom: 5px;margin-left: 5px" @click="removeData(record)">删除</a-button>
         </template>
       </template>
     </a-table>
@@ -69,8 +69,7 @@
 
 
   <div>
-    <a-modal okText="确定" cancelText="取消" v-model:visible="addVisible" title="信息"
-             @ok="addOk">
+    <a-modal  v-model:visible="addVisible" title="信息">
       <a-form :model="formState" ref="formTable" :layout="'vertical'" >
         <a-form-item label="域名 " >
           <a-input :disabled="!isAdd" v-model:value="formState.domain" placeholder="域名"/>
@@ -88,8 +87,12 @@
           <a-textarea  :rows="6" v-model:value="formState.certificateContent"
                       placeholder="-----BEGIN CERTIFICATE-----&#10;***大概是这样的证书内容***&#10;-----BEGIN CERTIFICATE-----"/>
         </a-form-item>
-
       </a-form>
+
+      <template #footer>
+        <a-button class="btn view" @click="addVisible=!addVisible">取消</a-button>
+        <a-button class="btn edit" @click="addOk">确定</a-button>
+      </template>
     </a-modal>
   </div>
 

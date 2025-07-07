@@ -1,6 +1,6 @@
 <template>
   <div>
-    <a-button type="primary" style="margin-bottom: 10px;" @click="loadData">刷新列表</a-button>
+    <a-button class="btn view" style="margin-bottom: 10px;" @click="loadData">刷新列表</a-button>
     <a-table :loading="dataLoading" :columns="columns" rowKey="id" :data-source="monitorData"
              :locale="{emptyText: '暂无数据'}"
              :scroll="{ x: 'max-content' }">
@@ -24,7 +24,7 @@
           </div>
         </template>
         <template v-if="column.key === 'action'">
-          <a-button type="primary" style="margin-bottom: 5px;margin-left: 5px" @click="show(record)">查看统计</a-button>
+          <a-button class="btn view" style="margin-bottom: 5px;margin-left: 5px" @click="show(record)">查看统计</a-button>
         </template>
       </template>
     </a-table>
