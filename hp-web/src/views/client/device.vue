@@ -148,7 +148,7 @@
                 </a-popconfirm>
 
                 <a-button class="btn view" @click="showQr(item)">
-                  查看连接码
+                  连接码
                 </a-button>
 
                 <a-button class="btn edit" @click="edit(item)">
@@ -589,7 +589,6 @@ const removeData = (item) => {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 20px;
-  justify-content: flex-end;
 }
 
 /* 动画效果 */

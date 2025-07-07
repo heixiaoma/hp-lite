@@ -207,7 +207,7 @@ export default {
 }
 
 .header {
-  background: linear-gradient(135deg, #4b6ff6 0%, #3a5ede 100%);
+  background: linear-gradient(135deg, #4b6ff6 0%, #1890ff 100%);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   height: 64px;
   padding: 0;

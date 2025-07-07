@@ -4,7 +4,7 @@
     <nav class="navbar" :class="{ 'scrolled': isScrolled }">
       <div class="container">
         <div class="navbar-logo" @click="scrollToTop">
-          <img src="/logo-back.png" alt="HP-Lite Logo">
+          <img src="/logo.png" alt="HP-Lite Logo">
           <span class="navbar-logo-text">HP-Lite</span>
         </div>
 
@@ -237,7 +237,7 @@ onUnmounted(() => {
   transition: all 0.3s ease;
 
   &.scrolled {
-    background-color: rgba(75, 111, 246, 0.95);
+    background: linear-gradient(135deg, #4b6ff6 0%, #1890ff 100%);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     padding: 10px 0;
   }
@@ -335,7 +335,7 @@ onUnmounted(() => {
 
 /* 英雄区 */
 .hero {
-  background-color: #4b6ff6;
+  background: linear-gradient(135deg, #4b6ff6 0%, #1890ff 100%);
   color: white;
   padding: 160px 0 100px;
 

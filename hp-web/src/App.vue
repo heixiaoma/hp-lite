@@ -4,7 +4,6 @@
 <style>
 
 .btn {
-  min-width: 100px;
   height: 34px;
   border-radius: 4px;
   display: flex;
@@ -81,6 +80,14 @@
   color: #10b981 !important;
   background-color: #d1fae5 !important;
   border-color: #6ee7b7 !important;
+}
+
+.ant-modal-header{
+  border-radius: 15px !important;
+}
+
+.ant-modal-content{
+  border-radius: 15px !important;
 }
 
 </style>

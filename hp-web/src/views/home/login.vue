@@ -373,8 +373,7 @@ const handleSubmit = () => {
       .login-button {
         height: 50px;
         border-radius: 8px;
-        background-color: #4b6ff6;
-        border-color: #4b6ff6;
+        background: linear-gradient(135deg, #4b6ff6 0%, #1890ff 100%);
         font-size: 16px;
         font-weight: 500;
 

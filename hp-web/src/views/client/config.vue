@@ -92,6 +92,8 @@
 
     <div>
       <a-modal v-model:visible="addConfigVisible" title="添加内网穿透配置">
+
+        <div class="config-info">
         <a-form :model="formState" layout="vertical" ref="formTable">
           <a-form-item label="穿透设备" name="deviceKey" :rules="[{ required: true, message: '穿透设备必填'}]">
             <a-select
@@ -184,7 +186,7 @@
             </a-select>
           </a-form-item>
         </a-form>
-        
+        </div>
         <template #footer>
           <a-button class="btn view" @click="addConfigVisible=!addConfigVisible">取消</a-button>
           <a-button class="btn edit" @click="addConfigOk">确定</a-button>
@@ -458,4 +460,31 @@ const columns = [
   }
 }
 
+.config-info{
+  height: 60vh;
+  overflow-y: scroll;
+
+}
+/* 滚动条整体样式 */
+.config-info::-webkit-scrollbar {
+  width: 2px; /* 滚动条宽度 */
+  height: 2px;
+}
+
+/* 滚动条轨道 */
+.config-info::-webkit-scrollbar-track {
+  background: #f1f1f1; /* 轨道背景色 */
+  border-radius: 1px;
+}
+
+/* 滚动条滑块 */
+.config-info::-webkit-scrollbar-thumb {
+  background: #888; /* 滑块颜色 */
+  border-radius: 1px; /* 滑块圆角 */
+}
+
+/* 滑块悬停效果 */
+.config-info::-webkit-scrollbar-thumb:hover {
+  background: #555; /* 悬停时滑块颜色 */
+}
 </style>
