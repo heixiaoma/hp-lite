@@ -96,10 +96,10 @@ chmod -R 777 ./hp-lite-amd64
 
 
 ## 运行截图
-<img src="./doc/img/img.png"  />
-<img src="./doc/img/img_1.png"  />
+<img src="./doc/img/img_2.png"  />
+<img src="./doc/img/img_3.png"  />
+<img src="./doc/img/img_7.png"  />
 <img src="./doc/img/img_4.png"  />
 <img src="./doc/img/img_5.png"  />
 <img src="./doc/img/img_6.png"  />
-<img src="./doc/img/img_8.png"  />
 
