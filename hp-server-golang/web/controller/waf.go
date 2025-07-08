@@ -15,18 +15,7 @@ type WafController struct {
 	service.UserWafService
 }
 
-func (receiver WafController) checkUser(w http.ResponseWriter, r *http.Request) bool {
-	token := r.Header.Get("token")
-	_, s, _, err := util.DecodeToken(token)
-	if err == nil && strings.Compare(s, "ADMIN") == 0 {
-		return true
-	}
-	json.NewEncoder(w).Encode(bean.ResErrorCode(-2, "用户权限校验失败"))
-	return false
-}
-
 func (receiver WafController) Add(w http.ResponseWriter, r *http.Request) {
-	if receiver.checkUser(w, r) {
 		var msg entity.UserWafEntity
 		// 解析请求体中的JSON数据
 		err := json.NewDecoder(r.Body).Decode(&msg)
@@ -41,11 +30,9 @@ func (receiver WafController) Add(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		json.NewEncoder(w).Encode(bean.ResOk(nil))
-	}
 }
 
 func (receiver WafController) List(w http.ResponseWriter, r *http.Request) {
-	if receiver.checkUser(w, r) {
 		queryParams := r.URL.Query()
 		page := queryParams.Get("current")
 		pageSize := queryParams.Get("pageSize")
@@ -59,15 +46,12 @@ func (receiver WafController) List(w http.ResponseWriter, r *http.Request) {
 		}
 
 		json.NewEncoder(w).Encode(bean.ResOk(receiver.ListData(pageInt, pageSizeInt)))
-	}
 }
 
 func (receiver WafController) Del(w http.ResponseWriter, r *http.Request) {
-	if receiver.checkUser(w, r) {
-		queryParams := r.URL.Query()
-		id := queryParams.Get("id")
-		idInt, _ := strconv.Atoi(id)
-		receiver.RemoveData(idInt)
-		json.NewEncoder(w).Encode(bean.ResOk(nil))
-	}
+	queryParams := r.URL.Query()
+	id := queryParams.Get("id")
+	idInt, _ := strconv.Atoi(id)
+	receiver.RemoveData(idInt)
+	json.NewEncoder(w).Encode(bean.ResOk(nil))
 }
