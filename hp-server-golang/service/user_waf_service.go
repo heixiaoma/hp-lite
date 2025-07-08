@@ -75,5 +75,12 @@ func (receiver *UserWafService) ListData(page int, pageSize int) *bean.ResPage {
 }
 
 func (receiver *UserWafService) RemoveData(id int) {
+	userQuery := &entity.UserWafEntity{}
+	db.DB.Where("id = ? ", id).First(userQuery)
+	if userQuery!=nil {
+		//刷新配置
+		service := ConfigService{}
+		_ = service.RefData(userQuery.ConfigId)
+	}
 	db.DB.Delete(&entity.UserWafEntity{Id: &id})
 }

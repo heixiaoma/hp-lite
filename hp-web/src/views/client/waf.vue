@@ -1,6 +1,8 @@
 <template>
   <div>
     <a-button  style="margin-bottom: 10px" class="btn edit" @click="addModal">添加规则</a-button>
+    <a-button class="btn view" style="margin-bottom: 10px;margin-left: 5px" @click="loadData">刷新列表</a-button>
+
       <a-table :loading="dataLoading" :columns="columns" rowKey="id" :data-source="listData"
                :locale="{emptyText: '暂无数据,添加一个试试看看'}"
                :pagination="pagination"
@@ -14,7 +16,7 @@
                 <a-tag color="#87d068">{{item}}</a-tag>
               </div>
               <div v-else>
-                <a-tag color="#87d068">无配置</a-tag>
+                <a-tag color="#87d068">未启用</a-tag>
               </div>
             </template>
           </template>
@@ -23,11 +25,12 @@
               <a-tag color="#f50">{{item}}</a-tag>
             </div>
             <div v-else>
-              <a-tag color="#87d068">无配置</a-tag>
+              <a-tag color="#f50">未启用</a-tag>
             </div>
           </template>
           <template v-if="column.key === 'action'">
             <a-button  class="btn edit" style="margin-bottom: 5px;margin-left: 5px" @click="edit(record)">编辑</a-button>
+            <a-button class="btn view" style="margin-bottom: 5px;margin-left: 5px" @click="refConfigData(record)">刷新规则</a-button>
             <a-button  class="btn delete" style="margin-bottom: 5px;margin-left: 5px" @click="removeData(record)">删除</a-button>
           </template>
         </template>
@@ -130,7 +133,7 @@ import {getWaf, removeWaf, saveWaf} from "../../api/client/waf";
 import {onMounted, reactive, ref} from "vue";
 import {notification} from "ant-design-vue";
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons-vue';
-import {getConfigByKeyword} from "../../api/client/config.js";
+import {getConfigByKeyword, refConfig} from "../../api/client/config.js";
 
 const listData = ref();
 const dataLoading = ref(false);
@@ -172,6 +175,17 @@ const removeData = (item) => {
     loadData()
   })
 }
+
+const refConfigData = (item) => {
+  refConfig({
+    configId: item.configId
+  }).then(res => {
+    if (res.data) {
+      loadData()
+    }
+  })
+}
+
 
 const edit = (itemOld) => {
   const item=JSON.parse(JSON.stringify(itemOld))
