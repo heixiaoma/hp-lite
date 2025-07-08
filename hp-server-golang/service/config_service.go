@@ -85,6 +85,18 @@ func (receiver *ConfigService) RemoveData(configId int) bool {
 	}
 	return false
 }
+
+func (receiver *ConfigService) KeywordData(userId int, keyword string) []entity.UserConfigEntity {
+	var results []entity.UserConfigEntity
+	key := "%" + keyword + "%"
+	if userId < 0 {
+		db.DB.Model(&entity.UserConfigEntity{}).Where("remarks like ? or id like ?", key, key).Limit(10).Find(&results)
+	} else {
+		db.DB.Model(&entity.UserConfigEntity{}).Where("user_id = ? and (remarks like ? or id like ?)", userId, key, key).Limit(10).Find(&results)
+	}
+	return results
+}
+
 func (receiver *ConfigService) AddData(configEntity entity.UserConfigEntity) error {
 	if len(configEntity.DeviceKey) == 0 {
 		return errors.New("设备ID未选择")

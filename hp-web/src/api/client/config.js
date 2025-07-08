@@ -48,3 +48,12 @@ export function getDeviceKey(query) {
         params: query
     })
 }
+
+
+export function getConfigByKeyword(keyword) {
+    return http({
+        url: '/client/config/keyword',
+        method: 'get',
+        params: {keyword:keyword}
+    })
+}

@@ -39,16 +39,29 @@
       <div class="config-info">
       <a-form :model="formState" ref="formTable" :layout="'vertical'" >
         <a-form-item label="穿透配置 ">
-          <a-input v-model:value="formState.configId"  placeholder="配置ID"/>
+          <a-select
+              v-model:value="formState.configId"
+              show-search
+              placeholder="穿透配置备注关键字"
+              style="width: 90%"
+              :default-active-first-option="false"
+              :show-arrow="false"
+              :filter-option="false"
+              :not-found-content="null"
+              :options="data"
+              @search="handleSearch"
+              @change="handleChange"
+          ></a-select>
         </a-form-item>
         <a-form-item label="并发限制">
-          <a-input v-model:value="formState.rateLimit" placeholder="每分钟最大连接数(-1不限制)"/>
+
+          <a-input style="width: 90%" v-model:value="formState.rateLimit" placeholder="每分钟最大连接数(-1不限制)"/>
         </a-form-item>
         <a-form-item label="上传限制(字节)">
-          <a-input v-model:value="formState.inLimit" placeholder="上传限制字节单位(-1不限制)"/>
+          <a-input style="width: 90%" v-model:value="formState.inLimit" placeholder="上传限制字节单位(-1不限制)"/>
         </a-form-item>
         <a-form-item label="下载限制(字节)">
-          <a-input v-model:value="formState.outLimit" placeholder="下载限制字节单位(-1不限制)"/>
+          <a-input style="width: 90%" v-model:value="formState.outLimit" placeholder="下载限制字节单位(-1不限制)"/>
         </a-form-item>
 
         <div v-if="formState.blockedIps.length===0">
@@ -117,6 +130,7 @@ import {getWaf, removeWaf, saveWaf} from "../../api/client/waf";
 import {onMounted, reactive, ref} from "vue";
 import {notification} from "ant-design-vue";
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons-vue';
+import {getConfigByKeyword} from "../../api/client/config.js";
 
 const listData = ref();
 const dataLoading = ref(false);
@@ -159,7 +173,8 @@ const removeData = (item) => {
   })
 }
 
-const edit = (item) => {
+const edit = (itemOld) => {
+  const item=JSON.parse(JSON.stringify(itemOld))
   formState.allowedIps = item.allowedIps
   formState.blockedIps = item.blockedIps
   formState.rateLimit = item.rateLimit
@@ -168,6 +183,7 @@ const edit = (item) => {
   formState.id = item.id
   formState.configId = item.configId
   addVisible.value=true
+  handleSearch(item.configId)
 }
 
 const columns = [
@@ -238,6 +254,48 @@ const removeBlockedIps = (item) => {
       formState.blockedIps.splice(index, 1);
     }
 };
+
+
+const data = ref([]);
+const value = ref();
+const handleSearch = val => {
+  fetch(val, d => data.value = d);
+};
+const handleChange = val => {
+  console.log(val);
+  value.value = val;
+  fetch(val, d => data.value = d);
+};
+
+let timeout;
+let currentValue = '';
+function fetch(value, callback) {
+  if (timeout) {
+    clearTimeout(timeout);
+    timeout = null;
+  }
+  currentValue = value;
+  function fake() {
+    getConfigByKeyword(value).then(res=>{
+      if (currentValue === value) {
+        console.log(res)
+        if (res.data){
+          const data = [];
+          res.data.forEach(r => {
+            data.push({
+              value: r.id,
+              label: r.remarks,
+            });
+          });
+          callback(data);
+        }
+      }
+    })
+  }
+  timeout = setTimeout(fake, 300);
+}
+
+
 </script>
 
 <style scoped>

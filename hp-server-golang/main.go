@@ -6,6 +6,7 @@ import (
 	"hp-server-lib/net/acme"
 	"hp-server-lib/net/http"
 	"hp-server-lib/net/server"
+	"hp-server-lib/task"
 	"hp-server-lib/web"
 	"log"
 	"os"
@@ -45,6 +46,7 @@ func main() {
 		if err2 != nil {
 			log.Printf("证书申请服务启动失败..." + err2.Error())
 		} else {
+			task.StartSslTask()
 		}
 	}()
 	select {}

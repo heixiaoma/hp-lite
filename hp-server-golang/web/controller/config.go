@@ -79,6 +79,20 @@ func (receiver ConfigController) Add(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (receiver ConfigController) Keyword(w http.ResponseWriter, r *http.Request) {
+	userId, err := receiver.getUserId(w, r)
+	if err == nil {
+		queryParams := r.URL.Query()
+		keyword := queryParams.Get("keyword")
+		data := receiver.KeywordData(userId, keyword)
+		if data != nil {
+			json.NewEncoder(w).Encode(bean.ResOk(data))
+			return
+		}
+		json.NewEncoder(w).Encode(bean.ResOk(nil))
+	}
+}
+
 func (receiver ConfigController) RefConfig(w http.ResponseWriter, r *http.Request) {
 	_, err := receiver.getUserId(w, r)
 	if err == nil {

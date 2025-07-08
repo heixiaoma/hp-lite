@@ -62,6 +62,7 @@ func StartWebServer(port int) {
 	mux.HandleFunc("/client/config/refConfig", configController.RefConfig)
 	mux.HandleFunc("/client/config/changeStatus", configController.ChangeStatus)
 	mux.HandleFunc("/client/config/addConfig", configController.Add)
+	mux.HandleFunc("/client/config/keyword", configController.Keyword)
 
 	monitorController := controller.MonitorController{}
 	mux.HandleFunc("/client/monitor/list", monitorController.List)

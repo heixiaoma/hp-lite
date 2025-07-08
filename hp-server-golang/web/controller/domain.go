@@ -67,7 +67,7 @@ func (receiver DomainController) Gen(w http.ResponseWriter, r *http.Request) {
 		queryParams := r.URL.Query()
 		id := queryParams.Get("id")
 		idInt, _ := strconv.Atoi(id)
-		json.NewEncoder(w).Encode(bean.ResOk(receiver.GenSsl(idInt)))
+		json.NewEncoder(w).Encode(bean.ResOk(receiver.GenSsl(false, idInt)))
 	}
 }
 

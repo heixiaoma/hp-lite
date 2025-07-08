@@ -39,7 +39,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// 根据 host 选择不同的目标代理
 	value, ok := service.DOMAIN_USER_INFO.Load(host)
 	if !ok {
-		http.Error(w, "设备不在线", http.StatusInternalServerError)
+		Error(w, DeviceNotFound(), http.StatusInternalServerError)
 		return
 	}
 	info := value.(*bean.UserConfigInfo)
@@ -56,7 +56,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if flag {
-			http.Error(w, "不在白名单:"+clientIP, http.StatusInternalServerError)
+			Error(w, Waf("您的IP地址不在防火墙白名单，无法访问此服务", clientIP), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -65,7 +65,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		ips := info.BlockedIps
 		for _, item := range ips {
 			if util.IsIPInCIDR(clientIP, item) {
-				http.Error(w, "已经黑名单:"+clientIP, http.StatusInternalServerError)
+				Error(w, Waf("您的IP地址已被列入防火墙黑名单，无法访问此服务", clientIP), http.StatusInternalServerError)
 				return
 			}
 		}
@@ -230,4 +230,24 @@ func saveMultipartFiles(req *http.Request) (*os.File, error) {
 	}
 
 	return tmpFile, nil
+}
+
+func Error(w http.ResponseWriter, error string, code int) {
+	h := w.Header()
+
+	// Delete the Content-Length header, which might be for some other content.
+	// Assuming the error string fits in the writer's buffer, we'll figure
+	// out the correct Content-Length for it later.
+	//
+	// We don't delete Content-Encoding, because some middleware sets
+	// Content-Encoding: gzip and wraps the ResponseWriter to compress on-the-fly.
+	// See https://go.dev/issue/66343.
+	h.Del("Content-Length")
+
+	// There might be content type already set, but we reset it to
+	// text/html for the error message.
+	h.Set("Content-Type", "text/html; charset=utf-8")
+	h.Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(code)
+	fmt.Fprintln(w, error)
 }
