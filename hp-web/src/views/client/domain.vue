@@ -1,7 +1,7 @@
 <template>
   <div>
     <a-button class="btn edit" style="margin-bottom: 10px" @click="addModal">添加域名</a-button>
-    <a-button class="btn view" style="margin-bottom: 10px;margin-left: 5px" @click="loadData">刷新</a-button>
+    <a-button class="btn view" style="margin-bottom: 10px;margin-left: 5px" @click="loadData">刷新列表</a-button>
 
     <a-table :loading="dataLoading" :columns="columns" rowKey="id" :data-source="listData"
              :locale="{emptyText: '暂无数据,添加一个试试看看'}"
