@@ -40,10 +40,10 @@ HP-Lite5.0是一个单机方案
 - 提前在主机建好 /data/app.yml文件 然后映射过去
 ```shell
 # 通过 阿里云源 docker run 运行容器
-sudo docker run --net=host --restart=always -d  -v /data/app.yml:/hp-lite-server/app.yml  -v /data/data:/hp-lite-server/data registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite-server:latest
+sudo docker run --name hp-lite-server --net=host --restart=always -d  -v /data/app.yml:/hp-lite-server/app.yml  -v /data/data:/hp-lite-server/data registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite-server:latest
 
 # 通过Docker官方源运行
-sudo docker run --net=host --restart=always -d  -v /data/app.yml:/hp-lite-server/app.yml  -v /data/data:/hp-lite-server/data  heixiaoma/hp-lite-server:latest
+sudo docker run --name hp-lite-server --net=host --restart=always -d  -v /data/app.yml:/hp-lite-server/app.yml  -v /data/data:/hp-lite-server/data  heixiaoma/hp-lite-server:latest
 ```
 
 
@@ -75,14 +75,14 @@ acme:
 ##### docker
 ```shell
 # 通过 阿里云源 docker run 运行容器
-sudo docker run --restart=always -d  -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite:latest
+sudo docker run --name hp-lite --restart=always -d  -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite:latest
 #直接连接码
-sudo docker run --restart=always -d  -e c=连接码 registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite:latest
+sudo docker run --name hp-lite --restart=always -d  -e c=连接码 registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite:latest
 
 # 通过Docker官方源运行
-sudo docker run --restart=always -d -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID heixiaoma/hp-lite:latest
+sudo docker run --name hp-lite --restart=always -d -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID heixiaoma/hp-lite:latest
 #直接连接码
-sudo docker run --restart=always -d -e  c=连接码 heixiaoma/hp-lite:latest
+sudo docker run --name hp-lite --restart=always -d -e  c=连接码 heixiaoma/hp-lite:latest
 ```
 
 ##### Linux或者win
