@@ -52,6 +52,11 @@ type UserWafEntity struct {
 	 */
 	ConfigId int `json:"configId"`
 
+	/**
+	 * 用户ID
+	 */
+	UserId *int `json:"userId"`
+
 	AllowedIPs IPList `json:"allowedIps" gorm:"type:text"` // 使用自定义类型
 
 	BlockedIPs IPList `json:"blockedIps" gorm:"type:text"`

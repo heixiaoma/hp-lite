@@ -28,6 +28,31 @@
               <a-tag color="#f50">未启用</a-tag>
             </div>
           </template>
+          <template v-if="column.key === 'rateLimit'">
+            <div v-if="record.rateLimit<=0">
+              不限制
+            </div>
+            <div v-else>
+              {{record.rateLimit}}
+            </div>
+          </template>
+          <template v-if="column.key === 'inLimit'">
+            <div v-if="record.inLimit<=0">
+              不限制
+            </div>
+            <div v-else>
+              {{record.rateLimit}}
+            </div>
+          </template>
+          <template v-if="column.key === 'outLimit'">
+            <div v-if="record.outLimit<=0">
+              不限制
+            </div>
+            <div v-else>
+              {{record.rateLimit}}
+            </div>
+          </template>
+
           <template v-if="column.key === 'action'">
             <a-button  class="btn edit" style="margin-bottom: 5px;margin-left: 5px" @click="edit(record)">编辑</a-button>
             <a-button class="btn view" style="margin-bottom: 5px;margin-left: 5px" @click="refConfigData(record)">刷新规则</a-button>
@@ -41,7 +66,7 @@
     <a-modal  v-model:visible="addVisible" title="添加">
       <div class="config-info">
       <a-form :model="formState" ref="formTable" :layout="'vertical'" >
-        <a-form-item label="穿透配置 ">
+        <a-form-item label="穿透配置 " name="configId"  :rules="[{ required: true, message: '选择穿透配置'}]">
           <a-select
               v-model:value="formState.configId"
               show-search
@@ -56,14 +81,13 @@
               @change="handleChange"
           ></a-select>
         </a-form-item>
-        <a-form-item label="并发限制">
-
+        <a-form-item label="并发限制" name="rateLimit"  :rules="[{ required: true, message: '设置并发连接数'}]">
           <a-input style="width: 90%" v-model:value="formState.rateLimit" placeholder="每分钟最大连接数(-1不限制)"/>
         </a-form-item>
-        <a-form-item label="上传限制(字节)">
+        <a-form-item label="上传限制(字节)" name="inLimit" :rules="[{ required: true, message: '设置上传限制'}]">
           <a-input style="width: 90%" v-model:value="formState.inLimit" placeholder="上传限制字节单位(-1不限制)"/>
         </a-form-item>
-        <a-form-item label="下载限制(字节)">
+        <a-form-item label="下载限制(字节)"  name="outLimit" :rules="[{ required: true, message: '设置下载限制'}]">
           <a-input style="width: 90%" v-model:value="formState.outLimit" placeholder="下载限制字节单位(-1不限制)"/>
         </a-form-item>
 
@@ -136,6 +160,7 @@ import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons-vue';
 import {getConfigByKeyword, refConfig} from "../../api/client/config.js";
 
 const listData = ref();
+const formTable = ref();
 const dataLoading = ref(false);
 const addVisible = ref(false);
 const formState = reactive({
@@ -208,7 +233,7 @@ const columns = [
   {title: '禁止IP', dataIndex: 'blockedIps', key: 'blockedIps'},
   {title: '上传速率(byte)', dataIndex: 'inLimit', key: 'inLimit'},
   {title: '下载速率(byte)', dataIndex: 'outLimit', key: 'outLimit'},
-  {title: '并发限制', dataIndex: 'rateLimit', key: 'rateLimit'},
+  {title: '并发连接限制', dataIndex: 'rateLimit', key: 'rateLimit'},
   {title: '操作', key: 'action'},
 ];
 
@@ -225,23 +250,24 @@ const addModal = () => {
   formState.rateLimit = -1
   formState.inLimit = -1
   formState.outLimit = -1
-  formState.configId = 0
+  formState.configId = ''
   formState.id = undefined
   addVisible.value = true
 }
 
 const addOk = () => {
-  formState.rateLimit=parseInt(formState.rateLimit)
-  formState.inLimit=parseInt(formState.inLimit)
-  formState.outLimit=parseInt(formState.outLimit)
-  formState.configId=parseInt(formState.configId)
-
-  saveWaf({...formState}).then(res => {
-    notification.open({
-      message: res.msg,
+  formTable.value.validate().then(valid => {
+    formState.rateLimit=parseInt(formState.rateLimit)
+    formState.inLimit=parseInt(formState.inLimit)
+    formState.outLimit=parseInt(formState.outLimit)
+    formState.configId=parseInt(formState.configId)
+    saveWaf({...formState}).then(res => {
+      notification.open({
+        message: res.msg,
+      })
+      loadData()
+      addVisible.value = false
     })
-    loadData()
-    addVisible.value = false
   })
 }
 

@@ -40,6 +40,13 @@ func (receiver *UserWafService) AddData(custom entity.UserWafEntity) error {
 			return errors.New("穿透的安全规则已经存在，请查找你的列表配置")
 		}
 	}
+
+	deviceQuery := &entity.UserConfigEntity{}
+	db.DB.Where("id = ? ", custom.ConfigId).First(deviceQuery)
+	if deviceQuery == nil || deviceQuery.UserId == nil {
+		return errors.New("配置不存在")
+	}
+	custom.UserId = deviceQuery.UserId
 	db.DB.Save(&custom)
 	//刷新配置
 	service := ConfigService{}
@@ -47,12 +54,15 @@ func (receiver *UserWafService) AddData(custom entity.UserWafEntity) error {
 	return nil
 }
 
-func (receiver *UserWafService) ListData(page int, pageSize int) *bean.ResPage {
+func (receiver *UserWafService) ListData(userId int, page int, pageSize int) *bean.ResPage {
 	var results []*entity.UserWafEntity
 	var total int64
 	// 计算总记录数并执行分页查询
-	db.DB.Model(&entity.UserWafEntity{}).Count(&total).Offset((page - 1) * pageSize).Limit(pageSize).Find(&results)
-
+	if userId < 0 {
+		db.DB.Model(&entity.UserWafEntity{}).Order("id desc").Count(&total).Offset((page - 1) * pageSize).Limit(pageSize).Find(&results)
+	} else {
+		db.DB.Model(&entity.UserWafEntity{}).Where("user_id = ?", userId).Order("id desc").Count(&total).Offset((page - 1) * pageSize).Limit(pageSize).Find(&results)
+	}
 	var configIds []int
 	for _, item := range results {
 		configIds = append(configIds, item.ConfigId)
@@ -77,7 +87,7 @@ func (receiver *UserWafService) ListData(page int, pageSize int) *bean.ResPage {
 func (receiver *UserWafService) RemoveData(id int) {
 	userQuery := &entity.UserWafEntity{}
 	db.DB.Where("id = ? ", id).First(userQuery)
-	if userQuery!=nil {
+	if userQuery != nil {
 		//刷新配置
 		service := ConfigService{}
 		_ = service.RefData(userQuery.ConfigId)
