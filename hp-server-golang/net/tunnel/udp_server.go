@@ -44,6 +44,9 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 				break
 			}
 			n, addr, err := conn.ReadFromUDP(buffer)
+			if err != nil {
+				break
+			}
 
 			ip := util.GetClientIPFromUDP(addr)
 			if len(udpServer.userInfo.AllowedIps) > 0 {
@@ -69,9 +72,6 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 				}
 			}
 
-			if err != nil {
-				break
-			}
 			value, ok := udpServer.cache.Load(addr.String())
 			if !ok {
 				handler := NewUdpHandler(udpServer, conn, udpServer.conn, addr)
