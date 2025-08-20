@@ -76,10 +76,19 @@ func StartWebServer(port int) {
 	mux.HandleFunc("/client/domain/query", domainController.Query)
 
 	wafController := controller.WafController{}
-	mux.HandleFunc("/client/waf/saveUser", wafController.Add)
+	mux.HandleFunc("/client/waf/save", wafController.Add)
 	mux.HandleFunc("/client/waf/list", wafController.List)
-	mux.HandleFunc("/client/waf/removeUser", wafController.Del)
+	mux.HandleFunc("/client/waf/remove", wafController.Del)
 
+	reverseController := controller.ReverseController{}
+	mux.HandleFunc("/client/reverse/save", reverseController.Add)
+	mux.HandleFunc("/client/reverse/list", reverseController.List)
+	mux.HandleFunc("/client/reverse/remove", reverseController.Del)
+
+	forwardController := controller.ForwardController{}
+	mux.HandleFunc("/client/forward/save", forwardController.Add)
+	mux.HandleFunc("/client/forward/list", forwardController.List)
+	mux.HandleFunc("/client/forward/remove", forwardController.Del)
 	muxWithRecovery := recoveryMiddleware(mux)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), muxWithRecovery))
 }

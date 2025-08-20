@@ -71,10 +71,10 @@
   <div>
     <a-modal  v-model:visible="addVisible" title="信息">
       <a-form :model="formState" ref="formTable" :layout="'vertical'" >
-        <a-form-item label="域名 " >
+        <a-form-item label="域名" name="domain"  :rules="[{ required: true, message: '必选域名'}]" >
           <a-input :disabled="!isAdd" v-model:value="formState.domain" placeholder="域名"/>
         </a-form-item>
-        <a-form-item label="备注">
+        <a-form-item label="备注" name="desc"  :rules="[{ required: true, message: '必选备注'}]">
           <a-input v-model:value="formState.desc" placeholder="备注"/>
         </a-form-item>
         <a-form-item label="证书" name="certificateKey"
@@ -106,6 +106,7 @@ import {onMounted, reactive, ref} from "vue";
 import {notification} from "ant-design-vue";
 
 
+const formTable = ref();
 const listData = ref();
 const dataLoading = ref(false);
 const addVisible = ref(false);
@@ -199,13 +200,15 @@ const addModal = () => {
 }
 
 const addOk = () => {
-  addDomain({...formState}).then(res => {
-    notification.open({
-      message: res.msg,
+  formTable.value.validate().then(res => {
+    addDomain({...formState}).then(res => {
+      notification.open({
+        message: res.msg,
+      })
+      loadData()
+      addVisible.value = false
     })
-    loadData()
-    addVisible.value = false
-  })
+  });
 }
 
 onMounted(() => {

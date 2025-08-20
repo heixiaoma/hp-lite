@@ -40,6 +40,8 @@ func init() {
 	DB.AutoMigrate(&entity.UserStatisticsEntity{})
 	DB.AutoMigrate(&entity.UserDomainEntity{})
 	DB.AutoMigrate(&entity.UserWafEntity{})
+	DB.AutoMigrate(&entity.UserFwdEntity{})
+	DB.AutoMigrate(&entity.UserReverseEntity{})
 }
 
 func EnsureDirExists(dirPath string, perm os.FileMode, createParent bool) error {

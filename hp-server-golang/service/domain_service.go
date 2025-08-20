@@ -11,13 +11,41 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 )
 
 var acmeCheck int32 = 0
 
+var DOMAIN_INFO = sync.Map{}
+
 type DomainService struct {
+}
+
+func InitDomainCache() {
+	page := 1
+	pageSize := 100
+	for {
+		var results []*entity.UserDomainEntity
+		tx := db.DB.Model(&entity.UserDomainEntity{}).
+			Offset((page - 1) * pageSize).
+			Limit(pageSize).
+			Find(&results)
+		if tx.Error != nil {
+			break
+		}
+		// 如果本页没有数据，说明结束
+		if len(results) == 0 {
+			break
+		}
+		// 放入缓存
+		for _, r := range results {
+			DOMAIN_INFO.Store(*r.Domain, r)
+		}
+		// 下一页
+		page++
+	}
 }
 
 func (receiver *DomainService) DomainList(userId int, page int, pageSize int) *bean.ResPage {
@@ -89,21 +117,21 @@ func (receiver *DomainService) DomainListByKey(userId int, keyword string) *bean
 	var results []entity.UserDomainEntity
 	if userId < 0 {
 		tx := db.DB.Model(&entity.UserDomainEntity{})
-		tx.Joins("LEFT JOIN user_config ON user_domain.domain = user_config.domain")
+		tx.Joins("LEFT JOIN user_config ON user_domain.domain = user_config.domain LEFT JOIN user_reverse ON user_domain.domain = user_reverse.domain")
 		if len(keyword) > 0 {
-			tx.Where("(user_config.domain is null or user_config.domain='') and user_domain.domain like ?", "%"+keyword+"%")
+			tx.Where("(user_config.domain is null or user_config.domain='') and (user_reverse.domain is null or user_reverse.domain='') and user_domain.domain like ?", "%"+keyword+"%")
 		} else {
-			tx.Where("(user_config.domain is null or user_config.domain='')")
+			tx.Where("(user_config.domain is null or user_config.domain='') and (user_reverse.domain is null or user_reverse.domain='') ")
 		}
 
 		tx.Order("user_domain.id desc").Find(&results)
 	} else {
 		model := db.DB.Model(&entity.UserDomainEntity{})
-		model.Joins("LEFT JOIN user_config ON user_domain.domain = user_config.domain")
+		model.Joins("LEFT JOIN user_config ON user_domain.domain = user_config.domain LEFT JOIN user_reverse ON user_domain.domain = user_reverse.domain")
 		if len(keyword) > 0 {
-			model.Where("(user_config.domain is null or user_config.domain='') and user_domain.domain like ? and user_domain.user_id = ? ", "%"+keyword+"%", userId)
+			model.Where("(user_config.domain is null or user_config.domain='') and (user_reverse.domain is null or user_reverse.domain='') and user_domain.domain like ? and user_domain.user_id = ? ", "%"+keyword+"%", userId)
 		} else {
-			model.Where("(user_config.domain is null or user_config.domain='') and user_domain.user_id = ?", userId)
+			model.Where("(user_config.domain is null or user_config.domain='') and (user_reverse.domain is null or user_reverse.domain='') and user_domain.user_id = ?", userId)
 		}
 		model.Order("user_domain.id desc").Find(&results)
 	}
@@ -116,6 +144,7 @@ func (receiver *DomainService) RemoveData(id int) bool {
 	if userQuery != nil {
 		var results entity.UserDomainEntity
 		db.DB.Where("id = ?", id).Delete(&results)
+		DOMAIN_INFO.Delete(*userQuery.Domain)
 		return true
 	}
 	return false
@@ -131,11 +160,12 @@ func (receiver *DomainService) AddData(userDomain entity.UserDomainEntity) error
 			return errors.New("域名已存在")
 		}
 		db.DB.Save(&userDomain)
+		DOMAIN_INFO.Store(*userDomain.Domain, userDomain)
 	} else {
 		//更新缓存
-		value, ok := DOMAIN_USER_INFO.Load(*userDomain.Domain)
+		value, ok := DOMAIN_INFO.Load(*userDomain.Domain)
 		if ok {
-			info := value.(*bean.UserConfigInfo)
+			info := value.(*entity.UserDomainEntity)
 			info.CertificateKey = userDomain.CertificateKey
 			info.CertificateContent = userDomain.CertificateContent
 		}
@@ -189,20 +219,18 @@ func (receiver *DomainService) GenSsl(sync bool, id int) bool {
 	return false
 }
 
-func (receiver *DomainService) UpdateData(id int, key, content string, domain string) error {
+func (receiver *DomainService) UpdateData(id int, key, content string, domain string) {
 	//更新域名配置
 	db.DB.Model(&entity.UserDomainEntity{}).Where("id = ?", id).Update("certificate_key", key).Update("certificate_content", content)
 	//更新缓存
-	value, ok := DOMAIN_USER_INFO.Load(domain)
+	value, ok := DOMAIN_INFO.Load(domain)
 	if ok {
-		info := value.(*bean.UserConfigInfo)
+		info := value.(*entity.UserDomainEntity)
 		info.CertificateKey = key
 		info.CertificateContent = content
 	}
-	return nil
 }
 
-func (receiver *DomainService) UpdateStatus(id int, status string) error {
+func (receiver *DomainService) UpdateStatus(id int, status string) {
 	db.DB.Model(&entity.UserDomainEntity{}).Where("id = ?", id).Update("status", status)
-	return nil
 }

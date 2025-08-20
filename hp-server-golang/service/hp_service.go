@@ -16,7 +16,7 @@ import (
 
 // 端口->隧道服务
 var HP_CACHE_TUN = sync.Map{}
-var DOMAIN_USER_INFO = sync.Map{}
+var DOMAIN_HP_INFO = sync.Map{}
 var mu sync.Mutex // 创建一个互斥锁
 
 type HpService struct {
@@ -35,29 +35,18 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 	} else if userQuery.ProxyVersion == bean.V2 {
 		s = "V2"
 	}
-	//如果域名不能空就查询证书
-	key := ""
-	content := ""
-	if userQuery.Domain != nil && len(*userQuery.Domain) > 0 {
-		userDomain := &entity.UserDomainEntity{}
-		db.DB.Where("domain = ?  ", *userQuery.Domain).First(userDomain)
-		key = userDomain.CertificateKey
-		content = userDomain.CertificateContent
-	}
 
 	b := &bean.UserConfigInfo{
-		ProxyVersion:       s,
-		Domain:             userQuery.Domain,
-		ProxyIp:            userQuery.LocalIp,
-		ProxyPort:          *userQuery.LocalPort,
-		ConfigId:           *userQuery.Id,
-		Port:               *userQuery.Port,
-		Ip:                 userQuery.ServerIp,
-		CertificateKey:     key,
-		CertificateContent: content,
-		WebType:            userQuery.WebType,
-		TunType:            userQuery.TunType,
-		MaxConn:            -1,
+		ProxyVersion: s,
+		Domain:       userQuery.Domain,
+		ProxyIp:      userQuery.LocalIp,
+		ProxyPort:    *userQuery.LocalPort,
+		ConfigId:     *userQuery.Id,
+		Port:         *userQuery.Port,
+		Ip:           userQuery.ServerIp,
+		WebType:      userQuery.WebType,
+		TunType:      userQuery.TunType,
+		MaxConn:      -1,
 	}
 	//防火墙参数配置
 	waf := &entity.UserWafEntity{}
@@ -91,7 +80,7 @@ func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSessi
 		s.CLose()
 		HP_CACHE_TUN.Delete(info.Port)
 		if info.Domain != nil {
-			DOMAIN_USER_INFO.Delete(*info.Domain)
+			DOMAIN_HP_INFO.Delete(*info.Domain)
 		}
 	}
 	tunnelType := data.MetaData.Type.String()
@@ -105,7 +94,7 @@ func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSessi
 		HP_CACHE_TUN.Store(info.Port, newTunnelServer)
 	}
 	if info.Domain != nil {
-		DOMAIN_USER_INFO.Store(*info.Domain, info)
+		DOMAIN_HP_INFO.Store(*info.Domain, info)
 	}
 
 	//更新服务端状态
@@ -124,8 +113,6 @@ func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSessi
 		arr2 = append(arr2, []string{"外网TCP", info.Ip + ":" + strconv.Itoa(info.Port)})
 		if info.Domain != nil {
 			arr2 = append(arr2, []string{"HTTP地址", "http://" + *info.Domain})
-		}
-		if len(info.CertificateKey) > 0 && len(info.CertificateContent) > 0 {
 			arr2 = append(arr2, []string{"HTTPS地址", "https://" + *info.Domain})
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hp-server-lib/bean"
 	"hp-server-lib/config"
+	"hp-server-lib/entity"
 	"hp-server-lib/net/base"
 	"hp-server-lib/service"
 	"hp-server-lib/util"
@@ -19,6 +20,7 @@ import (
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	host := r.Host
+	clientIP := getClientIP(r)
 	//检查是否是证书挑战
 	if strings.Contains(r.URL.String(), "/.well-known/acme-challenge/") {
 		target, err := url.Parse("http://127.0.0.1:" + config.ConfigData.Acme.HttpPort)
@@ -31,15 +33,43 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		proxy.ServeHTTP(w, r)
 		return
 	}
+
+	//反向代理处理
+	load, o := service.DOMAIN_REVERSE_INFO.Load(host)
+	if o {
+		reverse := load.(*entity.UserReverseEntity)
+		if reverse.ReverseProxy == nil {
+
+			target, err := url.Parse(*reverse.Address)
+			if err != nil {
+				http.Error(w, "错误URL地址", http.StatusInternalServerError)
+				return
+			}
+			proxy := httputil.NewSingleHostReverseProxy(target)
+			proxy.Transport = &http.Transport{
+				MaxIdleConns:        1000,
+				MaxIdleConnsPerHost: 500,
+				IdleConnTimeout:     30 * time.Second,
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
+			}
+			reverse.ReverseProxy = proxy
+		}
+
+		log.Printf("来源: %s 访问地址: http://%s%s", clientIP, host, r.URL.Path)
+		reverse.ReverseProxy.ServeHTTP(w, r)
+		return
+	}
+
+	//穿透代理处理
 	// 根据 host 选择不同的目标代理
-	value, ok := service.DOMAIN_USER_INFO.Load(host)
+	value, ok := service.DOMAIN_HP_INFO.Load(host)
 	if !ok {
 		Error(w, DeviceNotFound(), http.StatusInternalServerError)
 		return
 	}
 	info := value.(*bean.UserConfigInfo)
-
-	clientIP := getClientIP(r)
 
 	if len(info.AllowedIps) > 0 {
 		ips := info.AllowedIps

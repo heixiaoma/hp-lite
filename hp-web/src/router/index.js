@@ -13,6 +13,8 @@ const manage = () => import('../views/client/manage.vue');
 const client_user = () => import('../views/client/user.vue');
 const client_domain = () => import('../views/client/domain.vue');
 const client_waf = () => import('../views/client/waf.vue');
+const client_reverse = () => import('../views/client/reverse.vue');
+const client_forward = () => import('../views/client/forward.vue');
 
 const routes = [
     {path: '/', component: home},
@@ -30,6 +32,8 @@ const routes = [
             {path: 'waf', component: client_waf, name: "waf"},
             {path: 'teach', component: client_teach, name: "teach"},
             {path: 'domain', component: client_domain, name: "domain"},
+            {path: 'reverse', component: client_reverse, name: "reverse"},
+            {path: 'forward', component: client_forward, name: "forward"},
         ],
     },
 ]

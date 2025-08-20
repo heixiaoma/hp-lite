@@ -6,154 +6,153 @@
       <a-button class="btn view" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
     </div>
 
-
-    <a-empty  v-if="deviceList&&deviceList.length===0"  />
-
-    <div class="device-list-container">
-      <a-spin :spinning="listLoading" tip="加载中...">
-        <a-collapse accordion class="custom-collapse">
-          <a-collapse-panel
-              v-for="item in deviceList"
-              :key="item.deviceId"
-              class="device-panel"
-          >
-            <!-- 使用正确的插槽语法 -->
-            <template #header>
-              <div class="panel-header">
-                <div class="device-info">
-                  <div class="device-status">
-                    <span class="status-dot" :class="item.online ? 'online' : 'offline'"></span>
-                    <span class="status-text" :class="item.online ? 'online' : 'offline'">
-                    {{ item.online ? '在线中' : '未在线' }}
+    <a-table :columns="columns" :data-source="deviceList"  rowKey="deviceId" :loading="listLoading"
+             :locale="{emptyText: '暂无数据,添加一个试试看看'}"
+             :pagination="pagination"
+             @change="handleTableChange"
+             :scroll="{ x: 'max-content' }"
+    >
+      <template #bodyCell="{ column,record }">
+        <template v-if="column.key === 'online'">
+          <div class="panel-header">
+            <div class="device-info">
+              <div class="device-status">
+                <span class="status-dot" :class="record.online ? 'online' : 'offline'"></span>
+                <span class="status-text" :class="record.online ? 'online' : 'offline'">
+                    {{ record.online ? '在线中' : '未在线' }}
                   </span>
-                  </div>
-                  <div class="device-name">{{ item.desc }}</div>
-                </div>
-              </div>
-            </template>
-
-            <!-- 面板内容 -->
-            <div class="panel-content">
-              <div class="device-details">
-                <!-- 基础信息 -->
-                <div class="info-section">
-                  <h3 class="section-title">设备信息</h3>
-                  <div class="info-row" style="flex-direction: column">
-                    <span class="info-label">设备ID:</span>
-                    <span class="info-value">{{ item.deviceId }}</span>
-                  </div>
-                  <div class="info-row" style="flex-direction: column">
-                    <span class="info-label">连接码:</span>
-                    <span class="info-value">{{ item.connectKey }}</span>
-                  </div>
-                </div>
-
-                <!-- 性能监控 -->
-                <div v-if="item.memoryInfo" class="performance-section">
-                  <h3 class="section-title">性能监控</h3>
-
-                  <!-- 内存使用率 -->
-                  <div class="metric-item">
-                    <div class="metric-header">
-                      <span class="metric-label">内存使用率</span>
-                      <span class="metric-value">
-                      {{ ((item.memoryInfo.useMem / item.memoryInfo.total) * 100).toFixed(1) }}%
-                    </span>
-                    </div>
-                    <div class="progress-bar">
-                      <div class="progress-track">
-                        <div
-                            class="progress-fill memory"
-                            :style="{ width: ((item.memoryInfo.useMem / item.memoryInfo.total) * 100) + '%' }"
-                        ></div>
-                      </div>
-                    </div>
-                    <div class="memory-details">
-                      <span class="memory-used">{{ (item.memoryInfo.useMem / 1024 / 1024).toFixed(2) }} MB</span>
-                      <span class="memory-total">{{ (item.memoryInfo.total / 1024 / 1024).toFixed(2) }} MB</span>
-                    </div>
-                  </div>
-
-                  <!-- CPU使用率 -->
-                  <div class="metric-item">
-                    <div class="metric-header">
-                      <span class="metric-label">CPU使用率</span>
-                      <span class="metric-value">{{ item.memoryInfo.cpuRate.toFixed(1) }}%</span>
-                    </div>
-                    <div class="progress-bar">
-                      <div class="progress-track">
-                        <div
-                            class="progress-fill cpu"
-                            :style="{ width: item.memoryInfo.cpuRate + '%' }"
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- HP内存信息 -->
-                  <div class="hp-memory-info">
-                    <div class="info-row">
-                      <span class="info-label">HP占用内存:</span>
-                      <span class="info-value">{{ (item.memoryInfo.hpTotalMem / 1024 / 1024).toFixed(2) }} MB</span>
-                    </div>
-                    <div class="info-row">
-                      <span class="info-label">HP实际使用:</span>
-                      <span class="info-value">{{ (item.memoryInfo.hpUseMem / 1024 / 1024).toFixed(2) }} MB</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 管理员信息 -->
-                <div v-if="userInfo.getUserInfo().role === 'ADMIN'" class="admin-section">
-                  <h3 class="section-title">归属信息</h3>
-                  <div class="info-row">
-                    <span class="info-label">归属用户:</span>
-                    <span class="info-value">{{ item.username || '无' }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label">用户备注:</span>
-                    <span class="info-value">{{ item.userDesc || '无' }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 操作按钮 -->
-              <div class="action-buttons">
-                <a-popconfirm
-                    title="确定要删除该设备？"
-                    ok-text="删除"
-                    cancel-text="取消"
-                    @confirm="() => removeData(item)"
-                >
-                  <a-button class="btn delete">
-                     删除
-                  </a-button>
-                </a-popconfirm>
-
-                <a-popconfirm
-                    title="确定要强制停止程序？"
-                    ok-text="停止"
-                    cancel-text="取消"
-                    @confirm="() => stopData(item)"
-                >
-                  <a-button class="btn stop">
-                     强制停止
-                  </a-button>
-                </a-popconfirm>
-
-                <a-button class="btn view" @click="showQr(item)">
-                  连接码
-                </a-button>
-
-                <a-button class="btn edit" @click="edit(item)">
-                  编辑
-                </a-button>
               </div>
             </div>
-          </a-collapse-panel>
-        </a-collapse>
-      </a-spin>
-    </div>
+          </div>
+        </template>
+
+        <template v-if="column.key === 'action'">
+
+          <a-button class="btn view" style="margin-right: 5px" @click="showQr(record)">
+            连接码
+          </a-button>
+
+          <a-button class="btn edit" @click="edit(record)">
+            编辑
+          </a-button>
+        </template>
+
+      </template>
+
+      <template #expandedRowRender="{ record }">
+        <div class="panel-content">
+          <div class="device-details">
+            <!-- 基础信息 -->
+            <div class="info-section">
+              <h3 class="section-title">设备信息</h3>
+              <div class="info-row" style="flex-direction: column">
+                <span class="info-label">设备ID:</span>
+                <span class="info-value">{{ record.deviceId }}</span>
+              </div>
+              <div class="info-row" style="flex-direction: column">
+                <span class="info-label">连接码:</span>
+                <span class="info-value">{{ record.connectKey }}</span>
+              </div>
+            </div>
+
+            <!-- 性能监控 -->
+            <div v-if="record.memoryInfo" class="performance-section">
+              <h3 class="section-title">性能监控</h3>
+
+              <!-- 内存使用率 -->
+              <div class="metric-item">
+                <div class="metric-header">
+                  <span class="metric-label">内存使用率</span>
+                  <span class="metric-value">
+                      {{ ((record.memoryInfo.useMem / record.memoryInfo.total) * 100).toFixed(1) }}%
+                    </span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-track">
+                    <div
+                        class="progress-fill memory"
+                        :style="{ width: ((record.memoryInfo.useMem / record.memoryInfo.total) * 100) + '%' }"
+                    ></div>
+                  </div>
+                </div>
+                <div class="memory-details">
+                  <span class="memory-used">{{ (record.memoryInfo.useMem / 1024 / 1024).toFixed(2) }} MB</span>
+                  <span class="memory-total">{{ (record.memoryInfo.total / 1024 / 1024).toFixed(2) }} MB</span>
+                </div>
+              </div>
+
+              <!-- CPU使用率 -->
+              <div class="metric-item">
+                <div class="metric-header">
+                  <span class="metric-label">CPU使用率</span>
+                  <span class="metric-value">{{ record.memoryInfo.cpuRate.toFixed(1) }}%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-track">
+                    <div
+                        class="progress-fill cpu"
+                        :style="{ width: record.memoryInfo.cpuRate + '%' }"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- HP内存信息 -->
+              <div class="hp-memory-info">
+                <div class="info-row">
+                  <span class="info-label">HP占用内存:</span>
+                  <span class="info-value">{{ (record.memoryInfo.hpTotalMem / 1024 / 1024).toFixed(2) }} MB</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">HP实际使用:</span>
+                  <span class="info-value">{{ (record.memoryInfo.hpUseMem / 1024 / 1024).toFixed(2) }} MB</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 管理员信息 -->
+            <div v-if="userInfo.getUserInfo().role === 'ADMIN'" class="admin-section">
+              <h3 class="section-title">归属信息</h3>
+              <div class="info-row">
+                <span class="info-label">归属用户:</span>
+                <span class="info-value">{{ record.username || '无' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">用户备注:</span>
+                <span class="info-value">{{ record.userDesc || '无' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="action-buttons">
+            <a-popconfirm
+                title="确定要删除该设备？"
+                ok-text="删除"
+                cancel-text="取消"
+                @confirm="() => removeData(record)"
+            >
+              <a-button class="btn delete">
+                删除
+              </a-button>
+            </a-popconfirm>
+
+            <a-popconfirm
+                title="确定要强制停止程序？"
+                ok-text="停止"
+                cancel-text="取消"
+                @confirm="() => stopData(record)"
+            >
+              <a-button class="btn stop">
+                强制停止
+              </a-button>
+            </a-popconfirm>
+
+          </div>
+        </div>
+      </template>
+    </a-table>
+
     <div>
       <a-modal :destroyOnClose="true"  v-model:visible="qrModalVisible" title="设备二维码">
         <qr :text="deviceId"/>
@@ -203,9 +202,10 @@
 <script setup>
 import {onMounted, reactive, ref} from "vue";
 import {useRouter} from "vue-router";
-import {getDeviceList, addDevice, removeDevice, stopDevice, updateDevice} from "../../api/client/device";
+import {addDevice, getDeviceList, removeDevice, stopDevice, updateDevice} from "../../api/client/device";
 import qr from './qr.vue';
 import userInfo from "../../data/userInfo";
+
 const qrModalVisible = ref(false)
 const router = useRouter()
 const formTable = ref()
@@ -218,6 +218,24 @@ const formState = reactive({
   deviceId: "",
   desc: ""
 })
+const pagination = reactive({
+  total: 0,
+  current: 1,
+  pageSize: 10,
+});
+
+const columns = [
+  {title: '描述', dataIndex: 'desc', key: 'desc'},
+  {title: '在线状态', dataIndex: 'online', key: 'online'},
+  {title: '操作', dataIndex: 'action',key: 'action'},
+];
+
+const handleTableChange = (item) => {
+  pagination.current = item.current
+  pagination.pageSize = item.pageSize
+  pagination.total = item.total
+  loadData()
+}
 
 const addDeviceModal = () => {
   formState.deviceId=""
@@ -278,10 +296,11 @@ const stopData = (item) => {
 
 const loadData = () => {
   listLoading.value = true
-  getDeviceList().then(res => {
+  getDeviceList(pagination).then(res => {
     listLoading.value = false
     if (res.data){
-      deviceList.value = res.data
+      deviceList.value = res.data.records
+      pagination.total = res.data.total
     }
   }).catch(e => {
     listLoading.value = false
@@ -289,13 +308,11 @@ const loadData = () => {
 }
 
 const guid = () => {
-  let uid = 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+  formState.deviceId = 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     let r = Math.random() * 16 | 0,
         v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
-  });
-
-  formState.deviceId = uid
+  })
 
 }
 

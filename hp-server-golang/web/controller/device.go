@@ -6,6 +6,7 @@ import (
 	"hp-server-lib/service"
 	"hp-server-lib/util"
 	"net/http"
+	"strconv"
 )
 
 type DeviceController struct {
@@ -64,7 +65,18 @@ func (receiver DeviceController) Update(w http.ResponseWriter, r *http.Request) 
 func (receiver DeviceController) List(w http.ResponseWriter, r *http.Request) {
 	userId, err := receiver.getUserId(w, r)
 	if err == nil {
-		json.NewEncoder(w).Encode(bean.ResOk(receiver.ListData(userId)))
+		queryParams := r.URL.Query()
+		page := queryParams.Get("current")
+		pageSize := queryParams.Get("pageSize")
+		pageInt, _ := strconv.Atoi(page)
+		pageSizeInt, _ := strconv.Atoi(pageSize)
+		if pageInt == 0 {
+			pageInt = 1
+		}
+		if pageSizeInt == 0 {
+			pageSizeInt = 10
+		}
+		json.NewEncoder(w).Encode(bean.ResOk(receiver.ListData(userId, pageInt, pageSizeInt)))
 	}
 }
 

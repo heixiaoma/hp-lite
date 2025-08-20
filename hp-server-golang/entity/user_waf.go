@@ -68,6 +68,9 @@ type UserWafEntity struct {
 	InLimit int `json:"inLimit"`
 
 	ConfigDesc string `json:"configDesc"  gorm:"-"`
+	Username   string `json:"username" gorm:"-"`
+
+	UserDesc string `json:"userDesc"  gorm:"-"`
 }
 
 func (UserWafEntity) TableName() string {

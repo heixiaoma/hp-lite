@@ -6,18 +6,17 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
 type HttpFwdServer struct {
-	port     int
+	port     string
 	username string
 	password string
 	server   *http.Server
 }
 
-func NewHttpFwdServer(port int, username string, password string) *HttpFwdServer {
+func NewHttpFwdServer(port string, username string, password string) *HttpFwdServer {
 	return &HttpFwdServer{
 		port:     port,
 		username: username,
@@ -120,8 +119,8 @@ func (h *HttpFwdServer) handleConnect(w http.ResponseWriter, r *http.Request) {
 	io.Copy(clientConn, destConn)
 }
 
-func (h *HttpFwdServer) Start() bool {
-	addr := ":" + strconv.Itoa(h.port)
+func (h *HttpFwdServer) Start(close func()) bool {
+	addr := ":" + h.port
 	h.server = &http.Server{
 		Addr:    addr,
 		Handler: http.HandlerFunc(h.handler),
@@ -129,8 +128,9 @@ func (h *HttpFwdServer) Start() bool {
 	go func() {
 		log.Printf("Proxy server started on %s", addr)
 		if err := h.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal(err)
+			log.Println(err)
 		}
+		defer close()
 	}()
 	return true
 }

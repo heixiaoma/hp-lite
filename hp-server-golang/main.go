@@ -6,6 +6,7 @@ import (
 	"hp-server-lib/net/acme"
 	"hp-server-lib/net/http"
 	"hp-server-lib/net/server"
+	"hp-server-lib/service"
 	"hp-server-lib/task"
 	"hp-server-lib/web"
 	"log"
@@ -27,6 +28,9 @@ func main() {
 	if config.ConfigData.Tunnel.OpenDomain {
 		go http.StartHttpServer()
 		go http.StartHttpsServer()
+		//缓存域名配置
+		go service.InitDomainCache()
+		go service.InitReverseECache()
 	}
 	//指令控制
 	tcpServer := server.NewCmdServer()

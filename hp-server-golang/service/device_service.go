@@ -50,13 +50,13 @@ func (receiver *DeviceService) UpdateData(device bean.ReqDeviceInfo) error {
 	return nil
 }
 
-func (receiver *DeviceService) ListData(userId int) []*bean.ResDeviceInfo {
+func (receiver *DeviceService) ListData(userId int, page int, pageSize int) *bean.ResPage {
 	var results []entity.UserDeviceEntity
-	// 计算总记录数并执行分页查询
+	var total int64
 	if userId < 0 {
-		db.DB.Find(&results)
+		db.DB.Model(&entity.UserDeviceEntity{}).Order("id desc").Count(&total).Offset((page - 1) * pageSize).Limit(pageSize).Find(&results)
 	} else {
-		db.DB.Where("user_id = ?", userId).Find(&results)
+		db.DB.Model(&entity.UserDeviceEntity{}).Where("user_id = ?", userId).Order("id desc").Count(&total).Offset((page - 1) * pageSize).Limit(pageSize).Find(&results)
 	}
 	var result2 []*bean.ResDeviceInfo
 	var userIds []int
@@ -90,7 +90,7 @@ func (receiver *DeviceService) ListData(userId int) []*bean.ResDeviceInfo {
 			}
 		}
 	}
-	return result2
+	return bean.PageOk(total, result2)
 }
 
 func (receiver *DeviceService) RemoveData(deviceKey string) error {

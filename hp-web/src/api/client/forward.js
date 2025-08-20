@@ -1,24 +1,24 @@
 import http from '../../data/http'
 
-export function getWaf(query) {
+export function getForward(query) {
     return http({
-        url: '/client/waf/list',
+        url: '/client/forward/list',
         method: 'get',
         params: query
     })
 }
 
-export function removeWaf(query) {
+export function removeForward(query) {
     return http({
-        url: '/client/waf/remove',
+        url: '/client/forward/remove',
         method: 'get',
         params: query
     })
 }
 
-export function saveWaf(data) {
+export function saveForward(data) {
     return http({
-        url: '/client/waf/save',
+        url: '/client/forward/save',
         method: 'post',
         data
     })

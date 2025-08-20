@@ -1,24 +1,24 @@
 import http from '../../data/http'
 
-export function getWaf(query) {
+export function getReverse(query) {
     return http({
-        url: '/client/waf/list',
+        url: '/client/reverse/list',
         method: 'get',
         params: query
     })
 }
 
-export function removeWaf(query) {
+export function removeReverse(query) {
     return http({
-        url: '/client/waf/remove',
+        url: '/client/reverse/remove',
         method: 'get',
         params: query
     })
 }
 
-export function saveWaf(data) {
+export function saveReverse(data) {
     return http({
-        url: '/client/waf/save',
+        url: '/client/reverse/save',
         method: 'post',
         data
     })

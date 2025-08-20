@@ -81,6 +81,29 @@ func (receiver *UserWafService) ListData(userId int, page int, pageSize int) *be
 			}
 		}
 	}
+
+	if userId < 0 {
+		var userIds []int
+		for _, item := range results {
+			userIds = append(userIds, *item.UserId)
+		}
+		var users []*entity.UserCustomEntity
+		if err := db.DB.Model(&entity.UserCustomEntity{}).Where("id IN ?", userIds).Find(&users).Error; err == nil {
+			// 将查询结果转换成 map[int]User
+			userMap := make(map[int]*entity.UserCustomEntity)
+			for _, user := range users {
+				userMap[*user.Id] = user
+			}
+			for _, item := range results {
+				customEntity := userMap[*item.UserId]
+				if customEntity != nil {
+					item.Username = customEntity.Username
+					item.UserDesc = customEntity.Desc
+				}
+			}
+		}
+	}
+
 	return bean.PageOk(total, results)
 }
 

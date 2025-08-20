@@ -53,6 +53,16 @@
             </div>
           </template>
 
+          <template v-if="column.key === 'user'">
+            <div v-if="!record.userDesc&&!record.username">
+              自用
+            </div>
+            <div v-else>
+              <div>归属用户：{{record.username}}</div>
+              <div>归属用户备注：{{record.userDesc}}</div>
+            </div>
+          </template>
+
           <template v-if="column.key === 'action'">
             <a-button  class="btn edit" style="margin-bottom: 5px;margin-left: 5px" @click="edit(record)">编辑</a-button>
             <a-button class="btn view" style="margin-bottom: 5px;margin-left: 5px" @click="refConfigData(record)">刷新规则</a-button>
@@ -234,6 +244,7 @@ const columns = [
   {title: '上传速率(byte)', dataIndex: 'inLimit', key: 'inLimit'},
   {title: '下载速率(byte)', dataIndex: 'outLimit', key: 'outLimit'},
   {title: '并发连接限制', dataIndex: 'rateLimit', key: 'rateLimit'},
+  {title: '归属', dataIndex: 'user', key: 'user'},
   {title: '操作', key: 'action'},
 ];
 

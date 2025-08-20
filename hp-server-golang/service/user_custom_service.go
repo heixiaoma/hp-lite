@@ -21,7 +21,7 @@ func (receiver *UserCustomService) ListData(page int, pageSize int) *bean.ResPag
 	var results []entity.UserCustomEntity
 	var total int64
 	// 计算总记录数并执行分页查询
-	db.DB.Model(&entity.UserCustomEntity{}).Count(&total).Offset((page - 1) * pageSize).Limit(pageSize).Find(&results)
+	db.DB.Model(&entity.UserCustomEntity{}).Order("id desc").Count(&total).Offset((page - 1) * pageSize).Limit(pageSize).Find(&results)
 	return bean.PageOk(total, results)
 }
 

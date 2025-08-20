@@ -267,6 +267,7 @@ const loadDomains=()=>{
   queryDomain({}).then(res => {
       const result = res.data.data;
       console.log(result)
+    domainOptions.value=[]
       result.forEach(r => {
         domainOptions.value.push({
           value: r.domain,

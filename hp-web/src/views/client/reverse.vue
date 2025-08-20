@@ -1,6 +1,6 @@
 <template>
   <div>
-    <a-button  style="margin-bottom: 10px" class="btn edit" @click="addModal">添加用户</a-button>
+    <a-button  style="margin-bottom: 10px" class="btn edit" @click="addModal">添加反向代理</a-button>
     <a-button class="btn view" style="margin-bottom: 10px;margin-left: 5px" @click="loadData">刷新列表</a-button>
 
     <a-table :loading="dataLoading" :columns="columns" rowKey="id" :data-source="listData"
@@ -10,14 +10,18 @@
              :scroll="{ x: 'max-content' }">
 
       <template #bodyCell="{ column ,record}">
-
-        <template v-if="column.key === 'createTime'">
-          {{new Date(record.createTime).toLocaleString()}}
-        </template>
-
         <template v-if="column.key === 'action'">
           <a-button  class="btn edit" style="margin-bottom: 5px;margin-left: 5px" @click="edit(record)">编辑</a-button>
           <a-button  class="btn delete" style="margin-bottom: 5px;margin-left: 5px" @click="removeData(record)">删除</a-button>
+        </template>
+        <template v-if="column.key === 'user'">
+          <div v-if="!record.userDesc&&!record.username">
+            自用
+          </div>
+          <div v-else>
+            <div>归属用户：{{record.username}}</div>
+            <div>归属用户备注：{{record.userDesc}}</div>
+          </div>
         </template>
       </template>
     </a-table>
@@ -28,11 +32,16 @@
     <a-modal  v-model:visible="addVisible" title="添加"
              >
       <a-form :model="formState" ref="formTable" :layout="'vertical'" >
-        <a-form-item label="用户名 " name="username"  :rules="[{ required: true, message: '必填用户名'}]">
-          <a-input v-model:value="formState.username" placeholder="用户名"/>
+        <a-form-item label="&nbsp;域名&nbsp;&nbsp;" name="domain"  :rules="[{ required: true, message: '必选域名'}]">
+          <a-select
+              v-model:value="formState.domain"
+              show-search
+              placeholder="选择一个域名"
+              :options="domainOptions"
+          ></a-select>
         </a-form-item>
-        <a-form-item label="密码" name="password"  :rules="[{ required: true, message: '必填密码'},{ min: 6, message: '密码长度不能少于6位', trigger: 'blur' },]">
-          <a-input v-model:value="formState.password" placeholder="密码"/>
+        <a-form-item label="地址" name="address"  :rules="[{ required: true, message: '必填地址'}]">
+          <a-input v-model:value="formState.address" placeholder="http://127.0.0.1:9090"/>
         </a-form-item>
         <a-form-item label="备注" name="desc"  :rules="[{ required: true, message: '必填备注'}]">
           <a-input v-model:value="formState.desc" placeholder="备注"/>
@@ -48,9 +57,10 @@
 </template>
 
 <script setup>
-import {getUser, removeUser, saveUser} from "../../api/client/client_user";
+import {getReverse, removeReverse, saveReverse} from "../../api/client/reverse.js";
 import {onMounted, reactive, ref} from "vue";
 import {notification} from "ant-design-vue";
+import {queryDomain} from "../../api/client/domain.js";
 
 
 const formTable = ref();
@@ -58,11 +68,13 @@ const listData = ref();
 const dataLoading = ref(false);
 const addVisible = ref(false);
 const formState = reactive({
-  username: "",
-  password: "",
+  address: "",
+  domain: "",
   desc:"",
   id:""
 })
+const domainOptions = ref([]);
+
 const pagination = reactive({
   total: 0,
   current: 1,
@@ -70,8 +82,9 @@ const pagination = reactive({
 });
 
 const loadData = () => {
+  loadDomains()
   dataLoading.value = true
-  getUser({
+  getReverse({
     current: pagination.current,
     pageSize: pagination.pageSize
   }).then(res => {
@@ -82,7 +95,7 @@ const loadData = () => {
 }
 
 const removeData = (item) => {
-  removeUser({
+  removeReverse({
     id: item.id
   }).then(res => {
     notification.open({
@@ -93,8 +106,8 @@ const removeData = (item) => {
 }
 
 const edit = (item) => {
-  formState.username = item.username
-  formState.password = item.password
+  formState.domain = item.domain
+  formState.address = item.address
   formState.desc = item.desc
   formState.id = item.id
   addVisible.value=true
@@ -102,10 +115,10 @@ const edit = (item) => {
 
 const columns = [
   {title: '编号', dataIndex: 'id', key: 'id'},
-  {title: '用户名', dataIndex: 'username', key: 'username'},
-  {title: '密码', dataIndex: 'password', key: 'password'},
+  {title: '域名', dataIndex: 'domain', key: 'domain'},
+  {title: '地址', dataIndex: 'address', key: 'address'},
   {title: '备注', dataIndex: 'desc', key: 'desc'},
-  {title: '创建时间', dataIndex: 'createTime', key: 'createTime'},
+  {title: '归属', dataIndex: 'user', key: 'user'},
   {title: '操作', key: 'action'},
 ];
 
@@ -117,8 +130,8 @@ const handleTableChange = (item) => {
 }
 
 const addModal = () => {
-  formState.username = ""
-  formState.password = ""
+  formState.domain = ""
+  formState.address = ""
   formState.desc = ""
   formState.id = undefined
   addVisible.value = true
@@ -126,15 +139,28 @@ const addModal = () => {
 
 const addOk = () => {
   formTable.value.validate().then(res => {
-
-    saveUser({...formState}).then(res => {
+    saveReverse({...formState}).then(res => {
       notification.open({
         message: res.msg,
       })
       loadData()
       addVisible.value = false
     })
-  });
+  })
+}
+
+const loadDomains=()=>{
+  queryDomain({}).then(res => {
+    const result = res.data.data;
+    domainOptions.value=[]
+    console.log(result)
+    result.forEach(r => {
+      domainOptions.value.push({
+        value: r.domain,
+        label: r.domain,
+      });
+    });
+  })
 }
 
 onMounted(() => {

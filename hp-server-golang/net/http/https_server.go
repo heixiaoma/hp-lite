@@ -3,7 +3,7 @@ package http
 import (
 	"crypto/tls"
 	"fmt"
-	"hp-server-lib/bean"
+	"hp-server-lib/entity"
 	"hp-server-lib/service"
 	"log"
 	"net/http"
@@ -12,11 +12,11 @@ import (
 // 根据域名返回证书和目标后端服务地址
 func getCertificateAndTargetForDomain(domain string) (*tls.Certificate, error) {
 	// 查找域名对应的证书和目标地址
-	value, ok := service.DOMAIN_USER_INFO.Load(domain)
+	value, ok := service.DOMAIN_INFO.Load(domain)
 	if !ok {
 		return nil, fmt.Errorf("域名找不到证书: %s", domain)
 	}
-	info := value.(*bean.UserConfigInfo)
+	info := value.(*entity.UserDomainEntity)
 	// 加载证书和私钥
 	certificate, err := tls.X509KeyPair([]byte(info.CertificateContent), []byte(info.CertificateKey))
 	if err != nil {
