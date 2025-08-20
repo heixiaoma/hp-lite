@@ -39,7 +39,11 @@ func InitReverseECache() {
 
 func (receiver *ReverseService) AddData(custom entity.UserReverseEntity) error {
 	tx := db.DB.Save(&custom)
-	DOMAIN_REVERSE_INFO.Store(*custom.Domain, &custom)
+	// 创建一个新的变量副本，避免存储局部变量指针
+	// 这里使用指针接收数据库返回的结果
+	saved := custom
+	// 明确存储指针类型
+	DOMAIN_REVERSE_INFO.Store(*saved.Domain, &saved)
 	return tx.Error
 }
 
