@@ -144,7 +144,7 @@ func (receiver *DomainService) RemoveData(id int) bool {
 	if userQuery != nil {
 		var results entity.UserDomainEntity
 		db.DB.Where("id = ?", id).Delete(&results)
-		DOMAIN_INFO.Delete(*results.Domain)
+		DOMAIN_INFO.Delete(*userQuery.Domain)
 		return true
 	}
 	return false

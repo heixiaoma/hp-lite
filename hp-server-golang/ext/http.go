@@ -57,7 +57,6 @@ func (h *HttpFwdServer) checkAuth(w http.ResponseWriter, r *http.Request) bool {
 
 // 处理所有请求
 func (h *HttpFwdServer) handler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
 	if !h.checkAuth(w, r) {
 		return
 	}

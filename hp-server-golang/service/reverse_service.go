@@ -38,6 +38,11 @@ func InitReverseECache() {
 }
 
 func (receiver *ReverseService) AddData(custom entity.UserReverseEntity) error {
+	if custom.Id != nil {
+		userQuery := &entity.UserReverseEntity{}
+		db.DB.Where("id = ? ", *custom.Id).First(userQuery)
+		DOMAIN_REVERSE_INFO.Delete(*userQuery.Domain)
+	}
 	tx := db.DB.Save(&custom)
 	// 创建一个新的变量副本，避免存储局部变量指针
 	// 这里使用指针接收数据库返回的结果
