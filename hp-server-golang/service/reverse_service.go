@@ -39,7 +39,7 @@ func InitReverseECache() {
 
 func (receiver *ReverseService) AddData(custom entity.UserReverseEntity) error {
 	tx := db.DB.Save(&custom)
-	DOMAIN_REVERSE_INFO.Store(*custom.Domain, custom)
+	DOMAIN_REVERSE_INFO.Store(*custom.Domain, &custom)
 	return tx.Error
 }
 
