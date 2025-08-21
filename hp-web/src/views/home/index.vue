@@ -18,13 +18,13 @@
 
         <div class="navbar-actions">
           <a-button type="dashed" size="large" ghost>
-            <a href="/#/home/login">登录</a>
+            <a href="/home/login">登录</a>
           </a-button>
         </div>
 
         <div class="navbar-mobile-menu">
           <a-button type="dashed" size="large" ghost>
-            <a href="/#/home/login">登录</a>
+            <a href="/home/login">登录</a>
           </a-button>
         </div>
       </div>
@@ -78,21 +78,22 @@
     <!-- 声明区 -->
     <section class="policy" id="policy">
       <div class="container">
-        <h2 class="section-title">项目声明</h2>
+        <h2 class="section-title">项目许可声明（MIT License）</h2>
         <div class="policy-content">
-          <p>亲爱的用户，</p>
-          <p>为了帮助您实现内网穿透的需求，我们提供一个开源的内网穿透项目，用于个人搭建。在使用该项目之前，请您仔细阅读以下声明：</p>
+          <p>版权所有 (c) [2025] [黑小马]</p>
+          <p>本内网穿透项目采用 <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer">MIT开源许可证</a> 授权。在使用本项目前，请您仔细阅读以下条款：</p>
           <ol>
-            <li><strong>项目用途限制</strong>：该开源项目旨在帮助个人实现内网穿透，方便访问自己的本地网络资源，和学习目的。请确保您在合法范围内使用该项目，并遵守法律法规，禁止搭建一切违反国家法律法规的网站，出现问题自行负责，与作者无关。</li>
-            <li><strong>安全性责任</strong>：我们将尽力确保该项目的安全性和稳定性，但无法完全排除潜在的风险。因此，在使用该项目时，请做好相关的安全措施并承担个人风险。</li>
-            <li><strong>防火墙设置</strong>：为了使内网穿透正常工作，您可能需要调整您的防火墙设置。请确保在进行任何更改之前，充分了解您所做的操作，并采取适当的安全措施。</li>
-            <li><strong>账户与权限</strong>：为了提供更好的服务体验，您可能需要创建一个个人账户并获取相应的权限。请妥善保管您的账户信息，不要与他人共享，以免造成不必要的风险。</li>
-            <li><strong>技术支持</strong>：我们提供有限的技术支持，以协助解决您在使用该项目时可能遇到的问题。请参考项目文档和相关社区资源，并理解我们的技术支持范围。</li>
-            <li><strong>免责声明</strong>：对于因使用该开源项目而导致的任何直接或间接损失，包括但不限于数据丢失、网络故障、安全漏洞等，我们概不负责。使用该项目即表示您已经阅读并同意自行承担相关风险。</li>
-            <li><strong>合作与反馈</strong>：我们欢迎用户对该项目提出宝贵的建议和反馈，以帮助我们改进和提供更好的服务。如果您对该项目感兴趣或遇到任何问题，请及时与我们联系。</li>
+            <li><strong>授权范围</strong>：您有权对本项目进行复制、使用、修改、合并、发布、分发、再授权及销售副本，可用于个人搭建、学习研究及符合法律法规的商业用途。但在所有副本或重要衍生部分中，必须保留本版权声明及许可条款。</li>
+            <li><strong>合法使用义务</strong>：本项目旨在帮助用户实现内网穿透以访问自身本地网络资源。您必须在合法范围内使用，严格遵守国家法律法规及相关规定，禁止用于任何违法活动。因违规使用导致的一切责任，由您自行承担，与原作者无关。</li>
+            <li><strong>免责声明</strong>：本项目按"现状"（AS IS）提供，作者不对其适用性、安全性或稳定性做任何明示或暗示的担保。对于因使用本项目导致的任何直接或间接损失（包括但不限于数据丢失、网络故障、安全漏洞等），作者不承担任何责任。</li>
+            <li><strong>网络安全提示</strong>：为确保内网穿透功能正常运行，您可能需要调整防火墙设置或网络配置。请在操作前充分了解相关风险，采取必要的安全防护措施，由此产生的安全问题由您自行负责。</li>
+            <li><strong>账户安全责任</strong>：如使用过程中需要创建账户及权限管理，您应妥善保管账户信息，不得擅自与他人共享，由此产生的账户安全风险由您自行承担。</li>
+            <li><strong>技术支持范围</strong>：作者提供有限的技术支持，包括项目文档及社区答疑。您应优先参考官方文档及社区资源，作者不对支持的及时性和有效性做任何保证。</li>
+            <li><strong>反馈与改进</strong>：欢迎您提出宝贵建议和反馈以帮助项目改进。如需联系我们，请通过项目地址进行沟通。</li>
+            <li><strong>衍生作品授权</strong>：基于本项目修改或衍生的作品，需采用与MIT协议兼容的开源许可进行发布，并保留原始版权信息及许可条款。</li>
           </ol>
-          <p>请注意，本声明仅作为指导性内容，最终用户应根据自己的实际情况和需求来判断和操作。使用该开源项目即代表您已经阅读并同意遵守以上声明。</p>
-          <p>谢谢您的支持和理解</p>
+          <p>使用本项目即表示您已阅读、理解并同意本许可声明的全部条款。</p>
+          <p>感谢您的支持与理解。</p>
         </div>
       </div>
     </section>
@@ -129,29 +130,29 @@ import { CheckCircleOutlined } from '@ant-design/icons-vue';
 // 特色数据
 const serverList = ref([
   {
-    title: "多端支持",
-    content: "Android端、Win、Linux、Mac、NAS、Docker等环境 X86、ARM、等CPU架构。"
+    title: "云端集中管控",
+    content: "支持在 Android、Windows、Linux、MacOS 等操作系统及 NAS、Docker 环境中部署，兼容 X86、ARM 等主流 CPU 架构；提供云端配置文件实时下发能力，实现跨地域环境的高效统一管理"
   },
   {
-    title: "固定端口",
-    content: "我们支持动态端口与固定端口模式，穿透FTP MYSQL Redis MQ等服务需要。"
+    title: "多设备多租户管理",
+    content: "内置精细化用户权限系统，支持超级管理员对子用户进行分级授权与操作审计；子用户可独立完成穿透设备配置及参数管理，满足多租户场景下的隔离化运营需求"
   },
   {
-    title: "自定义域名",
-    content: "我们支持用户自定义域名,只需要域名名字或者二级名字和账号名字一样就可以解析。"
+    title: "域名与证书自动化管理",
+    content: "支持用户自定义域名绑定，集成 ACME 协议实现 SSL 证书的自动申请、部署及到期续期，保障域名访问的安全性与连续性"
   },
   {
-    title: "HTTPS支持",
-    content: "支持用户自定义域名的同时添加证书，或者使用平台的一键获取功能获取ssl证书"
+    title: "全协议流量可视化分析",
+    content: "提供穿透配置的精细化流量统计功能，支持 UDP、TCP、HTTP 等协议的流量监测，包含 PV、UV 及传输量等关键指标的实时分析与历史数据追溯"
   },
   {
-    title: "高性能",
-    content: "我们使用Golang做为后台基石，在http协议上做了大量优化操作，通过SNI协议解析或者明文HOST解析。"
+    title: "穿透安全防护体系",
+    content: "支持基于 IP 段的黑白名单访问控制，可配置并发连接数限制及流量读写阈值管控，构建多层次的穿透安全防护机制"
   },
   {
-    title: "轻量级",
-    content: "我们把所有功能集成在一个文件里针对个人用户只需简单的启动这个文件包就能进行穿透访问，做得快速部署。"
-  }
+    title: "正反向代理一体化支持",
+    content: "内置可扩展代理模块，支持反向代理的域名绑定与规则配置；同时集成 HTTP/HTTPS/SOCKS5 协议的正向代理能力，实现代理功能的一站式部署"
+  },
 ]);
 
 // 导航栏状态
@@ -399,7 +400,7 @@ onUnmounted(() => {
 
 /* 特色区 */
 .features {
-  padding: 100px 0;
+  padding: 50px 0;
 
   .features-grid {
     display: grid;
@@ -472,7 +473,7 @@ onUnmounted(() => {
 
 /* 声明区 */
 .policy {
-  padding: 100px 0;
+  padding: 50px 0;
   background-color: #f9f9f9;
 
   .policy-content {
@@ -498,7 +499,7 @@ onUnmounted(() => {
 
 /* 联系区 */
 .contact {
-  padding: 100px 0;
+  padding: 50px 0;
 
   .contact-content {
     max-width: 800px;

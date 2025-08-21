@@ -119,7 +119,7 @@
           
           <a-menu-item key="/client/teach" class="sidebar-item">
             <template #icon><svg t="1751868316938" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="22356" width="24" height="24"><path d="M896 128l0 832-672 0c-53.024 0-96-42.976-96-96s42.976-96 96-96l608 0 0-768-640 0c-70.4 0-128 57.6-128 128l0 768c0 70.4 57.6 128 128 128l768 0 0-896-64 0z" fill="#ffffff" p-id="22357"></path><path d="M224.064 832l0 0c-0.032 0-0.032 0-0.064 0-17.664 0-32 14.336-32 32s14.336 32 32 32c0.032 0 0.032 0 0.064 0l0 0 607.904 0 0-64-607.904 0z" fill="#ffffff" p-id="22358"></path></svg></template>
-            <span>穿透说明</span>
+            <span>穿透交流</span>
           </a-menu-item>
         </a-menu>
       </a-layout-sider>

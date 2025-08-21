@@ -22,23 +22,27 @@
           <div class="login-features">
             <div class="feature-item">
               <i class="feature-icon"><CheckCircleOutlined /></i>
-              <span class="feature-text">多平台支持</span>
+              <span class="feature-text">云端集中管控</span>
             </div>
             <div class="feature-item">
               <i class="feature-icon"><CheckCircleOutlined /></i>
-              <span class="feature-text">自定义域名</span>
+              <span class="feature-text">多设备多租户管理</span>
             </div>
             <div class="feature-item">
               <i class="feature-icon"><CheckCircleOutlined /></i>
-              <span class="feature-text">HTTPS支持</span>
+              <span class="feature-text">域名与证书自动化管理</span>
             </div>
             <div class="feature-item">
               <i class="feature-icon"><CheckCircleOutlined /></i>
-              <span class="feature-text">双通道多协议</span>
+              <span class="feature-text">全协议流量可视化分析</span>
             </div>
             <div class="feature-item">
               <i class="feature-icon"><CheckCircleOutlined /></i>
-              <span class="feature-text">云端管理</span>
+              <span class="feature-text">穿透安全防护体系</span>
+            </div>
+            <div class="feature-item">
+              <i class="feature-icon"><CheckCircleOutlined /></i>
+              <span class="feature-text">正反向代理一体化支持</span>
             </div>
           </div>
         </div>
@@ -163,7 +167,7 @@ const handleSubmit = () => {
           localStorage.setItem('hp-lite-user', JSON.stringify({
             email: form.email,
             password: form.password,
-            expTime: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7天有效期
+            expTime: Date.now() + 30 * 24 * 60 * 60 * 1000 // 30天有效期
           }));
         } else {
           localStorage.removeItem('hp-lite-user');

@@ -89,6 +89,10 @@ func StartWebServer(port int) {
 	mux.HandleFunc("/client/forward/save", forwardController.Add)
 	mux.HandleFunc("/client/forward/list", forwardController.List)
 	mux.HandleFunc("/client/forward/remove", forwardController.Del)
+
+	giscusController := controller.GiscusController{}
+	mux.HandleFunc("/client/giscus/token", giscusController.Token)
+
 	muxWithRecovery := recoveryMiddleware(mux)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), muxWithRecovery))
 }
