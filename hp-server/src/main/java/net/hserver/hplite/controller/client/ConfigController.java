@@ -13,7 +13,7 @@ import net.hserver.hplite.service.UserConfigService;
 
 @Slf4j
 @Controller("/client/config/")
-public class ConfigController  {
+public class ConfigController {
     @Autowired
     private UserConfigService userConfigService;
 
@@ -27,8 +27,14 @@ public class ConfigController  {
 
 
     @GET("getConfigList")
-    public JsonResult getConfigList() {
-        return JsonResult.ok().put("data", userConfigService.getConfigList());
+    public JsonResult getConfigList(Integer current,Integer pageSize) {
+        if (current==null){
+            current=1;
+        }
+        if (pageSize==null||pageSize>100){
+            pageSize=10;
+        }
+        return JsonResult.ok().put("data", userConfigService.getConfigList(current,pageSize));
     }
 
 
@@ -49,7 +55,6 @@ public class ConfigController  {
 
     @GET("refConfig")
     public JsonResult refConfig(HttpRequest request, Integer configId) {
-
         userConfigService.refConfig( configId);
         return JsonResult.ok();
     }

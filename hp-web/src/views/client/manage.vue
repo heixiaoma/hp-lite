@@ -30,14 +30,17 @@
                       class="sider">
         <a-menu style="background-color: #4b6ff6" :theme="theme" mode="inline" :default-selected-keys="[selectedKey]"
                 @select="handleMenuSelect">
-          <a-menu-item key="monitor">
-            <router-link to="/client/monitor">穿透监控</router-link>
+          <a-menu-item key="user" v-if="userInfo&&userInfo.role==='ADMIN'">
+            <router-link to="/client/user">穿透用户</router-link>
           </a-menu-item>
           <a-menu-item key="device">
             <router-link to="/client/device">穿透设备</router-link>
           </a-menu-item>
           <a-menu-item key="config">
             <router-link to="/client/config">穿透配置</router-link>
+          </a-menu-item>
+          <a-menu-item key="monitor">
+            <router-link to="/client/monitor">穿透监控</router-link>
           </a-menu-item>
           <a-menu-item key="teach">
             <router-link to="/client/teach">穿透教程</router-link>

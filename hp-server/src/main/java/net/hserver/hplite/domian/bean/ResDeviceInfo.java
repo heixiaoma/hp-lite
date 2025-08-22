@@ -9,10 +9,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ResDeviceInfo {
 
+    private Integer userId;
+    private String username;
+    private String userDesc;
+
     private String deviceId;
 
     private String desc;
 
     private boolean online;
-
+    public ResDeviceInfo(String deviceId, String desc, boolean online) {
+        this.deviceId = deviceId;
+        this.desc = desc;
+        this.online = online;
+    }
+    private MemoryInfo memoryInfo;
 }

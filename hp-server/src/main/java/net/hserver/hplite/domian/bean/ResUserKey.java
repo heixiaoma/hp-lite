@@ -7,4 +7,8 @@ public class ResUserKey {
     private String key;
 
     private String desc;
+
+    private Integer userId;
+    private String username;
+    private String userDesc;
 }

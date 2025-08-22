@@ -50,7 +50,7 @@
       </div>
     </div>
     <div style="font-size: 35px;text-align: center;margin-bottom: 50px">
-      <img width="400" src="/teach/img.png">
+      <img style="width: 40vw;" src="/teach/img.png">
     </div>
     <div>
       <div class="data" style="margin: 30px auto">
@@ -86,12 +86,7 @@
 
     <div class="foot">
       <div style="text-align: center;">
-          <span><a href="http://jq.qq.com/?_wv=1027&k=9xMZrFCQ" rel="nofollow" style="color: #ffffff"
-                   target="_blank">QQ群1：767474069</a></span>
-        <span style="padding-left: 10px"><a style="color: #ffffff"
-                                            href="http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=HtcqAJXqHdLd9qi6Nmp5Wd2-ukBjGYFS&authKey=PevXyhvsxsRe35IKE28v9Ra7N6%2BZxsMU9notMbWYgRX4gXRNJ%2Fm7907VxQDZSjXi&noverify=0&group_code=738424584"
-                                            rel="nofollow"
-                                            target="_blank">QQ群2：738424584</a></span>
+          <span>QQ群：1065301527</span>
       </div>
       <div style="text-align: center;font-size: 10px;margin: 10px auto;">
         本站默认用户都具有互联网基础知识，和阅读文档能力，如果您阅读文档后仍对本产品有使用上的疑问，

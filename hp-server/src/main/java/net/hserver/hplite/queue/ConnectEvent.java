@@ -5,7 +5,7 @@ import cn.hserver.core.ioc.annotation.queue.QueueHandler;
 import cn.hserver.core.ioc.annotation.queue.QueueListener;
 import lombok.extern.slf4j.Slf4j;
 import net.hserver.hplite.domian.entity.UserConfigEntity;
-import net.hserver.hplite.handler.CmdServerHandler;
+import net.hserver.hplite.handler.cmd.CmdServerHandler;
 import net.hserver.hplite.message.LocalInnerWear;
 import net.hserver.hplite.service.DeviceService;
 import net.hserver.hplite.service.UserConfigService;

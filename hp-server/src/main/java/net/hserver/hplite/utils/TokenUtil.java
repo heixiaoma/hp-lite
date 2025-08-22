@@ -1,6 +1,9 @@
 package net.hserver.hplite.utils;
 
+import cn.hserver.plugin.web.context.HServerContextHolder;
 import cn.hutool.core.codec.Base64;
+import cn.hutool.crypto.SecureUtil;
+import cn.hutool.crypto.symmetric.AES;
 import cn.hutool.crypto.symmetric.SymmetricAlgorithm;
 import cn.hutool.crypto.symmetric.SymmetricCrypto;
 import net.hserver.hplite.domian.bean.Token;
@@ -16,7 +19,7 @@ public class TokenUtil {
     private final static byte[] key = "hp_pro_token_key".getBytes(StandardCharsets.UTF_8);
 
     //构建
-    private static final SymmetricCrypto aes = new SymmetricCrypto(SymmetricAlgorithm.AES, key);
+    private final static AES aes = SecureUtil.aes(key);
 
     public static String genToken(Integer userId, Token.Role role) {
         //按自己想法给他搞一个token
@@ -30,8 +33,9 @@ public class TokenUtil {
     }
 
 
-    public static Token getToken(String token) {
+    public static Token getToken() {
         try {
+            String token = HServerContextHolder.getWebKit().httpRequest.getHeader("token");
             String decode = Base64.decodeStr(token);
             String decrypt = aes.decryptStr(decode);
             String[] split = decrypt.split(":");

@@ -69,4 +69,29 @@ public class UserConfigEntity {
     private String statusMsg;
 
 
+    private ProxyVersion proxyVersion=ProxyVersion.NONE;
+
+
+    /**
+     * SSL证书Key
+     */
+    private String certificateKey;
+
+    /**
+     * 证书内容
+     */
+    private String certificateContent;
+
+    /**
+     * 只支持这两种
+     */
+    public  enum ProxyVersion{
+        V1,V2,NONE
+    }
+
+    /**
+     * 用户ID
+     */
+    public Integer userId;
+
 }

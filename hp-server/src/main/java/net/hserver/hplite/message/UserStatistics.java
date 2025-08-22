@@ -12,16 +12,15 @@ import java.util.concurrent.atomic.LongAdder;
 @NoArgsConstructor
 @ToString
 public class UserStatistics {
-    private Integer userId;
     private Integer configId;
     private LongAdder download = new LongAdder();
     private LongAdder upload = new LongAdder();
-    private int uv;
-    private int pv;
-    private boolean hasPackageNoExp;
-    private boolean hasUpdateFlow;
+    private LongAdder uv=new LongAdder();
+    private LongAdder pv=new LongAdder();
 
     public void rest() {
+        uv.reset();
+        pv.reset();
         download.reset();
         upload.reset();
     }

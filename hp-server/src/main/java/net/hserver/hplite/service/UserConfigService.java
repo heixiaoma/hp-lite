@@ -3,23 +3,35 @@ package net.hserver.hplite.service;
 import cn.hserver.core.ioc.annotation.Autowired;
 import cn.hserver.core.ioc.annotation.Bean;
 import cn.hserver.core.queue.HServerQueue;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import net.hserver.hplite.config.WebConfig;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import net.hserver.hplite.config.TunnelConfig;
 import net.hserver.hplite.dao.UserConfigDao;
+import net.hserver.hplite.domian.bean.Token;
 import net.hserver.hplite.domian.entity.UserConfigEntity;
+import net.hserver.hplite.domian.entity.UserDeviceEntity;
 import net.hserver.hplite.utils.CheckUtil;
+import net.hserver.hplite.utils.SSLUtil;
+import net.hserver.hplite.utils.TokenUtil;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.*;
 
 @Bean
 public class UserConfigService {
 
     @Autowired
-    private WebConfig webConfig;
+    private TunnelConfig tunnelConfig;
 
     @Autowired
     private UserConfigDao userConfigDao;
+
+    @Autowired
+    private DeviceService deviceService;
+
 
     public List<UserConfigEntity> getDeviceConfig(String deviceKey) {
         return userConfigDao.selectList(
@@ -29,9 +41,13 @@ public class UserConfigService {
     }
 
 
-    public List<UserConfigEntity> getConfigList() {
-        return userConfigDao.selectList(
-                new LambdaQueryWrapper<>()
+    public Page<UserConfigEntity> getConfigList(Integer page, Integer pageSize) {
+        Token token = TokenUtil.getToken();
+        return userConfigDao.selectPage(
+                new Page<>(page,pageSize),
+                new LambdaQueryWrapper<UserConfigEntity>()
+                        .eq(token.getRole()== Token.Role.CLIENT,UserConfigEntity::getUserId,token.getUserId())
+                        .orderByDesc(UserConfigEntity::getId)
         );
     }
 
@@ -73,9 +89,6 @@ public class UserConfigService {
         if (userConfigEntity.getPort() == null) {
             throw new RuntimeException("外网端口未填写");
         }
-        if (userConfigEntity.getDomain() == null) {
-            throw new RuntimeException("穿透域名未填写");
-        }
 
         if (!CheckUtil.isValidIPAddress(userConfigEntity.getLocalIp())) {
             throw new RuntimeException("内网IP填写不正确");
@@ -84,25 +97,43 @@ public class UserConfigService {
         if (!CheckUtil.isValidPort(userConfigEntity.getLocalPort())) {
             throw new RuntimeException("内网端口填写不正确");
         }
-        //域名和端口配置已经校验了端口和域名的唯一，这里校验端口和域名配置是否被用过
-        Long portCount = userConfigDao.selectCount(
-                new LambdaQueryWrapper<UserConfigEntity>()
-                        .eq(UserConfigEntity::getPort, userConfigEntity.getPort())
-        );
-        if (portCount > 0 && userConfigEntity.getPort() > 0) {
-            throw new RuntimeException("端口已被其他服务使用，请换一个");
+        if (StrUtil.isNotEmpty(userConfigEntity.getCertificateKey()) || StrUtil.isNotEmpty(userConfigEntity.getCertificateContent())) {
+            if (SSLUtil.buildSSLContext(userConfigEntity.getCertificateKey(), userConfigEntity.getCertificateContent(), null) == null) {
+                throw new RuntimeException("SSL证书无效");
+            }
         }
-        Long domainCount = userConfigDao.selectCount(
-                new LambdaQueryWrapper<UserConfigEntity>()
-                        .eq(UserConfigEntity::getDomain, userConfigEntity.getDomain())
-        );
-        if (domainCount > 0) {
-            throw new RuntimeException("域名已被其他服务使用，请换一个");
+        //域名和端口配置已经校验了端口和域名的唯一，这里校验端口和域名配置是否被用过
+
+        if (userConfigEntity.getId()==null) {
+            Long portCount = userConfigDao.selectCount(
+                    new LambdaQueryWrapper<UserConfigEntity>()
+                            .eq(UserConfigEntity::getPort, userConfigEntity.getPort())
+            );
+            if (portCount > 0 && userConfigEntity.getPort() > 0) {
+                throw new RuntimeException("外网端口已被其他服务使用，请换一个");
+            }
+            Long domainCount = userConfigDao.selectCount(
+                    new LambdaQueryWrapper<UserConfigEntity>()
+                            .isNotNull(UserConfigEntity::getDomain)
+                            .eq(UserConfigEntity::getDomain, userConfigEntity.getDomain())
+            );
+            if (domainCount > 0) {
+                throw new RuntimeException("外网域名已被其他服务使用，请换一个");
+            }
         }
         userConfigEntity.setConfigKey(UUID.randomUUID().toString());
-        userConfigEntity.setServerIp(webConfig.getHost());
-        userConfigEntity.setServerPort(9090);
-        userConfigDao.insert(userConfigEntity);
+        UserDeviceEntity deviceKey = deviceService.getDeviceKey(userConfigEntity.getDeviceKey());
+        if (deviceKey==null){
+            throw new RuntimeException("设备不存在");
+        }
+        userConfigEntity.setUserId(deviceKey.getUserId());
+        userConfigEntity.setServerIp(tunnelConfig.getIp());
+        userConfigEntity.setServerPort(tunnelConfig.getPort());
+        if (userConfigEntity.getId()!=null){
+            userConfigDao.updateById(userConfigEntity);
+        }else {
+            userConfigDao.insert(userConfigEntity);
+        }
         HServerQueue.sendQueue("CONNECT_EVENT", userConfigEntity.getDeviceKey());
     }
 

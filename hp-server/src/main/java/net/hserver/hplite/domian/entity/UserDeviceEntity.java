@@ -22,4 +22,9 @@ public class UserDeviceEntity {
      */
     private String remarks;
 
+
+    /**
+     * 用户ID
+     */
+    public Integer userId;
 }

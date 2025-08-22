@@ -22,10 +22,9 @@ public class UserCheckFilter implements FilterAdapter {
     public void doFilter(Webkit webkit) throws Exception {
         HttpRequest httpRequest = webkit.httpRequest;
         if (httpRequest.getNettyUri().startsWith(uri1)) {
-            String token = httpRequest.getHeader("token");
-            Token tokenInfo = TokenUtil.getToken(token);
-            if (token == null || token.trim().length() == 0 || tokenInfo == null || tokenInfo.getRole() != Token.Role.ADMIN) {
-                webkit.httpResponse.sendJson(JsonResult.error(-2, "超级用户权限校验失败"));
+            Token token = TokenUtil.getToken();
+            if (token == null) {
+                webkit.httpResponse.sendJson(JsonResult.error(-2, "用户权限校验失败"));
             }
         }
     }

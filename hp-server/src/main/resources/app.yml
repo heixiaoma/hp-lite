@@ -1,0 +1,14 @@
+admin:
+  username: 'admin' #后台账号
+  password: '123456' #后台密码
+  port: 9090 #管理后台监听的端口
+
+cmd:
+  port: 6666 #控制指令端口
+
+tunnel:
+  ip: '127.0.0.1' #隧道监听服务器真实的IP
+  port: 9091 #隧道传输数据端口
+  open-domain: false #是否开启80，443端口域名转发
+
+log: info

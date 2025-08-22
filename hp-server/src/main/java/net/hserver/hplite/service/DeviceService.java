@@ -3,23 +3,30 @@ package net.hserver.hplite.service;
 import cn.hserver.core.ioc.annotation.Autowired;
 import cn.hserver.core.ioc.annotation.Bean;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import net.hserver.hplite.dao.UserConfigDao;
+import net.hserver.hplite.dao.UserCustomDao;
 import net.hserver.hplite.dao.UserDeviceDao;
-import net.hserver.hplite.domian.bean.ReqDeviceInfo;
-import net.hserver.hplite.domian.bean.ResDeviceInfo;
-import net.hserver.hplite.domian.bean.ResUserKey;
+import net.hserver.hplite.domian.bean.*;
 import net.hserver.hplite.domian.entity.UserConfigEntity;
+import net.hserver.hplite.domian.entity.UserCustomEntity;
 import net.hserver.hplite.domian.entity.UserDeviceEntity;
-import net.hserver.hplite.handler.CmdServerHandler;
+import net.hserver.hplite.domian.entity.UserStatisticsEntity;
+import net.hserver.hplite.handler.cmd.CmdServerHandler;
 import net.hserver.hplite.utils.CheckUtil;
+import net.hserver.hplite.utils.TokenUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Bean
 public class DeviceService {
 
+    @Autowired
+    private UserCustomDao userCustomDao;
 
     @Autowired
     private UserConfigDao userConfigDao;
@@ -27,30 +34,113 @@ public class DeviceService {
     @Autowired
     private UserDeviceDao deviceDao;
 
+
+    public UserDeviceEntity getDeviceKey(String deviceKey){
+      return   deviceDao.selectOne(
+                new LambdaQueryWrapper<UserDeviceEntity>().eq(UserDeviceEntity::getDeviceKey,deviceKey)
+                        .last("limit 1")
+        );
+    }
+
+
+    public List<UserDeviceEntity> getUserDeviceList() {
+        Token token = TokenUtil.getToken();
+        return deviceDao.selectList(
+                new LambdaQueryWrapper<UserDeviceEntity>()
+                        .eq(token.getRole() == Token.Role.CLIENT, UserDeviceEntity::getUserId, token.getUserId())
+        );
+    }
+
     /**
      * 查用户的key和是否在线
      *
      * @return
      */
     public List<ResDeviceInfo> getDeviceList() {
-        List<UserDeviceEntity> userDeviceEntities = deviceDao.selectList(new LambdaQueryWrapper<>());
-        return userDeviceEntities.stream().map(k -> new ResDeviceInfo(k.getDeviceKey(), k.getRemarks(), CmdServerHandler.hasKey(k.getDeviceKey()))).collect(Collectors.toList());
+        List<UserDeviceEntity> userDeviceList = getUserDeviceList();
+        List<ResDeviceInfo> deviceInfos = new ArrayList<>();
+        if (userDeviceList.isEmpty()) {
+            return deviceInfos;
+        }
+        for (UserDeviceEntity deviceEntity : userDeviceList) {
+            OnlineInfo onlineKey = CmdServerHandler.getOnlineKey(deviceEntity.getDeviceKey());
+            ResDeviceInfo resDeviceInfo = new ResDeviceInfo(deviceEntity.getDeviceKey(), deviceEntity.getRemarks(), onlineKey != null);
+            if (onlineKey != null && onlineKey.getMemoryInfo() != null) {
+                resDeviceInfo.setMemoryInfo(onlineKey.getMemoryInfo());
+            }
+
+            resDeviceInfo.setUserId(deviceEntity.getUserId());
+
+            deviceInfos.add(resDeviceInfo);
+        }
+        if (TokenUtil.getToken().getRole() == Token.Role.ADMIN) {
+            Set<Integer> collect = userDeviceList.stream().map(UserDeviceEntity::getUserId).collect(Collectors.toSet());
+            List<UserCustomEntity> userCustomEntities = userCustomDao.selectBatchIds(collect);
+            Map<Integer, UserCustomEntity> userCustomEntityMap = userCustomEntities.stream().collect(Collectors.toMap(UserCustomEntity::getId, k -> k));
+            for (ResDeviceInfo deviceInfo : deviceInfos) {
+                UserCustomEntity userCustomEntity = userCustomEntityMap.get(deviceInfo.getUserId());
+                if (userCustomEntity != null) {
+                    deviceInfo.setUsername(userCustomEntity.getUsername());
+                    deviceInfo.setUserDesc(userCustomEntity.getDesc());
+                }
+            }
+        }
+        return deviceInfos;
     }
 
     public List<ResUserKey> getDeviceKey() {
-        List<UserDeviceEntity> userDeviceEntities = deviceDao.selectList(new LambdaQueryWrapper<>());
+        Token token = TokenUtil.getToken();
+        List<UserDeviceEntity> userDeviceEntities = deviceDao.selectList(
+                new LambdaQueryWrapper<UserDeviceEntity>()
+                        .eq(token.getRole() == Token.Role.CLIENT, UserDeviceEntity::getUserId, token.getUserId())
+        );
+
+        Map<Integer, UserCustomEntity> userCustomEntityMap;
+        if (TokenUtil.getToken().getRole() == Token.Role.ADMIN) {
+            Set<Integer> collect = userDeviceEntities.stream().map(UserDeviceEntity::getUserId).collect(Collectors.toSet());
+            List<UserCustomEntity> userCustomEntities = userCustomDao.selectBatchIds(collect);
+            userCustomEntityMap = userCustomEntities.stream().collect(Collectors.toMap(UserCustomEntity::getId, k -> k));
+        } else {
+            userCustomEntityMap = null;
+        }
+
         return userDeviceEntities.stream().map(k -> {
             ResUserKey resUserKey = new ResUserKey();
             resUserKey.setKey(k.getDeviceKey());
-            boolean b = CmdServerHandler.hasKey(k.getDeviceKey());
+            boolean b = CmdServerHandler.getOnlineKey(k.getDeviceKey()) != null;
             resUserKey.setDesc((b ? "在线" : "离线") + "-" + k.getRemarks());
+            resUserKey.setUserId(k.getUserId());
+            if (userCustomEntityMap != null) {
+                UserCustomEntity userCustomEntity = userCustomEntityMap.get(k.getUserId());
+                if (userCustomEntity != null) {
+                    resUserKey.setUsername(userCustomEntity.getUsername());
+                    resUserKey.setUserDesc(userCustomEntity.getDesc());
+                }
+            }
             return resUserKey;
         }).collect(Collectors.toList());
-
     }
 
-    public boolean addDevice(ReqDeviceInfo reqDeviceInfo) {
 
+    public boolean updateDevice(ReqDeviceInfo reqDeviceInfo) {
+        String desc = reqDeviceInfo.getDesc();
+        if (desc == null || desc.trim().length() == 0) {
+            throw new RuntimeException("设备备注不能为空");
+        }
+        String deviceId = reqDeviceInfo.getDeviceId();
+        if (deviceId == null || deviceId.trim().length() != 32 || !CheckUtil.checkDomain(deviceId)) {
+            throw new RuntimeException("设备编号，不符合规范");
+        }
+        return deviceDao.update(null,
+                new LambdaUpdateWrapper<UserDeviceEntity>()
+                        .eq(UserDeviceEntity::getDeviceKey, reqDeviceInfo.getDeviceId())
+                        .set(UserDeviceEntity::getRemarks, reqDeviceInfo.getDesc())
+        ) > 0;
+    }
+
+
+    public boolean addDevice(ReqDeviceInfo reqDeviceInfo) {
+        Token token = TokenUtil.getToken();
         String desc = reqDeviceInfo.getDesc();
         if (desc == null || desc.trim().length() == 0) {
             throw new RuntimeException("设备备注不能为空");
@@ -70,6 +160,7 @@ public class DeviceService {
         UserDeviceEntity userDeviceEntity = new UserDeviceEntity();
         userDeviceEntity.setDeviceKey(reqDeviceInfo.getDeviceId());
         userDeviceEntity.setRemarks(reqDeviceInfo.getDesc());
+        userDeviceEntity.setUserId(token.getUserId());
         deviceDao.insert(userDeviceEntity);
         return true;
     }
@@ -94,5 +185,9 @@ public class DeviceService {
                 new LambdaQueryWrapper<UserDeviceEntity>()
                         .eq(UserDeviceEntity::getDeviceKey, key)
         ) > 0;
+    }
+
+    public Object stop(String deviceId) {
+        return CmdServerHandler.sendCloseMsg(deviceId, "强制停止");
     }
 }

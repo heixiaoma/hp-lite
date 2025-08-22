@@ -22,12 +22,6 @@ public class DbConfig {
     @Bean
     public MybatisConfig sql() {
         String path = System.getProperty("user.dir") + File.separator + "db.db";
-        File file = new File(path);
-        if (!file.exists()) {
-            //进行导出初始化一个sqlite
-            InputStream is = DbConfig.class.getResourceAsStream("/db/db.db");
-            FileUtil.copyFile(is, path);
-        }
         HikariDataSource ds = new HikariDataSource();
         ds.setJdbcUrl( "jdbc:sqlite:" + path);
         ds.setDriverClassName("org.sqlite.JDBC");

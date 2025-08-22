@@ -40,16 +40,36 @@ public class DeviceController  {
     @POST("add")
     public JsonResult addDevice(HttpRequest request, ReqDeviceInfo reqDeviceInfo) {
         try {
+
             return JsonResult.ok().put("data", deviceService.addDevice(reqDeviceInfo));
         } catch (Exception e) {
             return JsonResult.error(e.getMessage());
         }
     }
 
+    @POST("update")
+    public JsonResult updateDevice(HttpRequest request, ReqDeviceInfo reqDeviceInfo) {
+        try {
+            return JsonResult.ok().put("data", deviceService.updateDevice(reqDeviceInfo));
+        } catch (Exception e) {
+            return JsonResult.error(e.getMessage());
+        }
+    }
+
+
     @GET("remove")
     public JsonResult remove(HttpRequest request,String deviceId) {
         try {
             return JsonResult.ok().put("data", deviceService.remove(deviceId));
+        } catch (Exception e) {
+            return JsonResult.error(e.getMessage());
+        }
+    }
+
+    @GET("stop")
+    public JsonResult stop(HttpRequest request,String deviceId) {
+        try {
+            return JsonResult.ok().put("data", deviceService.stop(deviceId));
         } catch (Exception e) {
             return JsonResult.error(e.getMessage());
         }

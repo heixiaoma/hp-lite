@@ -24,3 +24,19 @@ export function removeDevice(query) {
         params: query
     })
 }
+
+export function stopDevice(query) {
+    return http({
+        url: '/client/device/stop',
+        method: 'get',
+        params: query
+    })
+}
+
+export function updateDevice(data) {
+    return http({
+        url: '/client/device/update',
+        method: 'post',
+        data
+    })
+}
