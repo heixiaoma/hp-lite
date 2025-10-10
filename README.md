@@ -68,7 +68,7 @@ acme:
 ```
 
 ### 服务端安装教程
-- https://b23.tv/8JBNOFX
+- 【最好用的内网穿透工具hp-lite搭建教程】 https://www.bilibili.com/video/BV1E6pwzVEAR/?share_source=copy_web&vd_source=9f2661127f08e7489ad9c2f80fbe7740
 
 
 ### 客户端运行方式
