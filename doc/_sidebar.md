@@ -4,7 +4,7 @@
 * 服务端部署
     * [服务端介绍](zh-cn/server/index.md)
     * [二进制方式](zh-cn/server/bin.md)
-    * [docker方式](zh-cn/server/index.md)
+    * [docker方式](zh-cn/server/docker.md)
     * [宝塔部署](zh-cn/server/index.md)
 * 客户端部署
     * [客户端介绍](zh-cn/client/index.md)
