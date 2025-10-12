@@ -1,5 +1,5 @@
 <p align="center">
-<img src="/doc/img/logo.png" width="200" />
+<img src="/docs/img/logo.png" width="200" />
 </p>
 <p align="center">
     <a >
@@ -27,6 +27,8 @@ HP-Lite5.0是一个单机方案
 我们是首个支持双通道模式的工具及通道可以选TCP(多路复用)或者QUIC传输，他们都是目前比较高效，高性能的传输方式
 我们支持TCP和UDP协议，针对 http/https ws/wss 协议做了大量的优化工作可以更加灵活的控制。让用户使用更佳舒服简单。
 
+### 部署文档
+> hp-lite.hserver.cn
 
 ### 服务端
 
@@ -91,10 +93,10 @@ chmod -R 777 ./hp-lite-amd64
 
 
 ## 运行截图
-<img src="./doc/img/img_2.png"  />
-<img src="./doc/img/img_3.png"  />
-<img src="./doc/img/img_7.png"  />
-<img src="./doc/img/img_4.png"  />
-<img src="./doc/img/img_5.png"  />
-<img src="./doc/img/img_6.png"  />
+<img src="docs/img/img_2.png"  />
+<img src="docs/img/img_3.png"  />
+<img src="docs/img/img_7.png"  />
+<img src="docs/img/img_4.png"  />
+<img src="docs/img/img_5.png"  />
+<img src="docs/img/img_6.png"  />
 
