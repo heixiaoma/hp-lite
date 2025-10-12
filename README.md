@@ -74,13 +74,8 @@ acme:
 ### 客户端运行方式
 ##### docker
 ```shell
-# 通过 阿里云源 docker run 运行容器
-sudo docker run --name hp-lite --restart=always -d  -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite:latest
 #直接连接码
 sudo docker run --name hp-lite --restart=always -d  -e c=连接码 registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite:latest
-
-# 通过Docker官方源运行
-sudo docker run --name hp-lite --restart=always -d -e server=xxx.com穿透服务:16666 -e deviceId=32位的设备ID heixiaoma/hp-lite:latest
 #直接连接码
 sudo docker run --name hp-lite --restart=always -d -e  c=连接码 heixiaoma/hp-lite:latest
 ```
