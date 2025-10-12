@@ -28,7 +28,7 @@ HP-Lite5.0是一个单机方案
 我们支持TCP和UDP协议，针对 http/https ws/wss 协议做了大量的优化工作可以更加灵活的控制。让用户使用更佳舒服简单。
 
 ### 部署文档
-> hp-lite.hserver.cn
+> https://hp-lite.hserver.cn
 
 ### 服务端
 
