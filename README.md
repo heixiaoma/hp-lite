@@ -27,8 +27,13 @@ HP-Lite5.0是一个单机方案
 我们是首个支持双通道模式的工具及通道可以选TCP(多路复用)或者QUIC传输，他们都是目前比较高效，高性能的传输方式
 我们支持TCP和UDP协议，针对 http/https ws/wss 协议做了大量的优化工作可以更加灵活的控制。让用户使用更佳舒服简单。
 
-### 部署文档
+### 详细部署文档
 > https://hp-lite.hserver.cn
+
+### 部署视频
+>【最好用的内网穿透工具hp-lite搭建教程】 https://www.bilibili.com/video/BV1E6pwzVEAR/?share_source=copy_web&vd_source=9f2661127f08e7489ad9c2f80fbe7740
+
+
 
 ### 服务端
 
@@ -68,9 +73,6 @@ acme:
   email: '232323@qq.com' #申请证书必须写一个邮箱可以随便写
   http-port: '5634' #证书验证会访问http接口，会通过80转发过来，所以这个端口不用暴露外网
 ```
-
-### 服务端安装教程
-- 【最好用的内网穿透工具hp-lite搭建教程】 https://www.bilibili.com/video/BV1E6pwzVEAR/?share_source=copy_web&vd_source=9f2661127f08e7489ad9c2f80fbe7740
 
 
 ### 客户端运行方式
