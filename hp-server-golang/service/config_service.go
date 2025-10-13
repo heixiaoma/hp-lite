@@ -7,6 +7,9 @@ import (
 	"hp-server-lib/config"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
+	"net"
+	"strconv"
+	"time"
 )
 
 type ConfigService struct {
@@ -113,11 +116,20 @@ func (receiver *ConfigService) AddData(configEntity entity.UserConfigEntity) err
 		return errors.New("外网端口未填写")
 	}
 
+	//检查端口占用
+	conn, err := net.DialTimeout("tcp", "127.0.0.1:"+strconv.Itoa(*configEntity.Port), 3*time.Second)
+	if conn != nil {
+		conn.Close()
+	}
+	if err == nil {
+		return errors.New("外网端口:" + strconv.Itoa(*configEntity.Port) + "已占用")
+	}
+
 	if configEntity.Id == nil {
 		var total int64
 		db.DB.Model(&entity.UserConfigEntity{}).Where("port = ?", configEntity.Port).Count(&total)
 		if total > 0 {
-			return errors.New("外网端口已被其他配置占用")
+			return errors.New("外网端口:" + strconv.Itoa(*configEntity.Port) + "已被其他配置占用")
 		}
 		if configEntity.Domain != nil && len(*configEntity.Domain) > 0 {
 			total = 0
