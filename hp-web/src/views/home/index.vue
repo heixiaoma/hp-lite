@@ -119,6 +119,9 @@
       <div class="container">
         <p>&copy; 2025 HP-Lite 内网穿透项目</p>
       </div>
+      <div>
+        全网数据平台合计统计
+      </div>
     </footer>
   </div>
 </template>
@@ -199,11 +202,47 @@ const scrollToTop = () => {
 // 生命周期钩子
 onMounted(() => {
   window.addEventListener('scroll', handleScroll);
+  load51La()
 });
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
+  unLoad51La()
 });
+
+
+
+const load51La = () => {
+  // 避免重复加载：检查是否已有该脚本
+  if (document.getElementById('LA-DATA-WIDGET')) return;
+
+  // 创建 script 标签
+  const script = document.createElement('script');
+  script.id = 'LA-DATA-WIDGET';
+  script.crossOrigin = 'anonymous';
+  script.charset = 'UTF-8';
+  // script.src = 'https://v6-widget.51.la/v6/3NkyaLWSCGchFoDV/quote.js?theme=0&f=12';
+  script.src = 'https://v6-widget.51.la/v6/3NkyaLWSCGchFoDV/quote.js?theme=#1690FF,#FFFFFF,#F4F4F4,#FFFFFF,#FFFFFF,#1690FF,12&f=12';
+
+  // 插入到 body 中（或 head）
+  document.body.appendChild(script);
+
+  // 监听加载状态
+  script.onload = () => {
+    console.log('51LA 脚本加载成功');
+  };
+  script.onerror = () => {
+    console.error('51LA 脚本加载失败');
+  };
+}
+
+const unLoad51La=()=>{
+  const script = document.getElementById('LA-DATA-WIDGET');
+  if (script) {
+    document.body.removeChild(script);
+  }
+}
+
 </script>
 <style scoped lang="less">
 /* 全局样式 */
