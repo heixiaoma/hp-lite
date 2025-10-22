@@ -1,6 +1,38 @@
 package http
 
+import (
+	"bytes"
+	"html/template"
+	"os"
+	"sync"
+)
+
+var (
+	cachedTemplate     string
+	cachedTemplateOnce sync.Once
+)
+
+var (
+	wafTpl     *template.Template
+	wafTplOnce sync.Once
+)
+
 func DeviceNotFound() string {
+	// 用 sync.Once 保证只加载一次模板
+	cachedTemplateOnce.Do(func() {
+		path := "./template/not_found.html"
+		data, err := os.ReadFile(path)
+		if err != nil {
+			// 文件不存在，使用默认模板
+			cachedTemplate = defaultDeviceNotFound()
+			return
+		}
+		cachedTemplate = string(data)
+	})
+	return cachedTemplate
+}
+
+func defaultDeviceNotFound() string {
 	return `
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -182,6 +214,29 @@ func DeviceNotFound() string {
 }
 
 func Waf(str, ip string) string {
+	// 模板加载一次后缓存
+	wafTplOnce.Do(func() {
+		path := "./template/waf.html"
+		data, err := os.ReadFile(path)
+		if err != nil {
+			// 文件不存在，使用默认模板
+			wafTpl = template.Must(template.New("default_waf").Parse(defaultWafHTML()))
+			return
+		}
+		// 编译模板
+		wafTpl = template.Must(template.New("custom_waf").Parse(string(data)))
+	})
+
+	// 渲染模板
+	var buf bytes.Buffer
+	_ = wafTpl.Execute(&buf, map[string]string{
+		"Str": str,
+		"IP":  ip,
+	})
+	return buf.String()
+}
+
+func defaultWafHTML() string {
 	return `
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -352,10 +407,10 @@ func Waf(str, ip string) string {
         <div class="error-icon"></div>
         <h1>访问受限</h1>
         <p class="error-message">
-            ` + str + `
+            {{.Str}}
         </p>
         <div class="details">
-            <div class="detail-item">您的IP地址: <span class="blocked-ip" id="blocked-ip">` + ip + `</span></div>
+            <div class="detail-item">您的IP地址: <span class="blocked-ip" id="blocked-ip">{{.IP}}</span></div>
             <div class="detail-item">此IP因安全原因被临时或永久阻止</div>
             <div class="detail-item">如有疑问，请联系系统管理员</div>
         </div>
