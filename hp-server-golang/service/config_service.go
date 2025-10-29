@@ -117,12 +117,26 @@ func (receiver *ConfigService) AddData(configEntity entity.UserConfigEntity) err
 	}
 
 	//检查端口占用
-	conn, err := net.DialTimeout("tcp", "127.0.0.1:"+strconv.Itoa(*configEntity.Port), 3*time.Second)
-	if conn != nil {
-		conn.Close()
+	// 如果是更新现有配置，需要检查端口是否发生变化
+	var shouldCheckPortOccupied = true
+	if configEntity.Id != nil {
+		// 查询当前配置的端口
+		var currentConfig entity.UserConfigEntity
+		db.DB.Where("id = ?", configEntity.Id).First(&currentConfig)
+		if currentConfig.Port != nil && *currentConfig.Port == *configEntity.Port {
+			// 端口没有变化，跳过端口占用检测
+			shouldCheckPortOccupied = false
+		}
 	}
-	if err == nil {
-		return errors.New("外网端口:" + strconv.Itoa(*configEntity.Port) + "已占用")
+	
+	if shouldCheckPortOccupied {
+		conn, err := net.DialTimeout("tcp", "127.0.0.1:"+strconv.Itoa(*configEntity.Port), 3*time.Second)
+		if conn != nil {
+			conn.Close()
+		}
+		if err == nil {
+			return errors.New("外网端口:" + strconv.Itoa(*configEntity.Port) + "已占用")
+		}
 	}
 
 	if configEntity.Id == nil {
