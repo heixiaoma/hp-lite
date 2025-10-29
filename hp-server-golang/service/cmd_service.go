@@ -107,8 +107,8 @@ func NoticeClientUpdateData(deviceKey string) bool {
 			}
 			return ok
 		}
-
 	}
+
 	return false
 }
 

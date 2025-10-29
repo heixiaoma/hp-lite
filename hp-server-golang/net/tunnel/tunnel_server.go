@@ -19,6 +19,10 @@ func NewTunnelServer(connectType bean.ConnectType, port int, conn *net2.MuxSessi
 	return &TunnelServer{connectType: connectType, port: port, conn: conn, userInfo: userInfo}
 }
 
+func (receiver *TunnelServer) UserInfo() bean.UserConfigInfo {
+	return receiver.userInfo
+}
+
 func (receiver *TunnelServer) StartServer() bool {
 
 	if receiver.connectType == bean.TCP || receiver.connectType == bean.TCP_UDP {

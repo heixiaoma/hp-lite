@@ -74,15 +74,7 @@ func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSessi
 	if info == nil {
 		return
 	}
-	tunnelServer, ok := HP_CACHE_TUN.Load(info.Port)
-	if ok {
-		s := tunnelServer.(*tunnel.TunnelServer)
-		s.CLose()
-		HP_CACHE_TUN.Delete(info.Port)
-		if info.Domain != nil {
-			DOMAIN_HP_INFO.Delete(*info.Domain)
-		}
-	}
+	ClosePortServer(info.Port)
 	tunnelType := data.MetaData.Type.String()
 	connectType := bean.ConnectType(tunnelType)
 	newTunnelServer := tunnel.NewTunnelServer(connectType, info.Port, conn, *info)
@@ -136,5 +128,19 @@ func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSessi
 	if err == nil {
 		openStream.Write(protol.Encode(hpMessage))
 		util.Print(status)
+	}
+}
+
+func ClosePortServer(port int) {
+	log.Println("关闭外网端口服务：" + strconv.Itoa(port))
+	tunnelServer, ok := HP_CACHE_TUN.Load(port)
+	if ok {
+		s := tunnelServer.(*tunnel.TunnelServer)
+		s.CLose()
+		HP_CACHE_TUN.Delete(port)
+		info := s.UserInfo()
+		if info.Domain != nil {
+			DOMAIN_HP_INFO.Delete(*info.Domain)
+		}
 	}
 }

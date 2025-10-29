@@ -84,6 +84,8 @@ func (receiver *ConfigService) RemoveData(configId int) bool {
 		var results entity.UserConfigEntity
 		db.DB.Where("id = ?", configId).Delete(&results)
 		NoticeClientUpdateData(userQuery.DeviceKey)
+		//关闭服务端口
+		ClosePortServer(*userQuery.Port)
 		return true
 	}
 	return false
@@ -126,9 +128,12 @@ func (receiver *ConfigService) AddData(configEntity entity.UserConfigEntity) err
 		if currentConfig.Port != nil && *currentConfig.Port == *configEntity.Port {
 			// 端口没有变化，跳过端口占用检测
 			shouldCheckPortOccupied = false
+		} else {
+			//关闭服务端口
+			ClosePortServer(*currentConfig.Port)
 		}
 	}
-	
+
 	if shouldCheckPortOccupied {
 		conn, err := net.DialTimeout("tcp", "127.0.0.1:"+strconv.Itoa(*configEntity.Port), 3*time.Second)
 		if conn != nil {
