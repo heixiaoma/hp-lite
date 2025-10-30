@@ -7,7 +7,7 @@
 > hp-lite5.0 ipk文件由群友制作
 * 哔站演示地址：https://b23.tv/0Xzc7fP
 * IPK文件下载地址：https://pan.baidu.com/s/1QUxPJwMTixFyU6cEeHazGA?pwd=xg1q
-> 请确保自己的openwrt架构下载对应的包，目前只支持 arm64和x86架构的IPK文件
+> 请确保自己的openwrt的CPU架构下载对应的包，目前只支持 arm64和x86架构的IPK文件
 
 
 ![img4.png](../../tech/openwrt/img4.png)
