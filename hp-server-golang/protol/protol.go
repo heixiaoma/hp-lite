@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 	hpMessage "hp-server-lib/message"
 	"io"
 )

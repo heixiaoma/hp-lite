@@ -20,7 +20,7 @@ func NewHPHandler() *HPClientHandler {
 
 // ChannelActive 连接激活时，发送注册信息给云端
 func (h *HPClientHandler) ChannelActive(stream *net2.MuxStream, conn *net2.MuxSession) {
-	log.Printf("HP传输打开流：%d", stream.StreamID())
+	//log.Printf("HP传输打开流：%d", stream.StreamID())
 }
 
 func (h *HPClientHandler) ChannelRead(stream *net2.MuxStream, data interface{}, conn *net2.MuxSession) error {

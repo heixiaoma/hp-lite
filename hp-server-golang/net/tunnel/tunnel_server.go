@@ -7,16 +7,16 @@ import (
 )
 
 type TunnelServer struct {
-	connectType bean.ConnectType
-	port        int
-	tcpServer   *TcpServer
-	udpServer   *UdpServer
-	conn        *net2.MuxSession
-	userInfo    bean.UserConfigInfo
+	protocol  bean.Protocol
+	port      int
+	tcpServer *TcpServer
+	udpServer *UdpServer
+	conn      *net2.MuxSession
+	userInfo  bean.UserConfigInfo
 }
 
-func NewTunnelServer(connectType bean.ConnectType, port int, conn *net2.MuxSession, userInfo bean.UserConfigInfo) *TunnelServer {
-	return &TunnelServer{connectType: connectType, port: port, conn: conn, userInfo: userInfo}
+func NewTunnelServer(protocol bean.Protocol, port int, conn *net2.MuxSession, userInfo bean.UserConfigInfo) *TunnelServer {
+	return &TunnelServer{protocol: protocol, port: port, conn: conn, userInfo: userInfo}
 }
 
 func (receiver *TunnelServer) UserInfo() bean.UserConfigInfo {
@@ -25,7 +25,7 @@ func (receiver *TunnelServer) UserInfo() bean.UserConfigInfo {
 
 func (receiver *TunnelServer) StartServer() bool {
 
-	if receiver.connectType == bean.TCP || receiver.connectType == bean.TCP_UDP {
+	if receiver.protocol == bean.TCP || receiver.protocol == bean.HTTP || receiver.protocol == bean.SOCKS5 {
 		server := NewTcpServer(receiver.conn, receiver.userInfo)
 		receiver.tcpServer = server
 		if !server.StartServer(receiver.port) {
@@ -33,7 +33,7 @@ func (receiver *TunnelServer) StartServer() bool {
 		}
 
 	}
-	if receiver.connectType == bean.UDP || receiver.connectType == bean.TCP_UDP {
+	if receiver.protocol == bean.UDP {
 		server := NewUdpServer(receiver.conn, receiver.userInfo)
 		receiver.udpServer = server
 		startServer := server.StartServer(receiver.port)

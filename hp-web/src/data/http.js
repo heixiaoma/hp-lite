@@ -5,9 +5,9 @@ import userInfo from './userInfo.js'
 
 // create an axios instance
 const service = axios.create({
-    // baseURL: "http://127.0.0.1:9090", // url = base url + request url
+    baseURL: "http://127.0.0.1:9090", // url = base url + request url
     // baseURL: "http://xxx.com", // url = base url + request url
-    baseURL: "", // url = base url + request url
+    // baseURL: "", // url = base url + request url
     // withCredentials: true, // send cookies when cross-domain requests
     timeout: 500000 // request timeout
 })

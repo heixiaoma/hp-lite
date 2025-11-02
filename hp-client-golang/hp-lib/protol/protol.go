@@ -5,9 +5,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
-	"github.com/golang/protobuf/proto"
 	hpMessage "hp-lib/message"
 	"io"
+
+	"google.golang.org/protobuf/proto"
 )
 
 func Encode(message *hpMessage.HpMessage) []byte {

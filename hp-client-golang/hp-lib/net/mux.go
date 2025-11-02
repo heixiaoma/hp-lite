@@ -2,14 +2,15 @@ package net
 
 import (
 	"bufio"
+	"net"
+
 	"github.com/quic-go/quic-go"
 	"github.com/xtaci/smux"
-	"net"
 )
 
 type MuxStream struct {
 	isTcp      bool
-	QuicStream quic.Stream
+	QuicStream *quic.Stream
 	TcpStream  *smux.Stream
 }
 
@@ -50,7 +51,7 @@ func (receiver *MuxStream) Close() error {
 	return nil
 }
 
-func NewQuicMuxStream(stream quic.Stream) *MuxStream {
+func NewQuicMuxStream(stream *quic.Stream) *MuxStream {
 	return &MuxStream{isTcp: false, QuicStream: stream}
 }
 
@@ -60,7 +61,7 @@ func NewTcpMuxStream(stream *smux.Stream) *MuxStream {
 
 type MuxSession struct {
 	isTcp       bool
-	QuicSession quic.Connection
+	QuicSession *quic.Conn
 	TcpSession  *smux.Session
 }
 
@@ -68,7 +69,7 @@ func NewTcpMuxSession(session *smux.Session) *MuxSession {
 	return &MuxSession{isTcp: true, TcpSession: session}
 }
 
-func NewQuicMuxSession(session quic.Connection) *MuxSession {
+func NewQuicMuxSession(session *quic.Conn) *MuxSession {
 	return &MuxSession{isTcp: false, QuicSession: session}
 }
 

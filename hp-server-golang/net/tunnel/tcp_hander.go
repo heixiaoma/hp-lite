@@ -3,7 +3,6 @@ package tunnel
 import (
 	"bufio"
 	"errors"
-	"github.com/pires/go-proxyproto"
 	"hp-server-lib/bean"
 	"hp-server-lib/message"
 	"hp-server-lib/net/base"
@@ -13,6 +12,8 @@ import (
 	"log"
 	"net"
 	"strings"
+
+	"github.com/pires/go-proxyproto"
 )
 
 type TcpHandler struct {
@@ -21,10 +22,17 @@ type TcpHandler struct {
 	stream    *base.MuxStream
 	channelId string
 	userInfo  bean.UserConfigInfo
+	protocol  string
+	localIp   string
+	localPort int
 }
 
-func NewTcpHandler(tcpConn net.Conn, conn *base.MuxSession, userInfo bean.UserConfigInfo) *TcpHandler {
-	return &TcpHandler{conn: conn, channelId: util.NewId(), tcpConn: tcpConn, userInfo: userInfo}
+func NewTcpHandler(tcpConn net.Conn, conn *base.MuxSession, userInfo bean.UserConfigInfo) (error, *TcpHandler) {
+	err, s, s2, i := util.ProtocolInfo(userInfo.LocalAddress)
+	if err != nil {
+		return err, nil
+	}
+	return nil, &TcpHandler{conn: conn, channelId: util.NewId(), tcpConn: tcpConn, userInfo: userInfo, protocol: s, localPort: i, localIp: s2}
 }
 
 func (h *TcpHandler) handlerStream(stream *base.MuxStream) {
@@ -63,7 +71,7 @@ func (h *TcpHandler) ChannelActive(conn net.Conn) {
 		m := &message.HpMessage{
 			Type: message.HpMessage_CONNECTED,
 			MetaData: &message.HpMessage_MetaData{
-				Type:      message.HpMessage_TCP,
+				Protocol:  h.protocol,
 				ChannelId: h.channelId,
 			},
 		}
@@ -84,8 +92,8 @@ func (h *TcpHandler) ChannelActive(conn net.Conn) {
 					TransportProtocol: proxyproto.TCPv4,
 					SourceAddr:        conn.RemoteAddr(),
 					DestinationAddr: &net.TCPAddr{
-						IP:   net.ParseIP(h.userInfo.ProxyIp),
-						Port: h.userInfo.ProxyPort,
+						IP:   net.ParseIP(h.localIp),
+						Port: h.localPort,
 					},
 				}
 				format, err := header.Format()
@@ -93,7 +101,7 @@ func (h *TcpHandler) ChannelActive(conn net.Conn) {
 					m := &message.HpMessage{
 						Type: message.HpMessage_DATA,
 						MetaData: &message.HpMessage_MetaData{
-							Type:      message.HpMessage_TCP,
+							Protocol:  h.protocol,
 							ChannelId: h.channelId,
 						},
 						Data: format,
@@ -116,7 +124,7 @@ func (h *TcpHandler) ChannelRead(conn net.Conn, data interface{}) error {
 	m := &message.HpMessage{
 		Type: message.HpMessage_DATA,
 		MetaData: &message.HpMessage_MetaData{
-			Type:      message.HpMessage_TCP,
+			Protocol:  h.protocol,
 			ChannelId: h.channelId,
 		},
 		Data: data.([]byte),
@@ -133,7 +141,7 @@ func (h *TcpHandler) ChannelInactive(conn net.Conn) {
 	m := &message.HpMessage{
 		Type: message.HpMessage_DISCONNECTED,
 		MetaData: &message.HpMessage_MetaData{
-			Type:      message.HpMessage_TCP,
+			Protocol:  h.protocol,
 			ChannelId: h.channelId,
 		},
 	}

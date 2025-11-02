@@ -6,13 +6,11 @@ import (
 
 type UserConfigInfo struct {
 	ProxyVersion string                 `json:"proxyVersion"`
-	ProxyIp      string                 `json:"proxyIp"`
-	ProxyPort    int                    `json:"proxyPort"`
+	LocalAddress string                 `json:"localAddress"`
 	Domain       *string                `json:"domain"`
 	ConfigId     int                    `json:"configId"`
-	Port         int                    `json:"port"`
+	RemotePort   int                    `json:"remotePort"`
 	Ip           string                 `json:"ip"`
-	WebType      string                 `json:"webType"`
 	TunType      string                 `json:"TunType"`
 	MaxConn      int                    `json:"maxConn"`
 	BlockedIps   []string               `json:"blockedIps"`

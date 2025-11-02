@@ -2,10 +2,13 @@ package util
 
 import (
 	"bytes"
-	"github.com/olekukonko/tablewriter"
 	"hp-lib/bean"
 	"log"
 	"strconv"
+
+	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 )
 
 func Print(msg string) {
@@ -18,26 +21,32 @@ func PrintStatus(data []*bean.LocalInnerWear) string {
 	}
 	// 创建表格
 	buffer := bytes.NewBuffer(nil)
-	table := tablewriter.NewWriter(buffer)
+	symbols := tw.NewSymbolCustom("Nature").
+		WithRow("-").
+		WithColumn("|").
+		WithTopLeft("🌱").
+		WithTopMid("🌿").
+		WithTopRight("🌱").
+		WithMidLeft("🍃").
+		WithCenter("❀").
+		WithMidRight("🍃").
+		WithBottomLeft("🌻").
+		WithBottomMid("🌾").
+		WithBottomRight("🌻")
+
+	table := tablewriter.NewTable(buffer, tablewriter.WithRenderer(renderer.NewBlueprint(tw.Rendition{Symbols: symbols})))
 	// 设置标题行
-	table.SetHeader([]string{"远端服务", "内网服务", "映射类型", "隧道类型", "状态"})
+	table.Header([]string{"远端服务", "内网服务", "隧道类型", "状态"})
+
 	for _, wear := range data {
 		if wear == nil {
 			return "暂无穿配置"
 		}
-		msg := []string{"", "", "", "", ""}
-		msg[0] = wear.ServerIp
-		msg[1] = wear.LocalIp + ":" + strconv.Itoa(wear.LocalPort)
-		switch wear.ConnectType {
-		case bean.TCP:
-			msg[2] = "TCP"
-		case bean.UDP:
-			msg[2] = "UDP"
-		case bean.TCP_UDP:
-			msg[2] = "TCP_UDP"
-		}
-		msg[3] = wear.TunType
-		msg[4] = strconv.FormatBool(wear.Status)
+		msg := []string{"", "", "", ""}
+		msg[0] = wear.ServerIp + ":" + strconv.Itoa(wear.RemotePort)
+		msg[1] = wear.LocalAddress
+		msg[2] = wear.TunType
+		msg[3] = strconv.FormatBool(wear.Status)
 		table.Append(msg)
 	}
 	// 渲染表格

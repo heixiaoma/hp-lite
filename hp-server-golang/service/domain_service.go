@@ -48,15 +48,18 @@ func InitDomainCache() {
 	}
 }
 
-func (receiver *DomainService) DomainList(userId int, page int, pageSize int) *bean.ResPage {
+func (receiver *DomainService) DomainList(userId int, page int, pageSize int, keyword string) *bean.ResPage {
 	var results []*entity.UserDomainEntity
 	var total int64
-	if userId < 0 {
-		db.DB.Model(&entity.UserDomainEntity{}).Order("id desc").Count(&total).Offset((page - 1) * pageSize).Limit(pageSize).Find(&results)
-	} else {
-		db.DB.Model(&entity.UserDomainEntity{}).Where("user_id = ?", userId).Order("id desc").Count(&total).Offset((page - 1) * pageSize).Limit(pageSize).Find(&results)
+	query := db.DB.Model(&entity.UserDomainEntity{})
+	if userId > 0 {
+		query.Where("user_id = ?", userId)
 	}
-
+	if keyword != "" {
+		// 示例：匹配 username 或 config_name 字段，使用 LIKE 模糊查询
+		query = query.Where("desc LIKE ? OR domain LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+	}
+	query.Order("id desc").Count(&total).Offset((page - 1) * pageSize).Limit(pageSize).Find(&results)
 	for _, data := range results {
 		if len(data.CertificateKey) > 0 && len(data.CertificateContent) > 0 {
 			// 解码 PEM 数据

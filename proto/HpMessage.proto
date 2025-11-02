@@ -19,18 +19,12 @@ message HpMessage{
     KEEPALIVE=5;
   }
 
-  //传输数据类型
-  enum MessageType
-  {
-    TCP=0;
-    UDP=1;
-    TCP_UDP=2;
-  }
+
 
   //元数据
   message MetaData{
     string key=1;
-    MessageType type=2;
+    string protocol=2;
     string channelId=3;
     bool success=4;
     string reason=5;

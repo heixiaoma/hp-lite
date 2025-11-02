@@ -92,8 +92,11 @@ func (tcpServer *TcpServer) handler(conn net.Conn) {
 				}
 			}
 		}
-
-		handler := NewTcpHandler(conn, tcpServer.conn, tcpServer.userInfo)
+		err, handler := NewTcpHandler(conn, tcpServer.conn, tcpServer.userInfo)
+		if err != nil {
+			log.Println(err.Error())
+			return
+		}
 		handler.ChannelActive(conn)
 		reader := bufio.NewReader(conn)
 		for {

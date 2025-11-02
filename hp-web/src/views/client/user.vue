@@ -29,13 +29,13 @@
              >
       <a-form :model="formState" ref="formTable" :layout="'vertical'" >
         <a-form-item label="用户名 " name="username"  :rules="[{ required: true, message: '必填用户名'}]">
-          <a-input v-model:value="formState.username" placeholder="用户名"/>
+          <a-input v-model:value="formState.username" allow-clear placeholder="用户名"/>
         </a-form-item>
         <a-form-item label="密码" name="password"  :rules="[{ required: true, message: '必填密码'},{ min: 6, message: '密码长度不能少于6位', trigger: 'blur' },]">
-          <a-input v-model:value="formState.password" placeholder="密码"/>
+          <a-input allow-clear v-model:value="formState.password" placeholder="密码"/>
         </a-form-item>
         <a-form-item label="备注" name="desc"  :rules="[{ required: true, message: '必填备注'}]">
-          <a-input v-model:value="formState.desc" placeholder="备注"/>
+          <a-input allow-clear v-model:value="formState.desc" placeholder="备注"/>
         </a-form-item>
       </a-form>
       <template #footer>

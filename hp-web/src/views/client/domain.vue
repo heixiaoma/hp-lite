@@ -2,7 +2,8 @@
   <div>
     <a-button class="btn edit" style="margin-bottom: 10px" @click="addModal">添加域名</a-button>
     <a-button class="btn view" style="margin-bottom: 10px;margin-left: 5px" @click="loadData">刷新列表</a-button>
-
+    <a-input v-model:value="pagination.keyword" placeholder="关键字查询" allow-clear style="width: 150px;margin-bottom: 10px;margin-left: 10px"/>
+    <a-button class="btn view" style="margin-bottom: 10px;margin-left: 10px" type="primary" @click="loadData">查询</a-button>
     <a-table :loading="dataLoading" :columns="columns" rowKey="id" :data-source="listData"
              :locale="{emptyText: '暂无数据,添加一个试试看看'}"
              :pagination="pagination"
@@ -72,19 +73,19 @@
     <a-modal  v-model:visible="addVisible" title="信息">
       <a-form :model="formState" ref="formTable" :layout="'vertical'" >
         <a-form-item label="域名" name="domain"  :rules="[{ required: true, message: '必选域名'}]" >
-          <a-input :disabled="!isAdd" v-model:value="formState.domain" placeholder="域名"/>
+          <a-input allow-clear :disabled="!isAdd" v-model:value="formState.domain" placeholder="域名"/>
         </a-form-item>
         <a-form-item label="备注" name="desc"  :rules="[{ required: true, message: '必选备注'}]">
-          <a-input v-model:value="formState.desc" placeholder="备注"/>
+          <a-input allow-clear v-model:value="formState.desc" placeholder="备注"/>
         </a-form-item>
         <a-form-item label="证书" name="certificateKey"
                      :rules="[{ required: false, message: '必须填写证书.key文件'}]">
-          <a-textarea :rows="6" v-model:value="formState.certificateKey"
+          <a-textarea allow-clear :rows="6" v-model:value="formState.certificateKey"
                        placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;***大概是这样的证书私钥***&#10;-----END RSA PRIVATE KEY-----"/>
         </a-form-item>
         <a-form-item  label="证书内容" name="certificateContent"
                       :rules="[{ required: false, message: '映射描述必填'}]">
-          <a-textarea  :rows="6" v-model:value="formState.certificateContent"
+          <a-textarea allow-clear :rows="6" v-model:value="formState.certificateContent"
                       placeholder="-----BEGIN CERTIFICATE-----&#10;***大概是这样的证书内容***&#10;-----BEGIN CERTIFICATE-----"/>
         </a-form-item>
       </a-form>
@@ -121,6 +122,7 @@ const pagination = reactive({
   total: 0,
   current: 1,
   pageSize: 10,
+  keyword:''
 });
 
 const loadData = () => {
@@ -128,7 +130,8 @@ const loadData = () => {
   console.log(pagination)
   getDomain({
     current: pagination.current,
-    pageSize: pagination.pageSize
+    pageSize: pagination.pageSize,
+    keyword: pagination.keyword,
   }).then(res => {
     dataLoading.value = false
     listData.value = res.data.records

@@ -99,10 +99,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	base.AddPv(info.ConfigId, 1)
 	base.AddUv(info.ConfigId, r.RemoteAddr)
 	if info.ReverseProxy == nil {
-		if len(info.WebType) == 0 {
-			info.WebType = "http"
+		err2, s, _, _ := util.ProtocolInfo(info.LocalAddress)
+		if err2 != nil {
+			http.Error(w, "错误URL地址", http.StatusInternalServerError)
+			return
 		}
-		target, err := url.Parse(info.WebType + "://127.0.0.1:" + strconv.Itoa(info.Port))
+		target, err := url.Parse(s + "://127.0.0.1:" + strconv.Itoa(info.RemotePort))
 		if err != nil {
 			http.Error(w, "错误URL地址", http.StatusInternalServerError)
 			return

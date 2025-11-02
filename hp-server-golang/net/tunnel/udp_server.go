@@ -74,7 +74,11 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 
 			value, ok := udpServer.cache.Load(addr.String())
 			if !ok {
-				handler := NewUdpHandler(udpServer, conn, udpServer.conn, addr)
+				err, handler := NewUdpHandler(udpServer, conn, udpServer.conn, addr, udpServer.userInfo)
+				if err != nil {
+					log.Println(err.Error())
+					break
+				}
 				go handler.ChannelActive(conn)
 				udpServer.cache.Store(addr.String(), handler)
 			} else {

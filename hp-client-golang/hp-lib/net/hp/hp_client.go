@@ -1,26 +1,31 @@
 package hp
 
 import (
-	"github.com/quic-go/quic-go"
-	"github.com/xtaci/smux"
-	"golang.org/x/time/rate"
 	"hp-lib/bean"
 	hpMessage "hp-lib/message"
 	"hp-lib/net"
 	"hp-lib/net/connect"
 	handler2 "hp-lib/net/handler"
+	net2 "hp-lib/net/socks5"
 	"hp-lib/protol"
+	"hp-lib/util"
 	"strconv"
+
+	"github.com/quic-go/quic-go"
+	"github.com/xtaci/smux"
+	"golang.org/x/time/rate"
 )
 
 type HpClient struct {
 	CallMsg    func(message string)
 	conn       *net.MuxSession
-	quicStream quic.Stream
+	quicStream *quic.Stream
 	tcpStream  *smux.Stream
 
 	Data    *bean.LocalInnerWear
 	handler *handler2.HpClientHandler
+
+	socksServer *net2.SocksServer
 }
 
 func NewHpClient(callMsg func(message string)) *HpClient {
@@ -33,20 +38,28 @@ func (hpClient *HpClient) Connect(data *bean.LocalInnerWear) {
 	if hpClient.conn != nil {
 		hpClient.conn.Close()
 	}
-	var hpType hpMessage.HpMessage_MessageType
-	switch data.ConnectType {
-	case bean.TCP:
-		hpType = hpMessage.HpMessage_TCP
-	case bean.UDP:
-		hpType = hpMessage.HpMessage_UDP
-	case bean.TCP_UDP:
-		hpType = hpMessage.HpMessage_TCP_UDP
+	hpClient.Data = data
+	err, s, _, port := util.ProtocolInfo(data.LocalAddress)
+	if err != nil {
+		hpClient.CallMsg(err.Error())
+		return
 	}
+
+	if bean.Protocol(s) == bean.SOCKS5 {
+		username, password, err := util.ParseSocks5Auth(data.LocalAddress)
+		if err != nil {
+			hpClient.CallMsg(err.Error())
+		}
+		hpClient.socksServer = net2.NewSocks(strconv.Itoa(port), username, password, hpClient.CallMsg)
+		hpClient.socksServer.Start(func() {
+			hpClient.CallMsg("SOCKS5服务停止")
+		})
+	}
+
 	handler := &handler2.HpClientHandler{
 		Key:          data.ConfigKey,
-		MessageType:  hpType,
-		ProxyAddress: data.LocalIp,
-		ProxyPort:    data.LocalPort,
+		Protocol:     s,
+		LocalAddress: data.LocalAddress,
 		CallMsg:      hpClient.CallMsg,
 	}
 	//限速测试
@@ -56,7 +69,6 @@ func (hpClient *HpClient) Connect(data *bean.LocalInnerWear) {
 	if data.OutLimit > 0 {
 		handler.OutLimit = rate.NewLimiter(rate.Limit(float64(data.OutLimit)), data.OutLimit)
 	}
-	hpClient.Data = data
 	hpClient.handler = handler
 	if data.TunType == "TCP" {
 		connection := connect.NewHpTcpConnection()
@@ -115,15 +127,11 @@ func (hpClient *HpClient) GetStatus() bool {
 	}
 }
 
-func (hpClient *HpClient) GetProxyServer() string {
-	return hpClient.handler.ProxyAddress + ":" + strconv.Itoa(hpClient.handler.ProxyPort)
-}
-
-func (hpClient *HpClient) GetServer() string {
-	return hpClient.Data.ServerIp + ":" + strconv.Itoa(hpClient.Data.ServerPort)
-}
-
 func (hpClient *HpClient) Close() {
+	if hpClient.socksServer != nil {
+		hpClient.socksServer.Stop()
+		hpClient.socksServer = nil
+	}
 	if hpClient.conn != nil {
 		hpClient.conn.Close()
 		hpClient.handler.CloseAll()

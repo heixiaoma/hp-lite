@@ -82,15 +82,14 @@ func NoticeClientUpdateData(deviceKey string) bool {
 				}
 			}
 			wear := bean.LocalInnerWear{
-				OutLimit:    OutLimit,
-				InLimit:     InLimit,
-				TunType:     item.TunType,
-				ConnectType: *item.ConnectType,
-				ConfigKey:   item.ConfigKey,
-				LocalIp:     item.LocalIp,
-				LocalPort:   *item.LocalPort,
-				ServerIp:    item.ServerIp,
-				ServerPort:  *item.ServerPort,
+				OutLimit:     OutLimit,
+				InLimit:      InLimit,
+				TunType:      item.TunType,
+				RemotePort:   *item.RemotePort,
+				LocalAddress: item.LocalAddress,
+				ConfigKey:    item.ConfigKey,
+				ServerIp:     item.ServerIp,
+				ServerPort:   *item.ServerPort,
 			}
 			results2 = append(results2, wear)
 		}

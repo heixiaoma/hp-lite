@@ -12,24 +12,19 @@ type LocalInnerWear struct {
 	ServerPort int `json:"serverPort"`
 
 	/**
-	 * 本地IP
+	 * 远端端口
 	 */
-	LocalIp string `json:"localIp"`
+	RemotePort int `json:"remotePort"`
 
 	/**
-	 * 本地的端口
+	 * 本地地址
 	 */
-	LocalPort int `json:"localPort"`
+	LocalAddress string `json:"localAddress"`
 
 	/**
 	 * 本地映射的key
 	 */
 	ConfigKey string `json:"configKey"`
-
-	/**
-	 * 映射类型
-	 */
-	ConnectType ConnectType `json:"connectType"`
 
 	/**
 	 * 链接方式

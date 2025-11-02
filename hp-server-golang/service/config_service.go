@@ -2,14 +2,16 @@ package service
 
 import (
 	"errors"
-	"github.com/google/uuid"
 	"hp-server-lib/bean"
 	"hp-server-lib/config"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
+	"hp-server-lib/util"
 	"net"
 	"strconv"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type ConfigService struct {
@@ -63,14 +65,27 @@ func (receiver *ConfigService) DeviceKey(userId int) []*bean.ResUserDeviceInfo {
 
 }
 
-func (receiver *ConfigService) ConfigList(userId int, page int, pageSize int) *bean.ResPage {
+func (receiver *ConfigService) ConfigList(userId int, page int, pageSize int, keyword string) *bean.ResPage {
 	var results []entity.UserConfigEntity
 	var total int64
-	if userId < 0 {
-		db.DB.Model(&entity.UserConfigEntity{}).Order("id desc").Count(&total).Offset((page - 1) * pageSize).Limit(pageSize).Find(&results)
-	} else {
-		db.DB.Model(&entity.UserConfigEntity{}).Where("user_id = ?", userId).Order("id desc").Count(&total).Offset((page - 1) * pageSize).Limit(pageSize).Find(&results)
+
+	// 基础查询
+	query := db.DB.Model(&entity.UserConfigEntity{})
+	if userId >= 0 {
+		query = query.Where("user_id = ?", userId)
 	}
+	if keyword != "" {
+		// 示例：匹配 username 或 config_name 字段，使用 LIKE 模糊查询
+		query = query.Where("local_address LIKE ? OR remarks LIKE ? OR domain LIKE ?", "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
+	}
+
+	// 分页查询
+	query.Order("id desc").
+		Count(&total).
+		Offset((page - 1) * pageSize).
+		Limit(pageSize).
+		Find(&results)
+
 	// 计算总记录数并执行分页查询
 	return bean.PageOk(total, results)
 }
@@ -85,7 +100,7 @@ func (receiver *ConfigService) RemoveData(configId int) bool {
 		db.DB.Where("id = ?", configId).Delete(&results)
 		NoticeClientUpdateData(userQuery.DeviceKey)
 		//关闭服务端口
-		ClosePortServer(*userQuery.Port)
+		ClosePortServer(*userQuery.RemotePort)
 		return true
 	}
 	return false
@@ -110,12 +125,14 @@ func (receiver *ConfigService) AddData(configEntity entity.UserConfigEntity) err
 		return errors.New("备注不能为空，同时不能超过50个字")
 	}
 
-	if configEntity.ConnectType == nil {
-		return errors.New("穿透协议未选择")
+	if configEntity.RemotePort == nil {
+		return errors.New("外网端口未填写")
 	}
 
-	if configEntity.Port == nil {
-		return errors.New("外网端口未填写")
+	//校验内网地址
+	err2, _, _, _ := util.ProtocolInfo(configEntity.LocalAddress)
+	if err2 != nil {
+		return errors.New(err2.Error())
 	}
 
 	//检查端口占用
@@ -125,30 +142,30 @@ func (receiver *ConfigService) AddData(configEntity entity.UserConfigEntity) err
 		// 查询当前配置的端口
 		var currentConfig entity.UserConfigEntity
 		db.DB.Where("id = ?", configEntity.Id).First(&currentConfig)
-		if currentConfig.Port != nil && *currentConfig.Port == *configEntity.Port {
+		if currentConfig.RemotePort != nil && *currentConfig.RemotePort == *configEntity.RemotePort {
 			// 端口没有变化，跳过端口占用检测
 			shouldCheckPortOccupied = false
 		} else {
 			//关闭服务端口
-			ClosePortServer(*currentConfig.Port)
+			ClosePortServer(*currentConfig.RemotePort)
 		}
 	}
 
 	if shouldCheckPortOccupied {
-		conn, err := net.DialTimeout("tcp", "127.0.0.1:"+strconv.Itoa(*configEntity.Port), 3*time.Second)
+		conn, err := net.DialTimeout("tcp", "127.0.0.1:"+strconv.Itoa(*configEntity.RemotePort), 3*time.Second)
 		if conn != nil {
 			conn.Close()
 		}
 		if err == nil {
-			return errors.New("外网端口:" + strconv.Itoa(*configEntity.Port) + "已占用")
+			return errors.New("外网端口:" + strconv.Itoa(*configEntity.RemotePort) + "已占用")
 		}
 	}
 
 	if configEntity.Id == nil {
 		var total int64
-		db.DB.Model(&entity.UserConfigEntity{}).Where("port = ?", configEntity.Port).Count(&total)
+		db.DB.Model(&entity.UserConfigEntity{}).Where("remote_port = ?", configEntity.RemotePort).Count(&total)
 		if total > 0 {
-			return errors.New("外网端口:" + strconv.Itoa(*configEntity.Port) + "已被其他配置占用")
+			return errors.New("外网端口:" + strconv.Itoa(*configEntity.RemotePort) + "已被其他配置占用")
 		}
 		if configEntity.Domain != nil && len(*configEntity.Domain) > 0 {
 			total = 0
@@ -159,7 +176,7 @@ func (receiver *ConfigService) AddData(configEntity entity.UserConfigEntity) err
 		}
 	} else {
 		var total int64
-		db.DB.Model(&entity.UserConfigEntity{}).Where("port = ? and id != ?", configEntity.Port, configEntity.Id).Count(&total)
+		db.DB.Model(&entity.UserConfigEntity{}).Where("remote_port = ? and id != ?", configEntity.RemotePort, configEntity.Id).Count(&total)
 		if total > 0 {
 			return errors.New("外网端口已被其他配置占用")
 		}

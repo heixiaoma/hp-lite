@@ -2,8 +2,11 @@ package util
 
 import (
 	"bytes"
-	"github.com/olekukonko/tablewriter"
 	"log"
+
+	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 )
 
 func Print(msg string) {
@@ -16,19 +19,25 @@ func PrintStatus(data [][]string) string {
 	}
 	// 创建表格
 	buffer := bytes.NewBuffer(nil)
-	table := tablewriter.NewWriter(buffer)
+
+	symbols := tw.NewSymbolCustom("Nature").
+		WithRow("-").
+		WithColumn("|").
+		WithTopLeft("🌱").
+		WithTopMid("🌿").
+		WithTopRight("🌱").
+		WithMidLeft("🍃").
+		WithCenter("❀").
+		WithMidRight("🍃").
+		WithBottomLeft("🌻").
+		WithBottomMid("🌾").
+		WithBottomRight("🌻")
+
+	table := tablewriter.NewTable(buffer, tablewriter.WithRenderer(renderer.NewBlueprint(tw.Rendition{Symbols: symbols})))
+
 	// 设置标题行
-	table.SetHeader([]string{"描述", "内容"})
-	for _, wear := range data {
-		if wear == nil {
-			return "暂无穿配置"
-		}
-		msg := []string{"", ""}
-		msg[0] = wear[0]
-		msg[1] = wear[1]
-		table.Append(msg)
-	}
-	// 渲染表格
+	table.Header([]string{"描述", "内容"})
+	table.Bulk(data)
 	table.Render()
 	result := buffer.String()
 	return "\r\n" + result

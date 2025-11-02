@@ -27,19 +27,9 @@ type UserConfigEntity struct {
 	ServerPort *int `json:"serverPort"`
 
 	/**
-	 * 本地IP
+	 * 本地地址
 	 */
-	LocalIp string `json:"localIp"`
-
-	/**
-	 * 本地端口
-	 */
-	LocalPort *int `json:"localPort"`
-
-	/**
-	 * 穿透类型
-	 */
-	ConnectType *bean.ConnectType `json:"connectType"`
+	LocalAddress string `json:"localAddress"`
 
 	/**
 	 * 备注
@@ -47,12 +37,12 @@ type UserConfigEntity struct {
 	Remarks string `json:"remarks"`
 
 	/**
-	 * 端口
+	 * 外网端口端口
 	 */
-	Port *int `json:"port"`
+	RemotePort *int `json:"remotePort"`
 
 	/**
-	 * 域名
+	 * HTTP模式下的域名
 	 */
 	Domain *string `json:"domain"`
 
@@ -70,11 +60,6 @@ type UserConfigEntity struct {
 	 * 用户ID
 	 */
 	UserId *int `json:"userId"`
-
-	/**
-	 * 内网web类型 http和https
-	 */
-	WebType string `json:"webType"`
 
 	/**
 	 * 隧道类型QUIC/TCP

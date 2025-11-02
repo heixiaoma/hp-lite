@@ -5,14 +5,6 @@ import (
 	"log"
 )
 
-type ConnectType string
-
-const (
-	TCP     ConnectType = "TCP"
-	UDP     ConnectType = "UDP"
-	TCP_UDP ConnectType = "TCP_UDP"
-)
-
 type LocalInnerWear struct {
 	/**
 	 * 映射服务器IP
@@ -25,24 +17,19 @@ type LocalInnerWear struct {
 	ServerPort int `json:"serverPort"`
 
 	/**
-	 * 本地IP
+	 * 远端端口
 	 */
-	LocalIp string `json:"localIp"`
+	RemotePort int `json:"remotePort"`
 
 	/**
-	 * 本地的端口
+	 * 本地IP
 	 */
-	LocalPort int `json:"localPort"`
+	LocalAddress string `json:"localAddress"`
 
 	/**
 	 * 本地映射的key
 	 */
 	ConfigKey string `json:"configKey"`
-
-	/**
-	 * 映射类型
-	 */
-	ConnectType ConnectType `json:"connectType"`
 
 	/**
 	 * QUIC、TCP、“”默认QUIC

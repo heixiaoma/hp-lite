@@ -37,6 +37,7 @@ func (receiver ConfigController) GetConfigList(w http.ResponseWriter, r *http.Re
 		queryParams := r.URL.Query()
 		page := queryParams.Get("current")
 		pageSize := queryParams.Get("pageSize")
+		keyword := queryParams.Get("keyword")
 		pageInt, _ := strconv.Atoi(page)
 		pageSizeInt, _ := strconv.Atoi(pageSize)
 		if pageInt == 0 {
@@ -45,7 +46,7 @@ func (receiver ConfigController) GetConfigList(w http.ResponseWriter, r *http.Re
 		if pageSizeInt == 0 {
 			pageSizeInt = 10
 		}
-		json.NewEncoder(w).Encode(bean.ResOk(receiver.ConfigList(id, pageInt, pageSizeInt)))
+		json.NewEncoder(w).Encode(bean.ResOk(receiver.ConfigList(id, pageInt, pageSizeInt, keyword)))
 	}
 }
 

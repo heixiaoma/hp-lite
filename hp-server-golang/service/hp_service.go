@@ -12,6 +12,7 @@ import (
 	"log"
 	"strconv"
 	"sync"
+	"time"
 )
 
 // 端口->隧道服务
@@ -26,9 +27,10 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 
 	userQuery := &entity.UserConfigEntity{}
 	db.DB.Where("config_key = ?  and  (status = 0 or status is null) ", configKey).First(userQuery)
-	if userQuery == nil || userQuery.LocalPort == nil || userQuery.Port == nil || userQuery.Id == nil {
+	if userQuery == nil || userQuery.Id == nil {
 		return nil
 	}
+
 	s := ""
 	if userQuery.ProxyVersion == bean.V1 {
 		s = "V1"
@@ -39,12 +41,10 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 	b := &bean.UserConfigInfo{
 		ProxyVersion: s,
 		Domain:       userQuery.Domain,
-		ProxyIp:      userQuery.LocalIp,
-		ProxyPort:    *userQuery.LocalPort,
+		LocalAddress: userQuery.LocalAddress,
 		ConfigId:     *userQuery.Id,
-		Port:         *userQuery.Port,
+		RemotePort:   *userQuery.RemotePort,
 		Ip:           userQuery.ServerIp,
-		WebType:      userQuery.WebType,
 		TunType:      userQuery.TunType,
 		MaxConn:      -1,
 	}
@@ -74,25 +74,25 @@ func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSessi
 	if info == nil {
 		return
 	}
-	ClosePortServer(info.Port)
-	tunnelType := data.MetaData.Type.String()
-	connectType := bean.ConnectType(tunnelType)
-	newTunnelServer := tunnel.NewTunnelServer(connectType, info.Port, conn, *info)
+	ClosePortServer(info.RemotePort)
+	protocolType := data.MetaData.Protocol
+	connectType := bean.Protocol(protocolType)
+	newTunnelServer := tunnel.NewTunnelServer(connectType, info.RemotePort, conn, *info)
 	server := newTunnelServer.StartServer()
 	if !server {
 		newTunnelServer.CLose()
 	} else {
 		log.Printf("隧道启动成功")
-		HP_CACHE_TUN.Store(info.Port, newTunnelServer)
+		HP_CACHE_TUN.Store(info.RemotePort, newTunnelServer)
 	}
 	if info.Domain != nil {
 		DOMAIN_HP_INFO.Store(*info.Domain, info)
 	}
-
+	now := time.Now()
 	//更新服务端状态
-	strMsg := "配置启动成功"
+	strMsg := now.Format("2006年01月02日 15时04分05秒") + " 配置启动成功"
 	if !server {
-		strMsg = "配置启动失败，大概率是端口冲突，请刷新"
+		strMsg = now.Format("2006年01月02日 15时04分05秒") + " 配置启动失败，大概率是端口冲突，请刷新"
 	}
 	db.DB.Model(&entity.UserConfigEntity{}).Where("config_key = ?", configkey).Update("status_msg", strMsg)
 	//通知客户端结果
@@ -100,18 +100,28 @@ func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSessi
 		{"穿透结果", strconv.FormatBool(server)},
 	}
 
-	if server && (connectType == bean.TCP || connectType == bean.TCP_UDP) {
-		arr2 = append(arr2, []string{"内网TCP", info.ProxyIp + ":" + strconv.Itoa(info.ProxyPort)})
-		arr2 = append(arr2, []string{"外网TCP", info.Ip + ":" + strconv.Itoa(info.Port)})
+	if server && ((connectType == bean.TCP) || (connectType == bean.UNIX)) {
+		arr2 = append(arr2, []string{"内网地址", info.LocalAddress})
+		arr2 = append(arr2, []string{"外网TCP", info.Ip + ":" + strconv.Itoa(info.RemotePort)})
+	}
+
+	if server && ((connectType == bean.HTTP) || connectType == bean.HTTPS) {
+		arr2 = append(arr2, []string{"内网地址", info.LocalAddress})
+		arr2 = append(arr2, []string{"外网HTTP", "http://" + info.Ip + ":" + strconv.Itoa(info.RemotePort)})
 		if info.Domain != nil {
 			arr2 = append(arr2, []string{"HTTP地址", "http://" + *info.Domain})
 			arr2 = append(arr2, []string{"HTTPS地址", "https://" + *info.Domain})
 		}
 	}
 
-	if server && (connectType == bean.UDP || connectType == bean.TCP_UDP) {
-		arr2 = append(arr2, []string{"内网UDP", info.ProxyIp + ":" + strconv.Itoa(info.ProxyPort)})
-		arr2 = append(arr2, []string{"外网UDP", info.Ip + ":" + strconv.Itoa(info.Port)})
+	if server && (connectType == bean.SOCKS5) {
+		arr2 = append(arr2, []string{"内网SOCKS5", info.LocalAddress})
+		arr2 = append(arr2, []string{"外网SOCKS5", info.Ip + ":" + strconv.Itoa(info.RemotePort)})
+	}
+
+	if server && (connectType == bean.UDP) {
+		arr2 = append(arr2, []string{"内网UDP", info.LocalAddress})
+		arr2 = append(arr2, []string{"外网UDP", info.Ip + ":" + strconv.Itoa(info.RemotePort)})
 	}
 
 	status := util.PrintStatus(arr2)

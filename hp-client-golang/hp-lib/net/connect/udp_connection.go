@@ -3,6 +3,7 @@ package connect
 import (
 	"bufio"
 	net2 "hp-lib/net"
+	"hp-lib/util"
 	"io"
 	"net"
 	"strconv"
@@ -15,7 +16,13 @@ func NewUdpConnection() *UdpConnection {
 	return &UdpConnection{}
 }
 
-func (connection *UdpConnection) Connect(host string, port int, handler net2.Handler, call func(mgs string)) net.Conn {
+func (connection *UdpConnection) Connect(address string, handler net2.Handler, call func(mgs string)) net.Conn {
+	err2, _, host, port := util.ProtocolInfo(address)
+	if err2 != nil {
+		call("地址解析错误：" + host + ":" + strconv.Itoa(port) + " 原因：" + err2.Error())
+		return nil
+	}
+
 	conn, err := net.Dial("udp", host+":"+strconv.Itoa(port))
 	if err != nil {
 		call("不能能连到服务器：" + host + ":" + strconv.Itoa(port) + " 原因：" + err.Error())

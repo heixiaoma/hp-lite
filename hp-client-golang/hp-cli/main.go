@@ -35,7 +35,7 @@ func main() {
 	}
 	if c != "" {
 		log.Printf("使用连接码模式连接")
-		base32 := util.DecodeFromLowerCaseBase32(c)
+		base32 := util.DecodeFromLowerCaseBase32(strings.TrimSpace(c))
 		log.Printf(base32)
 		split := strings.Split(base32, ",")
 		server = split[0]

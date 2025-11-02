@@ -1,6 +1,7 @@
 package tunnel
 
 import (
+	"hp-server-lib/bean"
 	"hp-server-lib/message"
 	"hp-server-lib/net/base"
 	"hp-server-lib/protol"
@@ -18,10 +19,18 @@ type UdpHandler struct {
 	channelId    string
 	udpServer    *UdpServer
 	lastActiveAt time.Time
+	userInfo     bean.UserConfigInfo
+	protocol     string
+	localIp      string
+	localPort    int
 }
 
-func NewUdpHandler(udpServer *UdpServer, udpConn *net.UDPConn, conn *base.MuxSession, addr *net.UDPAddr) *UdpHandler {
-	return &UdpHandler{udpServer: udpServer, udpConn: udpConn, conn: conn, channelId: util.NewId(), addr: addr, lastActiveAt: time.Now()}
+func NewUdpHandler(udpServer *UdpServer, udpConn *net.UDPConn, conn *base.MuxSession, addr *net.UDPAddr, userInfo bean.UserConfigInfo) (error, *UdpHandler) {
+	err, s, s2, i := util.ProtocolInfo(userInfo.LocalAddress)
+	if err != nil {
+		return err, nil
+	}
+	return nil, &UdpHandler{udpServer: udpServer, udpConn: udpConn, conn: conn, channelId: util.NewId(), addr: addr, lastActiveAt: time.Now(), protocol: s, localIp: s2, localPort: i}
 }
 func (h *UdpHandler) handlerStream(stream *base.MuxStream) {
 	defer stream.Close()
@@ -55,7 +64,7 @@ func (h *UdpHandler) ChannelActive(udpConn *net.UDPConn) {
 		m := &message.HpMessage{
 			Type: message.HpMessage_CONNECTED,
 			MetaData: &message.HpMessage_MetaData{
-				Type:      message.HpMessage_UDP,
+				Protocol:  h.protocol,
 				ChannelId: h.channelId,
 			},
 		}
@@ -97,7 +106,7 @@ func (h *UdpHandler) ChannelRead(udpConn *net.UDPConn, data interface{}) {
 	m := &message.HpMessage{
 		Type: message.HpMessage_DATA,
 		MetaData: &message.HpMessage_MetaData{
-			Type:      message.HpMessage_UDP,
+			Protocol:  h.protocol,
 			ChannelId: h.channelId,
 		},
 		Data: data.([]byte),
@@ -112,7 +121,7 @@ func (h *UdpHandler) ChannelInactive(udpConn *net.UDPConn) {
 	m := &message.HpMessage{
 		Type: message.HpMessage_DISCONNECTED,
 		MetaData: &message.HpMessage_MetaData{
-			Type:      message.HpMessage_TCP,
+			Protocol:  h.protocol,
 			ChannelId: h.channelId,
 		},
 	}

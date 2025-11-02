@@ -3,15 +3,15 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"golang.org/x/time/rate"
 	"hp-lib/bean"
 	hpMessage "hp-lib/message"
 	net2 "hp-lib/net"
 	"hp-lib/net/connect"
 	"hp-lib/protol"
 	"net"
-	"strconv"
 	"sync"
+
+	"golang.org/x/time/rate"
 )
 
 // 远程ID，通讯数据流
@@ -19,9 +19,8 @@ var WNConnGroup = sync.Map{}
 
 type HpClientHandler struct {
 	Key          string
-	MessageType  hpMessage.HpMessage_MessageType
-	ProxyAddress string
-	ProxyPort    int
+	LocalAddress string
+	Protocol     string
 	CallMsg      func(message string)
 	Conn         *net2.MuxSession
 	Active       bool
@@ -39,7 +38,7 @@ func (h *HpClientHandler) ChannelActive(conn *net2.MuxSession) {
 			Key: h.Key,
 		},
 	}
-	message.MetaData.Type = h.MessageType
+	message.MetaData.Protocol = h.Protocol
 	stream, err := conn.OpenStream()
 	if err != nil {
 		h.CallMsg("获取流错误")
@@ -50,7 +49,7 @@ func (h *HpClientHandler) ChannelActive(conn *net2.MuxSession) {
 		h.CallMsg("连接穿透服务发送数据错误：" + err.Error())
 		return
 	} else {
-		h.CallMsg(h.ProxyAddress + ":" + strconv.Itoa(h.ProxyPort) + " 映射请求已经提交等待云端响应，请稍等")
+		h.CallMsg(h.LocalAddress + " 映射请求已经提交等待云端响应，请稍等")
 		stream.Close()
 	}
 }
@@ -94,9 +93,10 @@ func (h *HpClientHandler) connected(stream *net2.MuxStream, message *hpMessage.H
 	id := message.MetaData.ChannelId
 	n := &bean.WtoN{ChannelId: id, W: stream}
 	WNConnGroup.Store(id, n)
-	if message.MetaData.Type == hpMessage.HpMessage_TCP {
+	protocol := bean.Protocol(message.MetaData.Protocol)
+	if protocol == bean.TCP || protocol == bean.HTTP || protocol == bean.SOCKS5 || protocol == bean.HTTPS || protocol == bean.UNIX {
 		//创建内网的新连接通道，两个实现绑定关系
-		local := connect.NewTcpConnection().ConnectLocal(h.ProxyAddress, h.ProxyPort, &LocalProxyHandler{
+		local := connect.NewTcpConnection().ConnectLocal(h.LocalAddress, &LocalProxyHandler{
 			HpClientHandler: h,
 			WToN:            n,
 		}, h.CallMsg)
@@ -104,10 +104,10 @@ func (h *HpClientHandler) connected(stream *net2.MuxStream, message *hpMessage.H
 		if local == nil {
 			h.Close(message.MetaData.ChannelId)
 		}
-
 	}
-	if message.MetaData.Type == hpMessage.HpMessage_UDP {
-		conn := connect.NewUdpConnection().Connect(h.ProxyAddress, h.ProxyPort, &LocalProxyUdpHandler{
+
+	if protocol == bean.UDP {
+		conn := connect.NewUdpConnection().Connect(h.LocalAddress, &LocalProxyUdpHandler{
 			HpClientHandler: h,
 			WToN:            n,
 		}, h.CallMsg)

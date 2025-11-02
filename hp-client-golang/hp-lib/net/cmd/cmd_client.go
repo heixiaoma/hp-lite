@@ -4,11 +4,11 @@ import (
 	net2 "hp-lib/net/hp"
 )
 
-var version = "hp-lite:5.0"
+var version = "hp-lite:6.0"
 
 type CmdClient struct {
-	CallMsg func(message string)
-	handler *CmdClientHandler
+	CallMsg    func(message string)
+	handler    *CmdClientHandler
 	Connection *TcpConnection
 }
 
@@ -21,7 +21,7 @@ func NewCmdClient(callMsg func(message string)) *CmdClient {
 func (cmdClient *CmdClient) Connect(serverIp string, serverPort int, key string) {
 	if cmdClient.Connection != nil {
 		cmdClient.Connection.Close()
-		cmdClient.Connection=nil
+		cmdClient.Connection = nil
 	}
 	connection := NewTcpConnection()
 	handler := &CmdClientHandler{
@@ -30,12 +30,12 @@ func (cmdClient *CmdClient) Connect(serverIp string, serverPort int, key string)
 	}
 	cmdClient.handler = handler
 	connection.Connect(serverIp, serverPort, handler, cmdClient.CallMsg)
-	cmdClient.Connection=connection
+	cmdClient.Connection = connection
 }
 
 func (cmdClient *CmdClient) GetStatus() bool {
-	if cmdClient.handler != nil{
-		if !cmdClient.handler.Ide(){
+	if cmdClient.handler != nil {
+		if !cmdClient.handler.Ide() {
 			return false
 		}
 		return true
@@ -48,6 +48,6 @@ func (cmdClient *CmdClient) Close() {
 	net2.CloseTunnel()
 	if cmdClient.Connection != nil {
 		cmdClient.Connection.Close()
-		cmdClient.Connection=nil
+		cmdClient.Connection = nil
 	}
 }

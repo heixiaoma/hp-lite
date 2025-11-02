@@ -2,6 +2,8 @@
   <div>
     <a-button class="btn edit" style="margin-bottom: 10px;" @click="addConfigModal">添加穿透</a-button>
     <a-button class="btn view" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
+      <a-input v-model:value="pagination.keyword" allow-clear placeholder="关键字查询" style="width: 150px;margin-bottom: 10px;margin-left: 10px"/>
+      <a-button class="btn view" style="margin-bottom: 10px;margin-left: 10px" type="primary" @click="loadData">查询</a-button>
     <a-table :loading="configLoading" :columns="columns" rowKey="id" :data-source="currentConfigList"
              :locale="{emptyText: '暂无配置,添加一个试试看看'}"
              :pagination="pagination"
@@ -9,11 +11,10 @@
              :scroll="{ x: 'max-content'}">
       <template #bodyCell="{ column ,record}">
 
-        <template v-if="column.key === 'local'">
-          {{record.localIp}}:{{record.localPort}}
-        </template>
         <template v-if="column.key === 'server'">
-          {{record.serverIp}}:{{record.port}}
+          <div v-for="(item,index) in openAddress(record)">
+            <a-tag color="pink">{{item}}</a-tag>
+          </div>
         </template>
 
         <template v-if="column.key==='status'">
@@ -54,36 +55,10 @@
         </template>
       </template>
       <template #expandedRowRender="{ record }">
-
         <div class="text-detail">
           <div>备注：{{ record.remarks }}</div>
-
-
-          <div v-if="record.connectType==='TCP'">
-            <div v-if="record.port">外网TCP地址: <span class="text-tips">{{ record.serverIp }}:{{ record.port }}</span>
-            </div>
-            <div v-if="record.domain">外网HTTP地址: <span class="text-tips">http(s)://{{ record.domain }}</span></div>
-          </div>
-
-          <div v-if="record.connectType==='UDP'">
-            <div v-if="record.port">外网UDP地址: <span class="text-tips">{{ record.serverIp }}:{{ record.port }}</span>
-            </div>
-          </div>
-
-          <div v-if="record.connectType==='TCP_UDP'">
-            <div v-if="record.port">外网UDP地址: <span class="text-tips">{{ record.serverIp }}:{{ record.port }}</span>
-            </div>
-            <div v-if="record.port">外网TCP地址: <span class="text-tips">{{ record.serverIp }}:{{ record.port }}</span>
-            </div>
-            <div v-if="record.domain">外网HTTP地址: <span class="text-tips">http(s)://{{ record.domain }}</span></div>
-          </div>
-
           <div v-if="record.statusMsg">
             最近一条穿透服务日志：<span class="text-tips">{{ record.statusMsg }}</span>
-          </div>
-
-          <div v-if="!record.port">
-            随机端口不支持TCP和UDP协议使用
           </div>
         </div>
       </template>
@@ -92,7 +67,6 @@
 
     <div>
       <a-modal v-model:visible="addConfigVisible" title="添加内网穿透配置">
-
         <div class="config-info">
         <a-form :model="formState" layout="vertical" ref="formTable">
           <a-form-item label="穿透设备" name="deviceKey" :rules="[{ required: true, message: '穿透设备必填'}]">
@@ -103,35 +77,38 @@
           </a-form-item>
 
           <a-form-item label="穿透备注" name="remarks" :rules="[{ required: true, message: '穿透备注必填'}]">
-            <a-input v-model:value="formState.remarks" placeholder="备注如：个人博客"/>
+            <a-input v-model:value="formState.remarks" allow-clear placeholder="备注如：个人博客"/>
           </a-form-item>
 
           <a-divider>端口映射配置</a-divider>
 
-          <a-form-item label="穿透协议" name="connectType" :rules="[{ required: true, message: '穿透协议必填'}]">
-            <a-select
-                v-model:value="formState.connectType"
-            >
-              <a-select-option value="TCP">TCP</a-select-option>
-              <a-select-option value="UDP">UDP</a-select-option>
-              <a-select-option value="TCP_UDP">TCP_UDP</a-select-option>
-            </a-select>
-          </a-form-item>
-          <!--    套餐选择      -->
-          <a-form-item label="外网端口" name="port" :rules="[{ required: true, message: '外网端口必填'}]">
-            <a-input v-model:value.number="formState.port" type="number" placeholder="8084"/>
+          <a-form-item label="外网端口" name="remotePort" :rules="[{ required: true, message: '外网端口必填'}]">
+            <a-input v-model:value.number="formState.remotePort" allow-clear type="number" placeholder="8084"/>
           </a-form-item>
 
-          <a-form-item label="内网地址" name="localIp" :rules="[{ required: true, message: '内网地址必填'}]">
-            <a-input v-model:value="formState.localIp" placeholder="内网IP如：127.0.0.1"/>
+          <a-form-item label="内网地址" name="localAddress" :rules="[{ required: true, message: '内网地址必填'}]">
+            <a-alert style="margin: 10px 5px" type="success" >
+              <template #message>
+                内网地址填写规范示例：
+                <div>
+                  <a-tag color="success">协议头</a-tag>
+                  <a-tag color="processing">地址</a-tag>
+                  <a-tag color="error">端口</a-tag>
+                </div>
+                <div>http://127.0.0.1、https://127.0.0.1、http://127.0.0.1:8080</div>
+                <div>socks5://127.0.0.1:1080、socks5://user:pass123@127.0.0.1:1080</div>
+                <div>tcp://127.0.0.1:1080</div>
+                <div>udp://127.0.0.1:1080</div>
+                <div>unix:///tmp/socks.sock</div>
+              </template>
+            </a-alert>
+            <a-input allow-clear v-model:value="formState.localAddress" placeholder="http://127.0.0.1:8084"/>
+
           </a-form-item>
 
-          <a-form-item label="内网端口" name="localPort" :rules="[{ required: true, message: '内网端口必填'}]">
-            <a-input v-model:value.number="formState.localPort" type="number" placeholder="内网端口如：8080"/>
-          </a-form-item>
 
-          <a-form-item label="代理协议" name="proxyVersion"
-                       :rules="[{ required: true, message: '用于获取真实IP，需要内网配合完成'}]">
+          <a-form-item label="代理协议" name="proxyVersion" v-if="showInput.proxyVersion"
+                       :rules="[{message: '用于获取真实IP，需要内网配合完成'}]">
             <a-select
                 v-model:value="formState.proxyVersion"
             >
@@ -140,27 +117,13 @@
               <a-select-option value="V2">TCP#V2版本</a-select-option>
             </a-select>
           </a-form-item>
-
-          <a-divider>域名选项配置</a-divider>
-
-          <a-form-item label="内网WEB类型" name="webType"
-                       :rules="[{ required: true, message: '内网环境下的web类型 http/https'}]">
-            <a-select
-                v-model:value="formState.webType"
-            >
-              <a-select-option value="http">http</a-select-option>
-              <a-select-option value="https">https</a-select-option>
-            </a-select>
-          </a-form-item>
-
-          <a-form-item label="&nbsp;穿透域名&nbsp;&nbsp;" name="domain">
+          <a-form-item label="&nbsp;绑定访问域名&nbsp;&nbsp;" name="domain" v-if="showInput.domain">
             <a-select
                 v-model:value="formState.domain"
                 show-search
                 placeholder="选择一个域名"
                 :options="domainOptions"
             ></a-select>
-
           </a-form-item>
 
           <a-divider>其他选项配置</a-divider>
@@ -198,7 +161,7 @@
 </template>
 
 <script setup>
-import {onMounted, reactive, ref} from "vue";
+import {onMounted, reactive, ref, watch} from "vue";
 import {removeConfig, getConfigList, getDeviceKey, addConfig, refConfig, changeStatus} from "../../api/client/config";
 import {useRoute} from 'vue-router'
 import userInfo from "../../data/userInfo";
@@ -211,6 +174,7 @@ const pagination = reactive({
   total: 0,
   current: 1,
   pageSize: 10,
+  keyword:'',
 });
 
 const handleTableChange = (item) => {
@@ -229,13 +193,10 @@ const formState = reactive({
   id: undefined,
   deviceKey: "",
   remarks: "",
-  port: undefined,
+  remotePort: undefined,
   domain: undefined,
-  localIp: "",
-  localPort: undefined,
-  connectType: "",
+  localAddress: "",
   proxyVersion: "NONE",
-  webType: "http",
   status: '0',
   tunType:"TCP",
 })
@@ -340,20 +301,14 @@ const editConfigData = (item) => {
   formState.id = item.id
   formState.deviceKey = item.deviceKey
   formState.remarks = item.remarks
-  formState.port = item.port
+  formState.remotePort = item.remotePort
+  formState.localAddress = item.localAddress
   formState.domain = item.domain
-  formState.localIp = item.localIp
-  formState.localPort = item.localPort
-  formState.connectType = item.connectType
   formState.proxyVersion = item.proxyVersion
-  if (!item.webType){
-    item.webType="http"
-  }
   if (!item.tunType){
     item.tunType="QUIC"
   }
   formState.tunType = item.tunType
-  formState.webType = item.webType
   formState.status = item.status+""
   addConfigVisible.value = true;
 }
@@ -374,14 +329,11 @@ const addConfigModal = () => {
   formState.id = undefined
   formState.deviceKey = ""
   formState.remarks = ""
-  formState.port = undefined
+  formState.remotePort = undefined
+  formState.localAddress = ''
   formState.domain = undefined
-  formState.localIp = ""
-  formState.localPort = undefined
-  formState.connectType = ""
   formState.proxyVersion = "NONE"
-  formState.webType = "http"
-  formState.tunType=''
+  formState.tunType='TCP'
   formState.status = "0"
   addConfigVisible.value = true;
 };
@@ -406,14 +358,57 @@ const columns = [
   {title: '配置ID', dataIndex: 'id', key: 'id'},
   {title: '备注', dataIndex: 'remarks', key: 'remarks'},
   {title: '隧道模式', dataIndex: 'tunType', key: 'tunType'},
-  {title: '内网服务', dataIndex: 'local', key: 'local'},
+  {title: '内网服务', dataIndex: 'localAddress', key: 'localAddress'},
   {title: '外网服务', dataIndex: 'server', key: 'server'},
-  {title: '穿透类型', dataIndex: 'connectType', key: 'connectType'},
   {title: '配置有效', dataIndex: 'status', key: 'status'},
-  {title: '域名', dataIndex: 'domain', key: 'domain'},
   {title: '部署设备', dataIndex: 'deviceKey', key: 'deviceKey'},
   {title: '操作', key: 'action'},
 ];
+
+const showInput=reactive({
+  proxyVersion:false,
+  domain:false,
+})
+
+watch(() => formState.localAddress, (newVal) => {
+  if (newVal.startsWith("tcp")){
+    showInput.proxyVersion=true
+  }else {
+    showInput.proxyVersion=false
+  }
+  if (newVal.startsWith("http")){
+    showInput.domain=true
+  }else {
+    showInput.domain=false
+  }
+})
+
+const openAddress = (item) => {
+  const address=[]
+
+  if (item.localAddress.startsWith("tcp")||item.localAddress.startsWith("unix")){
+    address.push("tcp://"+item.serverIp+":"+item.remotePort)
+  }
+
+  if (item.localAddress.startsWith("udp")){
+    address.push("udp://"+item.serverIp+":"+item.remotePort)
+  }
+  if (item.localAddress.startsWith("socks5")){
+    address.push("socks5://"+item.serverIp+":"+item.remotePort)
+  }
+
+  if (item.localAddress.startsWith("http")){
+    address.push("http://"+item.serverIp+":"+item.remotePort)
+    if (item.domain){
+    address.push("http://"+item.domain)
+    address.push("https://"+item.domain)
+    }
+  }
+
+  return address
+}
+
+
 
 </script>
 
@@ -461,7 +456,7 @@ const columns = [
 }
 
 .config-info{
-  height: 60vh;
+  max-height: 60vh;
   overflow-y: scroll;
 
 }

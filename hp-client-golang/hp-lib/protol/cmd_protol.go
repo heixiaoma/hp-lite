@@ -5,9 +5,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
-	"github.com/golang/protobuf/proto"
 	cmdMessage "hp-lib/message"
 	"io"
+
+	"google.golang.org/protobuf/proto"
 )
 
 func CmdEncode(message *cmdMessage.CmdMessage) []byte {

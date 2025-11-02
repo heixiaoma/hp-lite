@@ -3,7 +3,6 @@ package hp
 import (
 	"hp-lib/bean"
 	"hp-lib/util"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -105,7 +104,7 @@ func startTunnel(data *bean.LocalInnerWear, callMsg func(msg string)) {
 				status := hpClient.GetStatus()
 				if !status {
 					//开始重新连接
-					hpClient.CallMsg("隧道正在重新连接:" + data.LocalIp + ":" + strconv.Itoa(int(data.LocalPort)))
+					hpClient.CallMsg("隧道正在重新连接:" + data.LocalAddress)
 					hpClient.Connect(data)
 				}
 				if flagStatus != status {
