@@ -87,22 +87,70 @@
           </a-form-item>
 
           <a-form-item label="内网地址" name="localAddress" :rules="[{ required: true, message: '内网地址必填'}]">
-            <a-alert style="margin: 10px 5px" type="success" >
-              <template #message>
-                内网地址填写规范示例：
-                <div>
-                  <a-tag color="success">协议头</a-tag>
-                  <a-tag color="processing">地址</a-tag>
-                  <a-tag color="error">端口</a-tag>
-                </div>
-                <div>http://127.0.0.1、https://127.0.0.1、http://127.0.0.1:8080</div>
-                <div>socks5://127.0.0.1:1080、socks5://user:pass123@127.0.0.1:1080</div>
-                <div>tcp://127.0.0.1:1080</div>
-                <div>udp://127.0.0.1:1080</div>
-                <div>unix:///tmp/socks.sock</div>
-              </template>
-            </a-alert>
-            <a-input allow-clear v-model:value="formState.localAddress" placeholder="http://127.0.0.1:8084"/>
+
+
+
+
+
+
+            <a-collapse>
+              <a-collapse-panel  header="配置说明">
+                <a-collapse accordion>
+                  <a-collapse-panel key="1" header="HTTP/HTTPS协议">
+                    <a-alert style="margin: 10px 5px" type="success" >
+                      <template #message>
+                        <div>
+                          <a-tag color="pink">http://127.0.0.1</a-tag>
+                          <a-tag color="red">https://127.0.0.1</a-tag>
+                          <a-tag color="orange">http://127.0.0.1:8080</a-tag>
+                          <a-tag color="green">https://192.168.55:8080</a-tag>
+                          <a-tag color="cyan">http://192.168.15:8080</a-tag>
+                          <p>http/https协议支持默认端口方式或者手动指定端口、当选择http协议时可以自由选择是否绑定域名</p>
+                        </div>
+                      </template>
+                    </a-alert>
+                  </a-collapse-panel>
+                  <a-collapse-panel key="2" header="TCP协议">
+                    <a-alert style="margin: 10px 5px" type="success" >
+                      <template #message>
+                        <a-tag color="pink">tcp://127.0.0.1:1080</a-tag>
+                        <a-tag color="red">tcp://192.168.10.1:1080</a-tag>
+                        <p>TCP级别协议、当选择tcp协议可以设置代理协议，通常情况下是不用设置，如果有获取真实IP或者对该协议熟悉的人可以选择设置</p>
+                      </template>
+                    </a-alert>
+                  </a-collapse-panel>
+                  <a-collapse-panel key="3" header="UDP协议">
+                    <a-alert style="margin: 10px 5px" type="success" >
+                      <template #message>
+                        <a-tag color="pink">udp://127.0.0.1:1080</a-tag>
+                        <a-tag color="red">udp://192.168.10.1:1080</a-tag>
+                      </template>
+                    </a-alert>
+                  </a-collapse-panel>
+                  <a-collapse-panel key="4" header="SOCKS5协议">
+                    <a-alert style="margin: 10px 5px" type="success" >
+                      <template #message>
+                        <a-tag color="pink">socks5://127.0.0.1:1080</a-tag>
+                        <a-tag color="red">socks5://用户名:密码@127.0.0.1:1080</a-tag>
+                        <p>socks5协议会在内网创建创建一个socks5服务，然后暴露到公网 可以选择设置密码和不设置密码</p>
+                      </template>
+                    </a-alert>
+                  </a-collapse-panel>
+                  <a-collapse-panel key="5" header="UNIX协议">
+                    <a-alert style="margin: 10px 5px" type="success" >
+                      <template #message>
+                        <a-tag color="pink">unix:///tmp/socks.sock</a-tag>
+                        <a-tag color="red">unix:///tmp/****.sock</a-tag>
+                        <p>unix协议是直接连接到文件上，请确保sock文件路径正确</p>
+                      </template>
+                    </a-alert>
+                  </a-collapse-panel>
+                </a-collapse>
+              </a-collapse-panel>
+            </a-collapse>
+
+
+            <a-input style="margin-top: 5px" allow-clear v-model:value="formState.localAddress" placeholder="http://127.0.0.1:8084"/>
 
           </a-form-item>
 
@@ -462,8 +510,8 @@ const openAddress = (item) => {
 }
 /* 滚动条整体样式 */
 .config-info::-webkit-scrollbar {
-  width: 2px; /* 滚动条宽度 */
-  height: 2px;
+  width: 0px; /* 滚动条宽度 */
+  height: 0px;
 }
 
 /* 滚动条轨道 */
