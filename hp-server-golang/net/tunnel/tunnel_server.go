@@ -25,7 +25,7 @@ func (receiver *TunnelServer) UserInfo() bean.UserConfigInfo {
 
 func (receiver *TunnelServer) StartServer() bool {
 
-	if receiver.protocol == bean.TCP || receiver.protocol == bean.HTTP || receiver.protocol == bean.SOCKS5 {
+	if receiver.protocol == bean.TCP || receiver.protocol == bean.HTTP || receiver.protocol == bean.SOCKS5 || receiver.protocol == bean.HTTPS || receiver.protocol == bean.UNIX {
 		server := NewTcpServer(receiver.conn, receiver.userInfo)
 		receiver.tcpServer = server
 		if !server.StartServer(receiver.port) {
