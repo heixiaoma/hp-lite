@@ -40,10 +40,10 @@ func (receiver *ForwardService) AddData(custom entity.UserFwdEntity) error {
 	}
 	if *custom.Type == "2" && *custom.Status == "1" {
 		server := ext.NewSocks(*custom.Port, *custom.User, *custom.Pwd)
-		e := server.Start(func() {
+		start := server.Start(func() {
 			FORWARD_CACHE.Delete(*custom.Id)
 		})
-		if e == nil {
+		if start {
 			FORWARD_CACHE.Store(*custom.Id, server)
 		}
 	}
