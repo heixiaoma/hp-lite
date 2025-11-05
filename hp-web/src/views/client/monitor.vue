@@ -6,6 +6,12 @@
              :scroll="{ x: 'max-content' }">
 
       <template #bodyCell="{ column ,record}">
+        <template v-if="column.key === 'server'">
+          <div v-for="(item,index) in openAddress(record)">
+            <a-tag color="pink">{{item}}</a-tag>
+          </div>
+        </template>
+
         <template v-if="column.key === 'local'">
         {{record.localIp}}:{{record.localPort}}
         </template>
@@ -61,8 +67,8 @@ const loadData = async () => {
 const columns = [
   {title: '备注', dataIndex: 'remarks', key: 'remarks'},
   {title: '域名', dataIndex: 'domain', key: 'domain'},
-  {title: '内网', dataIndex: 'local', key: 'local'},
-  {title: '外网', dataIndex: 'remote', key: 'remote'},
+  {title: '内网', dataIndex: 'localAddress', key: 'localAddress'},
+  {title: '外网', dataIndex: 'server', key: 'server'},
   {title: '隧道类型', dataIndex: 'tunType', key: 'tunType'},
   {title: '操作', key: 'action'},
 ];
@@ -89,6 +95,31 @@ const show = (record) => {
 onMounted(async () => {
   await loadData()
 })
+
+const openAddress = (item) => {
+  const address=[]
+
+  if (item.localAddress.startsWith("tcp")||item.localAddress.startsWith("unix")){
+    address.push("tcp://"+item.serverIp+":"+item.remotePort)
+  }
+
+  if (item.localAddress.startsWith("udp")){
+    address.push("udp://"+item.serverIp+":"+item.remotePort)
+  }
+  if (item.localAddress.startsWith("socks5")){
+    address.push("socks5://"+item.serverIp+":"+item.remotePort)
+  }
+
+  if (item.localAddress.startsWith("http")){
+    address.push("http://"+item.serverIp+":"+item.remotePort)
+    if (item.domain){
+      address.push("http://"+item.domain)
+      address.push("https://"+item.domain)
+    }
+  }
+
+  return address
+}
 
 
 </script>
