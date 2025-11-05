@@ -33,15 +33,15 @@ func NewSocks(port string, username, password string, callMsg func(message strin
 }
 
 // 启动 SOCKS5 代理
-func (s *SocksServer) Start(close func()) error {
+func (s *SocksServer) Start(close func()) bool {
 	listener, err := net.Listen("tcp", ":"+s.port)
 	if err != nil {
-		return err
+		s.callMsg("SOCKS5 服务错误: " + err.Error())
+		return false
 	}
 	s.listener = listener
 	go func() {
 		defer close()
-		s.Serve(s.listener)
 		if err := s.Serve(s.listener); err != nil {
 			if opErr, ok := err.(*net.OpError); ok && opErr.Err.Error() == "use of closed network connection" {
 				// 正常关闭
@@ -50,7 +50,7 @@ func (s *SocksServer) Start(close func()) error {
 			s.callMsg("SOCKS5 服务错误: " + err.Error())
 		}
 	}()
-	return nil
+	return true
 }
 
 // 停止 SOCKS5 代理

@@ -35,6 +35,7 @@ func NewSocks(port string, username, password string) *SocksServer {
 func (s *SocksServer) Start(close func()) bool {
 	listener, err := net.Listen("tcp", ":"+s.port)
 	if err != nil {
+		log.Printf("SOCKS5 服务错误: %v", err)
 		return false
 	}
 	s.listener = listener
