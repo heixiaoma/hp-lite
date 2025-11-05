@@ -1,6 +1,6 @@
 variable "registry" {
-    default = "docker.io"  # 默认值，可被环境变量覆盖
-// default = "registry.cn-shenzhen.aliyuncs.com"  # 默认值，可被环境变量覆盖
+//     default = "docker.io"  # 默认值，可被环境变量覆盖
+default = "registry.cn-shenzhen.aliyuncs.com"  # 默认值，可被环境变量覆盖
 }
 
 variable "image_name" {
@@ -15,7 +15,7 @@ target "manifest" {
   context = "."
   dockerfile = "Dockerfile"
   platforms = ["linux/arm64", "linux/amd64","linux/arm/v7","linux/386"]
-  tags = ["${registry}/${image_name}:latest"]
+  tags = ["${registry}/${image_name}:6.0"]
   type = "manifest"
   push = true
 }
