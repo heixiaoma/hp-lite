@@ -5,7 +5,6 @@ go 1.24.0
 toolchain go1.24.5
 
 require (
-	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/olekukonko/tablewriter v1.1.0
 	github.com/quic-go/quic-go v0.55.0
 	github.com/shirou/gopsutil/v3 v3.24.5

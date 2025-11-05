@@ -5,7 +5,6 @@ go 1.24.0
 toolchain go1.24.5
 
 require (
-	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-acme/lego/v4 v4.28.0
 	github.com/gogf/gf/v2 v2.9.1
