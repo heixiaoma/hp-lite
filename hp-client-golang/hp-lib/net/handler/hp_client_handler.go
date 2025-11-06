@@ -8,6 +8,7 @@ import (
 	net2 "hp-lib/net"
 	"hp-lib/net/connect"
 	"hp-lib/protol"
+	"log"
 	"net"
 	"sync"
 
@@ -56,6 +57,7 @@ func (h *HpClientHandler) ChannelActive(conn *net2.MuxSession) {
 
 func (h *HpClientHandler) ChannelRead(stream *net2.MuxStream, data interface{}) {
 	message := data.(*hpMessage.HpMessage)
+	log.Println(message.MetaData.Protocol)
 	switch message.Type {
 	case hpMessage.HpMessage_REGISTER_RESULT:
 		h.CallMsg(message.MetaData.Reason)
