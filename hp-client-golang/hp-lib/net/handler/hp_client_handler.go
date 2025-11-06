@@ -8,7 +8,6 @@ import (
 	net2 "hp-lib/net"
 	"hp-lib/net/connect"
 	"hp-lib/protol"
-	"log"
 	"net"
 	"sync"
 
