@@ -90,7 +90,7 @@ func (s *Server) ServeConn(conn net.Conn) {
 	defer conn.Close()
 	err := s.serveConn(conn)
 	if err != nil && s.Logger != nil && !isClosedConnError(err) {
-		s.Logger.Println(err)
+		//s.Logger.Println(err)
 	}
 }
 

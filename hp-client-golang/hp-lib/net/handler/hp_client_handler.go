@@ -57,7 +57,6 @@ func (h *HpClientHandler) ChannelActive(conn *net2.MuxSession) {
 
 func (h *HpClientHandler) ChannelRead(stream *net2.MuxStream, data interface{}) {
 	message := data.(*hpMessage.HpMessage)
-	log.Println(message.MetaData.Protocol)
 	switch message.Type {
 	case hpMessage.HpMessage_REGISTER_RESULT:
 		h.CallMsg(message.MetaData.Reason)
