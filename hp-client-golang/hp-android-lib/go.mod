@@ -29,6 +29,7 @@ require (
 	github.com/xtaci/smux v1.5.35 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
+	golang.org/x/mobile v0.0.0-20251021151156-188f512ec823 // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
