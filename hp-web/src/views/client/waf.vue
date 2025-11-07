@@ -41,7 +41,7 @@
               不限制
             </div>
             <div v-else>
-              {{record.rateLimit}}
+              {{record.inLimit}}
             </div>
           </template>
           <template v-if="column.key === 'outLimit'">
@@ -49,7 +49,7 @@
               不限制
             </div>
             <div v-else>
-              {{record.rateLimit}}
+              {{record.outLimit}}
             </div>
           </template>
 
