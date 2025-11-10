@@ -75,7 +75,10 @@ func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSessi
 		return
 	}
 	ClosePortServer(info.RemotePort)
-	protocolType := data.MetaData.Protocol
+	err2, protocolType, _, _ := util.ProtocolInfo(info.LocalAddress)
+	if err2 != nil {
+		return
+	}
 	connectType := bean.Protocol(protocolType)
 	newTunnelServer := tunnel.NewTunnelServer(connectType, info.RemotePort, conn, *info)
 	server := newTunnelServer.StartServer()
@@ -100,7 +103,7 @@ func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSessi
 		{"穿透结果", strconv.FormatBool(server)},
 	}
 
-	if server && ((connectType == bean.TCP) || (connectType == bean.UNIX)) {
+	if server && ((connectType == bean.TCP) || (connectType == bean.UNIX) || (connectType == bean.TCP_UDP)) {
 		arr2 = append(arr2, []string{"内网地址", info.LocalAddress})
 		arr2 = append(arr2, []string{"外网TCP", info.Ip + ":" + strconv.Itoa(info.RemotePort)})
 	}
@@ -119,7 +122,7 @@ func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSessi
 		arr2 = append(arr2, []string{"外网SOCKS5", info.Ip + ":" + strconv.Itoa(info.RemotePort)})
 	}
 
-	if server && (connectType == bean.UDP) {
+	if server && (connectType == bean.UDP || (connectType == bean.TCP_UDP)) {
 		arr2 = append(arr2, []string{"内网UDP", info.LocalAddress})
 		arr2 = append(arr2, []string{"外网UDP", info.Ip + ":" + strconv.Itoa(info.RemotePort)})
 	}

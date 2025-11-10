@@ -71,8 +71,9 @@ func (h *TcpHandler) ChannelActive(conn net.Conn) {
 		m := &message.HpMessage{
 			Type: message.HpMessage_CONNECTED,
 			MetaData: &message.HpMessage_MetaData{
-				Protocol:  h.protocol,
-				ChannelId: h.channelId,
+				Protocol:    h.protocol,
+				ChannelType: string(bean.TCPType),
+				ChannelId:   h.channelId,
 			},
 		}
 		stream.Write(protol.Encode(m))
@@ -101,8 +102,9 @@ func (h *TcpHandler) ChannelActive(conn net.Conn) {
 					m := &message.HpMessage{
 						Type: message.HpMessage_DATA,
 						MetaData: &message.HpMessage_MetaData{
-							Protocol:  h.protocol,
-							ChannelId: h.channelId,
+							Protocol:    h.protocol,
+							ChannelType: string(bean.TCPType),
+							ChannelId:   h.channelId,
 						},
 						Data: format,
 					}
@@ -124,8 +126,9 @@ func (h *TcpHandler) ChannelRead(conn net.Conn, data interface{}) error {
 	m := &message.HpMessage{
 		Type: message.HpMessage_DATA,
 		MetaData: &message.HpMessage_MetaData{
-			Protocol:  h.protocol,
-			ChannelId: h.channelId,
+			Protocol:    h.protocol,
+			ChannelType: string(bean.TCPType),
+			ChannelId:   h.channelId,
 		},
 		Data: data.([]byte),
 	}
@@ -141,8 +144,9 @@ func (h *TcpHandler) ChannelInactive(conn net.Conn) {
 	m := &message.HpMessage{
 		Type: message.HpMessage_DISCONNECTED,
 		MetaData: &message.HpMessage_MetaData{
-			Protocol:  h.protocol,
-			ChannelId: h.channelId,
+			Protocol:    h.protocol,
+			ChannelType: string(bean.TCPType),
+			ChannelId:   h.channelId,
 		},
 	}
 	if h.stream != nil {

@@ -2,7 +2,6 @@ package connect
 
 import (
 	"bufio"
-	"hp-lib/bean"
 	net2 "hp-lib/net"
 	"hp-lib/util"
 	"io"
@@ -29,7 +28,7 @@ func (connection *TcpConnection) ConnectLocal(address string, handler net2.Handl
 	}
 	protocol := "tcp"
 	address2 := host + ":" + strconv.Itoa(port)
-	if bean.Protocol(s) == bean.UNIX {
+	if s == "unix" {
 		protocol = "unix"
 		address2 = host
 	}

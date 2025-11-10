@@ -45,7 +45,7 @@ func (hpClient *HpClient) Connect(data *bean.LocalInnerWear) {
 		return
 	}
 
-	if bean.Protocol(s) == bean.SOCKS5 {
+	if s == "socks5" {
 		username, password, err := util.ParseSocks5Auth(data.LocalAddress)
 		if err != nil {
 			hpClient.CallMsg(err.Error())
@@ -58,7 +58,6 @@ func (hpClient *HpClient) Connect(data *bean.LocalInnerWear) {
 
 	handler := &handler2.HpClientHandler{
 		Key:          data.ConfigKey,
-		Protocol:     s,
 		LocalAddress: data.LocalAddress,
 		CallMsg:      hpClient.CallMsg,
 	}

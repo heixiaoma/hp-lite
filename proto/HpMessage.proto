@@ -19,15 +19,14 @@ message HpMessage{
     KEEPALIVE=5;
   }
 
-
-
   //元数据
   message MetaData{
     string key=1;
     string protocol=2;
-    string channelId=3;
-    bool success=4;
-    string reason=5;
+    string channelType=3;
+    string channelId=4;
+    bool success=5;
+    string reason=6;
   }
 
   //消息类型

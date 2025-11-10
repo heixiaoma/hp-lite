@@ -25,7 +25,7 @@ func (receiver *TunnelServer) UserInfo() bean.UserConfigInfo {
 
 func (receiver *TunnelServer) StartServer() bool {
 
-	if receiver.protocol == bean.TCP || receiver.protocol == bean.HTTP || receiver.protocol == bean.SOCKS5 || receiver.protocol == bean.HTTPS || receiver.protocol == bean.UNIX {
+	if receiver.protocol == bean.TCP || receiver.protocol == bean.HTTP || receiver.protocol == bean.SOCKS5 || receiver.protocol == bean.HTTPS || receiver.protocol == bean.UNIX || receiver.protocol == bean.TCP_UDP {
 		server := NewTcpServer(receiver.conn, receiver.userInfo)
 		receiver.tcpServer = server
 		if !server.StartServer(receiver.port) {
@@ -33,7 +33,7 @@ func (receiver *TunnelServer) StartServer() bool {
 		}
 
 	}
-	if receiver.protocol == bean.UDP {
+	if receiver.protocol == bean.UDP || receiver.protocol == bean.TCP_UDP {
 		server := NewUdpServer(receiver.conn, receiver.userInfo)
 		receiver.udpServer = server
 		startServer := server.StartServer(receiver.port)

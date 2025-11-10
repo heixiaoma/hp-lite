@@ -99,11 +99,11 @@ onMounted(async () => {
 const openAddress = (item) => {
   const address=[]
 
-  if (item.localAddress.startsWith("tcp")||item.localAddress.startsWith("unix")){
+  if (item.localAddress.startsWith("tcp")||item.localAddress.startsWith("unix")||item.localAddress.startsWith("tcp_udp")){
     address.push("tcp://"+item.serverIp+":"+item.remotePort)
   }
 
-  if (item.localAddress.startsWith("udp")){
+  if (item.localAddress.startsWith("udp")||item.localAddress.startsWith("tcp_udp")){
     address.push("udp://"+item.serverIp+":"+item.remotePort)
   }
   if (item.localAddress.startsWith("socks5")){

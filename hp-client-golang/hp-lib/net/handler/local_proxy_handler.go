@@ -25,7 +25,6 @@ func (l *LocalProxyHandler) ChannelRead(conn net.Conn, data interface{}) {
 		Type: hpMessage.HpMessage_DATA,
 		Data: bytes,
 		MetaData: &hpMessage.HpMessage_MetaData{
-			Protocol:  l.HpClientHandler.Protocol,
 			ChannelId: l.WToN.ChannelId,
 		},
 	}

@@ -64,12 +64,12 @@ func (h *UdpHandler) ChannelActive(udpConn *net.UDPConn) {
 		m := &message.HpMessage{
 			Type: message.HpMessage_CONNECTED,
 			MetaData: &message.HpMessage_MetaData{
-				Protocol:  h.protocol,
-				ChannelId: h.channelId,
+				Protocol:    h.protocol,
+				ChannelType: string(bean.UDPType),
+				ChannelId:   h.channelId,
 			},
 		}
 		stream.Write(protol.Encode(m))
-		log.Printf("通知内网连接")
 		h.stream = stream
 		go h.handlerStream(stream)
 	} else {
@@ -106,8 +106,9 @@ func (h *UdpHandler) ChannelRead(udpConn *net.UDPConn, data interface{}) {
 	m := &message.HpMessage{
 		Type: message.HpMessage_DATA,
 		MetaData: &message.HpMessage_MetaData{
-			Protocol:  h.protocol,
-			ChannelId: h.channelId,
+			Protocol:    h.protocol,
+			ChannelType: string(bean.UDPType),
+			ChannelId:   h.channelId,
 		},
 		Data: data.([]byte),
 	}
@@ -121,8 +122,9 @@ func (h *UdpHandler) ChannelInactive(udpConn *net.UDPConn) {
 	m := &message.HpMessage{
 		Type: message.HpMessage_DISCONNECTED,
 		MetaData: &message.HpMessage_MetaData{
-			Protocol:  h.protocol,
-			ChannelId: h.channelId,
+			ChannelType: string(bean.UDPType),
+			Protocol:    h.protocol,
+			ChannelId:   h.channelId,
 		},
 	}
 	if h.stream != nil {

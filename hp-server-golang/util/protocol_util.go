@@ -35,6 +35,9 @@ func ProtocolInfo(address string) (error, string, string, int) {
 	case strings.HasPrefix(address, "udp://"):
 		protocol = "udp"
 		target = strings.TrimPrefix(address, "udp://")
+	case strings.HasPrefix(address, "tcp_udp://"):
+		protocol = "tcp_udp"
+		target = strings.TrimPrefix(address, "tcp_udp://")
 	case strings.HasPrefix(address, "socks5://"):
 		protocol = "socks5"
 		// 移除协议头后，先剥离认证信息（仅保留服务器地址部分用于主解析）

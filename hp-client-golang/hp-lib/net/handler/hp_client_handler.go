@@ -20,7 +20,6 @@ var WNConnGroup = sync.Map{}
 type HpClientHandler struct {
 	Key          string
 	LocalAddress string
-	Protocol     string
 	CallMsg      func(message string)
 	Conn         *net2.MuxSession
 	Active       bool
@@ -38,7 +37,6 @@ func (h *HpClientHandler) ChannelActive(conn *net2.MuxSession) {
 			Key: h.Key,
 		},
 	}
-	message.MetaData.Protocol = h.Protocol
 	stream, err := conn.OpenStream()
 	if err != nil {
 		h.CallMsg("获取流错误")
@@ -93,8 +91,8 @@ func (h *HpClientHandler) connected(stream *net2.MuxStream, message *hpMessage.H
 	id := message.MetaData.ChannelId
 	n := &bean.WtoN{ChannelId: id, W: stream}
 	WNConnGroup.Store(id, n)
-	protocol := bean.Protocol(message.MetaData.Protocol)
-	if protocol == bean.TCP || protocol == bean.HTTP || protocol == bean.SOCKS5 || protocol == bean.HTTPS || protocol == bean.UNIX {
+	channelType := bean.ChannelType(message.MetaData.ChannelType)
+	if channelType == bean.TCPType {
 		//创建内网的新连接通道，两个实现绑定关系
 		local := connect.NewTcpConnection().ConnectLocal(h.LocalAddress, &LocalProxyHandler{
 			HpClientHandler: h,
@@ -106,7 +104,7 @@ func (h *HpClientHandler) connected(stream *net2.MuxStream, message *hpMessage.H
 		}
 	}
 
-	if protocol == bean.UDP {
+	if channelType == bean.UDPType {
 		conn := connect.NewUdpConnection().Connect(h.LocalAddress, &LocalProxyUdpHandler{
 			HpClientHandler: h,
 			WToN:            n,

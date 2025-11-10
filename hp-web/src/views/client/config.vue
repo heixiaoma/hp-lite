@@ -128,6 +128,8 @@
                       </template>
                     </a-alert>
                   </a-collapse-panel>
+
+
                   <a-collapse-panel key="4" header="SOCKS5协议">
                     <a-alert style="margin: 10px 5px" type="success" >
                       <template #message>
@@ -143,6 +145,17 @@
                         <a-tag color="pink">unix:///tmp/socks.sock</a-tag>
                         <a-tag color="red">unix:///tmp/****.sock</a-tag>
                         <p>unix协议是直接连接到文件上，请确保sock文件路径正确</p>
+                      </template>
+                    </a-alert>
+                  </a-collapse-panel>
+
+
+
+                  <a-collapse-panel key="6" header="TCP+UDP协议">
+                    <a-alert style="margin: 10px 5px" type="success" >
+                      <template #message>
+                        <a-tag color="pink">tcp_udp://127.0.0.1:8080</a-tag>
+                        <a-tag color="red">tcp_udp://192.168.10.1:8080</a-tag>
                       </template>
                     </a-alert>
                   </a-collapse-panel>
@@ -435,11 +448,11 @@ watch(() => formState.localAddress, (newVal) => {
 const openAddress = (item) => {
   const address=[]
 
-  if (item.localAddress.startsWith("tcp")||item.localAddress.startsWith("unix")){
+  if (item.localAddress.startsWith("tcp")||item.localAddress.startsWith("unix")||item.localAddress.startsWith("tcp_udp")){
     address.push("tcp://"+item.serverIp+":"+item.remotePort)
   }
 
-  if (item.localAddress.startsWith("udp")){
+  if (item.localAddress.startsWith("udp")||item.localAddress.startsWith("tcp_udp")){
     address.push("udp://"+item.serverIp+":"+item.remotePort)
   }
   if (item.localAddress.startsWith("socks5")){

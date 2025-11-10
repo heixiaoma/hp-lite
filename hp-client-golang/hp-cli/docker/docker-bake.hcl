@@ -15,7 +15,7 @@ target "manifest" {
   context = "."
   dockerfile = "Dockerfile"
   platforms = ["linux/arm64", "linux/amd64","linux/arm/v7","linux/386"]
-  tags = ["${registry}/${image_name}:6.0"]
+  tags = ["${registry}/${image_name}:latest"]
   type = "manifest"
   push = true
 }
