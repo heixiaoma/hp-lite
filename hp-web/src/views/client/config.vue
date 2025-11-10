@@ -88,11 +88,6 @@
 
           <a-form-item label="内网地址" name="localAddress" :rules="[{ required: true, message: '内网地址必填'}]">
 
-
-
-
-
-
             <a-collapse>
               <a-collapse-panel  header="配置说明">
                 <a-collapse accordion>
@@ -133,9 +128,9 @@
                   <a-collapse-panel key="4" header="SOCKS5协议">
                     <a-alert style="margin: 10px 5px" type="success" >
                       <template #message>
-                        <a-tag color="pink">socks5://127.0.0.1:1080</a-tag>
-                        <a-tag color="red">socks5://用户名:密码@127.0.0.1:1080</a-tag>
-                        <p>socks5协议会在内网创建创建一个socks5服务，然后暴露到公网 可以选择设置密码和不设置密码</p>
+                        <a-tag color="pink">socks5://127.0.0.1</a-tag>
+                        <a-tag color="red">socks5://用户名:密码@127.0.0.1</a-tag>
+                        <p>socks5协议、会把外网的数据转移到内网通过socks5方式代理、最后实现使用内网的IP进行上网、可以选择设置密码和不设置密码</p>
                       </template>
                     </a-alert>
                   </a-collapse-panel>
@@ -144,18 +139,16 @@
                       <template #message>
                         <a-tag color="pink">unix:///tmp/socks.sock</a-tag>
                         <a-tag color="red">unix:///tmp/****.sock</a-tag>
-                        <p>unix协议是直接连接到文件上，请确保sock文件路径正确</p>
+                        <p>unix协议是直接连接到文件上、请确保sock文件路径正确</p>
                       </template>
                     </a-alert>
                   </a-collapse-panel>
-
-
-
                   <a-collapse-panel key="6" header="TCP+UDP协议">
                     <a-alert style="margin: 10px 5px" type="success" >
                       <template #message>
                         <a-tag color="pink">tcp_udp://127.0.0.1:8080</a-tag>
                         <a-tag color="red">tcp_udp://192.168.10.1:8080</a-tag>
+                        <p>tcp+udp双协议同时监听</p>
                       </template>
                     </a-alert>
                   </a-collapse-panel>
