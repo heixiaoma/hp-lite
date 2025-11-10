@@ -93,15 +93,29 @@ func (h *HpClientHandler) connected(stream *net2.MuxStream, message *hpMessage.H
 	WNConnGroup.Store(id, n)
 	channelType := bean.ChannelType(message.MetaData.ChannelType)
 	if channelType == bean.TCPType {
-		//创建内网的新连接通道，两个实现绑定关系
-		local := connect.NewTcpConnection().ConnectLocal(h.LocalAddress, &LocalProxyHandler{
-			HpClientHandler: h,
-			WToN:            n,
-		}, h.CallMsg)
+		if message.MetaData.Protocol == "socks5" {
+			//创建内网的新连接通道，两个实现绑定关系
+			local := connect.NewSocks5Connection().ConnectSocks(h.LocalAddress, &LocalProxyHandler{
+				HpClientHandler: h,
+				WToN:            n,
+			}, h.CallMsg)
 
-		if local == nil {
-			h.Close(message.MetaData.ChannelId)
+			if local == nil {
+				h.Close(message.MetaData.ChannelId)
+			}
+		} else {
+
+			//创建内网的新连接通道，两个实现绑定关系
+			local := connect.NewTcpConnection().ConnectLocal(h.LocalAddress, &LocalProxyHandler{
+				HpClientHandler: h,
+				WToN:            n,
+			}, h.CallMsg)
+
+			if local == nil {
+				h.Close(message.MetaData.ChannelId)
+			}
 		}
+
 	}
 
 	if channelType == bean.UDPType {
@@ -206,7 +220,6 @@ func (h HpClientHandler) writeInData(conn net.Conn, data []byte) {
 			h.CallMsg("往内网写数据错误：" + err.Error())
 			return
 		}
-
 	}
 }
 

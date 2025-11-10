@@ -6,10 +6,7 @@ import (
 	"hp-lib/net"
 	"hp-lib/net/connect"
 	handler2 "hp-lib/net/handler"
-	net2 "hp-lib/net/socks5"
 	"hp-lib/protol"
-	"hp-lib/util"
-	"strconv"
 
 	"github.com/quic-go/quic-go"
 	"github.com/xtaci/smux"
@@ -24,8 +21,6 @@ type HpClient struct {
 
 	Data    *bean.LocalInnerWear
 	handler *handler2.HpClientHandler
-
-	socksServer *net2.SocksServer
 }
 
 func NewHpClient(callMsg func(message string)) *HpClient {
@@ -39,22 +34,6 @@ func (hpClient *HpClient) Connect(data *bean.LocalInnerWear) {
 		hpClient.conn.Close()
 	}
 	hpClient.Data = data
-	err, s, _, port := util.ProtocolInfo(data.LocalAddress)
-	if err != nil {
-		hpClient.CallMsg(err.Error())
-		return
-	}
-
-	if s == "socks5" {
-		username, password, err := util.ParseSocks5Auth(data.LocalAddress)
-		if err != nil {
-			hpClient.CallMsg(err.Error())
-		}
-		hpClient.socksServer = net2.NewSocks(strconv.Itoa(port), username, password, hpClient.CallMsg)
-		hpClient.socksServer.Start(func() {
-			hpClient.CallMsg("SOCKS5服务停止")
-		})
-	}
 
 	handler := &handler2.HpClientHandler{
 		Key:          data.ConfigKey,
@@ -127,10 +106,6 @@ func (hpClient *HpClient) GetStatus() bool {
 }
 
 func (hpClient *HpClient) Close() {
-	if hpClient.socksServer != nil {
-		hpClient.socksServer.Stop()
-		hpClient.socksServer = nil
-	}
 	if hpClient.conn != nil {
 		hpClient.conn.Close()
 		hpClient.handler.CloseAll()

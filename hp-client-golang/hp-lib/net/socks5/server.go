@@ -11,7 +11,6 @@ import (
 	"time"
 )
 
-// Server is accepting connections and handling the details of the SOCKS5 protocol
 type Server struct {
 	// Authentication is proxy authentication
 	Authentication Authentication
@@ -47,24 +46,6 @@ type Logger interface {
 	Println(v ...interface{})
 }
 
-// ListenAndServe is used to create a listener and serve on it
-func (s *Server) ListenAndServe(network, addr string) error {
-	l, err := s.proxyListen(s.context(), network, addr)
-	if err != nil {
-		return err
-	}
-	return s.Serve(l)
-}
-
-func (s *Server) proxyListen(ctx context.Context, network, address string) (net.Listener, error) {
-	proxyListen := s.ProxyListen
-	if proxyListen == nil {
-		var listenConfig net.ListenConfig
-		proxyListen = listenConfig.Listen
-	}
-	return proxyListen(ctx, network, address)
-}
-
 func (s *Server) proxyListenBind(ctx context.Context, network, address string) (net.Listener, error) {
 	proxyListenBind := s.ProxyListenBind
 	if proxyListenBind == nil {
@@ -72,17 +53,6 @@ func (s *Server) proxyListenBind(ctx context.Context, network, address string) (
 		proxyListenBind = listenConfig.Listen
 	}
 	return proxyListenBind(ctx, network, address)
-}
-
-// Serve is used to serve connections from a listener
-func (s *Server) Serve(l net.Listener) error {
-	for {
-		conn, err := l.Accept()
-		if err != nil {
-			return err
-		}
-		go s.ServeConn(conn)
-	}
 }
 
 // ServeConn is used to serve a single connection.
