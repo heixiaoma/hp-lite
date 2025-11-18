@@ -5,8 +5,6 @@ import (
 	"hp-lib/net/cmd"
 	"hp-lib/util"
 	"log"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"strconv"
 	"strings"
@@ -14,78 +12,45 @@ import (
 )
 
 func main() {
-	var deviceId string
-	var server string
 	var c string
 	//命令行参数模式
 	flag.StringVar(&c, "c", "", "连接码")
-	flag.StringVar(&deviceId, "deviceId", "", "设备ID")
-	flag.StringVar(&server, "server", "", "穿透服务")
-	flag.StringVar(&server, "debug", "0", "debug模式")
 	flag.Parse()
 	//默认命令行参数大于环境变量参数
-	e1 := os.Getenv("deviceId")
-	e2 := os.Getenv("server")
 	e3 := os.Getenv("c")
-	debug := os.Getenv("debug")
-
-	//优先使用连码解析
 	if c == "" && e3 != "" {
 		c = e3
 	}
 	if c != "" {
 		log.Printf("使用连接码模式连接")
 		base32 := util.DecodeFromLowerCaseBase32(strings.TrimSpace(c))
-		log.Printf(base32)
-		split := strings.Split(base32, ",")
-		server = split[0]
-		deviceId = split[1]
-	} else {
-		log.Printf("使用旧模式连接")
-	}
-
-	if deviceId == "" && e1 != "" {
-		deviceId = e1
-	}
-	if server == "" && e2 != "" {
-		server = e2
-	}
-	if server == "" {
-		log.Printf("启动失败-缺少CMD服务启动参数 -server=xxxx.com:16666")
-		for {
-			time.Sleep(time.Duration(10) * time.Second)
+		conn := strings.Split(base32, ",")
+		if len(conn) != 2 {
+			log.Printf("连接码错误")
+			return
 		}
-	}
-	if deviceId == "" {
-		log.Printf("启动失败-缺少设备ID启动参数 -deviceId=*****")
-		for {
-			time.Sleep(time.Duration(10) * time.Second)
+		server := conn[0]
+		deviceId := conn[1]
+		split := strings.Split(server, ":")
+		if len(split) != 2 {
+			log.Printf("连接码错误")
+			return
 		}
-	}
-
-	split := strings.Split(server, ":")
-	serverPort, _ := strconv.Atoi(split[1])
-	serverIp := split[0]
-
-	cmdClient := cmd.NewCmdClient(func(message string) {
-		log.Printf(message)
-	})
-	cmdClient.Connect(serverIp, serverPort, deviceId)
-	go func() {
-		for {
-			if !cmdClient.GetStatus() {
-				cmdClient.Connect(serverIp, serverPort, deviceId)
-				util.Print("中心服务器重连中")
-			}
-			time.Sleep(time.Duration(10) * time.Second)
-		}
-	}()
-	if debug == "1" {
+		serverPort, _ := strconv.Atoi(split[1])
+		serverIp := split[0]
+		cmdClient := cmd.NewCmdClient(func(message string) {
+			log.Printf(message)
+		})
+		cmdClient.Connect(serverIp, serverPort, deviceId)
 		go func() {
-			util.Print("debug模式启动:监听13690")
-			http.ListenAndServe(":13690", nil)
+			for {
+				if !cmdClient.GetStatus() {
+					cmdClient.Connect(serverIp, serverPort, deviceId)
+					util.Print("中心服务器重连中")
+				}
+				time.Sleep(time.Duration(10) * time.Second)
+			}
 		}()
+		select {}
 	}
-	select {}
-
 }
