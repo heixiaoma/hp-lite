@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	cmdMessage "hp-lib/message"
 	"io"
 
@@ -28,7 +27,6 @@ func CmdDecode(reader *bufio.Reader) (*cmdMessage.CmdMessage, error) {
 	message := &cmdMessage.CmdMessage{}
 	err = proto.Unmarshal(d, message)
 	if err != nil {
-		println(hex.Dump(d))
 		return nil, err
 	}
 	return message, nil

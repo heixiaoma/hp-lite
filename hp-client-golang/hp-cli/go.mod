@@ -4,7 +4,10 @@ go 1.24.0
 
 toolchain go1.24.5
 
-require hp-lib v1.0.0
+require (
+	github.com/kardianos/service v1.2.4
+	hp-lib v1.0.0
+)
 
 require (
 	github.com/clipperhouse/stringish v0.1.1 // indirect

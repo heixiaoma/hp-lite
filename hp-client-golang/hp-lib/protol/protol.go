@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	hpMessage "hp-lib/message"
 	"io"
 
@@ -28,7 +27,6 @@ func Decode(reader *bufio.Reader) (*hpMessage.HpMessage, error) {
 	message := &hpMessage.HpMessage{}
 	err = proto.Unmarshal(d, message)
 	if err != nil {
-		println(hex.Dump(d))
 		return nil, err
 	}
 	return message, nil

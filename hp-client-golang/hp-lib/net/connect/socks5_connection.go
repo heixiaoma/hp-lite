@@ -18,7 +18,9 @@ func NewSocks5Connection() *Socks5Connection {
 }
 
 func (connection *Socks5Connection) ConnectSocks(address string, handler net2.Handler, call func(mgs string)) net.Conn {
-	server := socks5.Server{}
+	server := socks5.Server{
+		Call: call,
+	}
 	username, password, _ := util.ParseSocks5Auth(address)
 	server.ListenBindReuseTimeout = time.Second / 2
 	if username != "" && password != "" {

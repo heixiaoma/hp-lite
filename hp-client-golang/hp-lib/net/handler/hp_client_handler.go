@@ -176,7 +176,7 @@ func (h *HpClientHandler) Close(channelId string) {
 func (h *HpClientHandler) WriteData(stream *net2.MuxStream, message *hpMessage.HpMessage) {
 	load, ok := WNConnGroup.Load(message.MetaData.ChannelId)
 	if !ok {
-		println("不存在通道" + message.MetaData.ChannelId)
+		h.CallMsg("不存在通道" + message.MetaData.ChannelId)
 		return
 	}
 

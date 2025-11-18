@@ -14,6 +14,7 @@ import (
 	"github.com/kardianos/service"
 )
 
+// win-> eventvwr.msc
 var logger service.Logger
 
 // 定义服务配置
@@ -190,12 +191,11 @@ func main() {
 
 	// ########## 服务配置（固化连接码只在 install 时生效）##########
 	serviceConfig := &service.Config{
-		Name:        "HpLiteService",   // 服务唯一标识（不要修改）
-		DisplayName: "HP Lite Service", // 服务显示名称
-		Description: "HP 命令行客户端服务，用于与中心服务器通信",
+		Name:        "hp-lite", // 服务唯一标识（不要修改）
+		DisplayName: "hp-lite", // 服务显示名称
+		Description: "hp-lite 命令行客户端服务，用于与中心服务器通信",
 		Arguments:   []string{"-c", c}, // 安装时固化 -c 参数，启动时自动传递
 	}
-
 	// 如果是安装操作，更新服务描述（包含连接码，便于排查）
 	if serviceAction == "install" {
 		serviceConfig.Description += "（连接码：" + c + "）"
@@ -229,7 +229,7 @@ func main() {
 			log.Fatalf("服务安装失败：%v", err)
 		}
 		log.Printf("✅ 服务安装成功！服务名称：%s", serviceConfig.Name)
-		log.Printf("📌 固化连接码：%s", c)
+		log.Printf("📌 连接码：%s", c)
 		log.Println("💡 后续操作：")
 		log.Println("   启动服务：", os.Args[0], "-action start")
 		log.Println("   停止服务：", os.Args[0], "-action stop")
