@@ -3,7 +3,6 @@ package ext
 import (
 	"encoding/base64"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -125,9 +124,9 @@ func (h *HttpFwdServer) Start(close func()) bool {
 		Handler: http.HandlerFunc(h.handler),
 	}
 	go func() {
-		log.Printf("Proxy server started on %s", addr)
+		log.Infof("Proxy server started on %s", addr)
 		if err := h.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Println(err)
+			log.Error(err)
 		}
 		defer close()
 	}()
@@ -137,6 +136,6 @@ func (h *HttpFwdServer) Start(close func()) bool {
 func (h *HttpFwdServer) Stop() {
 	if h.server != nil {
 		_ = h.server.Close()
-		log.Println("Proxy server stopped")
+		log.Info("Proxy server stopped")
 	}
 }

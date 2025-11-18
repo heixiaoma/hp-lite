@@ -5,7 +5,6 @@ import (
 	hpMessage "hp-server-lib/message"
 	net2 "hp-server-lib/net/base"
 	"hp-server-lib/service"
-	"log"
 )
 
 type HPClientHandler struct {
@@ -26,12 +25,12 @@ func (h *HPClientHandler) ChannelActive(stream *net2.MuxStream, conn *net2.MuxSe
 func (h *HPClientHandler) ChannelRead(stream *net2.MuxStream, data interface{}, conn *net2.MuxSession) error {
 	message := data.(*hpMessage.HpMessage)
 	if message == nil {
-		log.Printf("消息类型:解码异常|ip:%s", conn.RemoteAddr().String())
+		log.Infof("消息类型:解码异常|ip:%s", conn.RemoteAddr().String())
 		stream.Close()
 		return errors.New("HP消息类型:解码异常")
 	}
 	if message.Type != hpMessage.HpMessage_KEEPALIVE {
-		log.Printf("流ID:%d|HP消息类型:%s|IP:%s", stream.StreamID(), message.Type.String(), conn.RemoteAddr())
+		log.Infof("流ID:%d|HP消息类型:%s|IP:%s", stream.StreamID(), message.Type.String(), conn.RemoteAddr())
 	}
 	switch message.Type {
 	case hpMessage.HpMessage_REGISTER:

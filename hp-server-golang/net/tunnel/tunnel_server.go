@@ -3,7 +3,6 @@ package tunnel
 import (
 	"hp-server-lib/bean"
 	net2 "hp-server-lib/net/base"
-	"log"
 )
 
 type TunnelServer struct {
@@ -47,10 +46,10 @@ func (receiver *TunnelServer) StartServer() bool {
 func (receiver *TunnelServer) CLose() {
 	if receiver.tcpServer != nil {
 		receiver.tcpServer.CLose()
-		log.Printf("关闭TCP服务,端口：%d", receiver.port)
+		log.Infof("关闭TCP服务,端口：%d", receiver.port)
 	}
 	if receiver.udpServer != nil {
 		receiver.udpServer.CLose()
-		log.Printf("关闭UDP服务,端口：%d", receiver.port)
+		log.Infof("关闭UDP服务,端口：%d", receiver.port)
 	}
 }

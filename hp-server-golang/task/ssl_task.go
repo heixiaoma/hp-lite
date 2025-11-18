@@ -3,15 +3,18 @@ package task
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/gogf/gf/v2/os/gcron"
-	"golang.org/x/net/context"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
 	"hp-server-lib/service"
-	"log"
 	"strconv"
 	"time"
+
+	"github.com/gogf/gf/v2/os/gcron"
+	daemon "github.com/kardianos/service"
+	"golang.org/x/net/context"
 )
+
+var log daemon.Logger
 
 // StartSslTask 每天检查下证书过期问题，过期的就自动续签
 func StartSslTask() {
@@ -23,10 +26,10 @@ func updateCertificate(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			// 记录异常信息
-			log.Printf("捕获到异常: %v\n", r)
+			log.Errorf("捕获到异常: %v\n", r)
 		}
 	}()
-	log.Println("开始更新证书:", time.Now().Format("2006-01-02 15:04:05"))
+	log.Info("开始更新证书:", time.Now().Format("2006-01-02 15:04:05"))
 	domainService := service.DomainService{}
 	pageSiz := 10
 	page := 1
@@ -52,14 +55,14 @@ func updateCertificate(ctx context.Context) {
 					if now.After(twoDaysBefore) {
 						ssl := domainService.GenSsl(true, *data.Id)
 						if ssl {
-							log.Println("证书检查->" + *data.Domain + ",生成成功")
+							log.Info("证书检查->" + *data.Domain + ",生成成功")
 						} else {
-							log.Println("证书检查->" + *data.Domain + ",生成失败")
+							log.Info("证书检查->" + *data.Domain + ",生成失败")
 						}
 					} else {
 						duration := cert.NotAfter.Sub(now)
 						daysRemaining := int(duration.Hours() / 24)
-						log.Println("证书检查->" + *data.Domain + ",证书还有" + strconv.Itoa(daysRemaining) + "天过期")
+						log.Info("证书检查->" + *data.Domain + ",证书还有" + strconv.Itoa(daysRemaining) + "天过期")
 					}
 				}
 			}

@@ -6,7 +6,6 @@ import (
 	"hp-server-lib/net/base"
 	"hp-server-lib/protol"
 	"hp-server-lib/util"
-	"log"
 	"net"
 	"time"
 )
@@ -73,10 +72,10 @@ func (h *UdpHandler) ChannelActive(udpConn *net.UDPConn) {
 		h.stream = stream
 		go h.handlerStream(stream)
 	} else {
-		log.Println("UDP服务激活创建流失败:" + err.Error())
+		log.Error("UDP服务激活创建流失败:" + err.Error())
 		err := h.conn.Close()
 		if err != nil {
-			log.Println("UDP服务关闭失败:" + err.Error())
+			log.Error("UDP服务关闭失败:" + err.Error())
 		}
 	}
 	go func() {

@@ -2,11 +2,13 @@ package ext
 
 import (
 	"hp-server-lib/ext/socks5"
-	"log"
 	"net"
-	"os"
 	"time"
+
+	daemon "github.com/kardianos/service"
 )
+
+var log daemon.Logger
 
 type SocksServer struct {
 	socks5.Server
@@ -23,7 +25,6 @@ func NewSocks(port string, username, password string) *SocksServer {
 		username: username,
 		password: password,
 	}
-	s.Logger = log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 	s.ListenBindReuseTimeout = time.Second / 2
 	if s.username != "" && s.password != "" {
 		s.Authentication = socks5.UserAuth(s.username, s.password)
@@ -35,7 +36,7 @@ func NewSocks(port string, username, password string) *SocksServer {
 func (s *SocksServer) Start(close func()) bool {
 	listener, err := net.Listen("tcp", ":"+s.port)
 	if err != nil {
-		log.Printf("SOCKS5 服务错误: %v", err)
+		log.Errorf("SOCKS5 服务错误: %v", err)
 		return false
 	}
 	s.listener = listener
@@ -46,7 +47,7 @@ func (s *SocksServer) Start(close func()) bool {
 				// 正常关闭
 				return
 			}
-			log.Printf("SOCKS5 服务错误: %v", err)
+			log.Errorf("SOCKS5 服务错误: %v", err)
 		}
 	}()
 	return true
@@ -56,6 +57,6 @@ func (s *SocksServer) Start(close func()) bool {
 func (s *SocksServer) Stop() {
 	if s.listener != nil {
 		_ = s.listener.Close()
-		log.Printf("SOCKS5 代理已停止:%s", s.port)
+		log.Infof("SOCKS5 代理已停止:%s", s.port)
 	}
 }

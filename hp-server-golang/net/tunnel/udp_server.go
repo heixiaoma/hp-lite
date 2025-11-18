@@ -4,7 +4,6 @@ import (
 	"hp-server-lib/bean"
 	net2 "hp-server-lib/net/base"
 	"hp-server-lib/util"
-	"log"
 	"net"
 	"strconv"
 	"sync"
@@ -31,7 +30,7 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 	udpAddr, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(port))
 	conn, err := net.ListenUDP("udp", udpAddr)
 	if err != nil {
-		log.Printf("不能创建UDP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error())
+		log.Error("不能创建UDP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error())
 		return false
 	}
 	udpServer.udpConn = conn
@@ -76,7 +75,7 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 			if !ok {
 				err, handler := NewUdpHandler(udpServer, conn, udpServer.conn, addr, udpServer.userInfo)
 				if err != nil {
-					log.Println(err.Error())
+					log.Error(err.Error())
 					break
 				}
 				handler.ChannelActive(conn)

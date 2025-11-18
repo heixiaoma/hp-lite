@@ -9,6 +9,7 @@ require (
 	github.com/go-acme/lego/v4 v4.28.0
 	github.com/gogf/gf/v2 v2.9.1
 	github.com/google/uuid v1.6.0
+	github.com/kardianos/service v1.2.4
 	github.com/olekukonko/tablewriter v1.1.0
 	github.com/pires/go-proxyproto v0.8.1
 	github.com/quic-go/quic-go v0.55.0

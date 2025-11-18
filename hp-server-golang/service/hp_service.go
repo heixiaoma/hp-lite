@@ -1,6 +1,7 @@
 package service
 
 import (
+	daemon "github.com/kardianos/service"
 	"hp-server-lib/bean"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
@@ -9,11 +10,12 @@ import (
 	"hp-server-lib/net/tunnel"
 	"hp-server-lib/protol"
 	"hp-server-lib/util"
-	"log"
 	"strconv"
 	"sync"
 	"time"
 )
+
+var log daemon.Logger
 
 // 端口->隧道服务
 var HP_CACHE_TUN = sync.Map{}
@@ -85,7 +87,7 @@ func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSessi
 	if !server {
 		newTunnelServer.CLose()
 	} else {
-		log.Printf("隧道启动成功")
+		log.Info("隧道启动成功")
 		HP_CACHE_TUN.Store(info.RemotePort, newTunnelServer)
 	}
 	if info.Domain != nil {
@@ -145,7 +147,7 @@ func (receiver *HpService) Register(data *message.HpMessage, conn *net2.MuxSessi
 }
 
 func ClosePortServer(port int) {
-	log.Println("关闭外网端口服务：" + strconv.Itoa(port))
+	log.Info("关闭外网端口服务：" + strconv.Itoa(port))
 	tunnelServer, ok := HP_CACHE_TUN.Load(port)
 	if ok {
 		s := tunnelServer.(*tunnel.TunnelServer)

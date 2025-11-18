@@ -1,7 +1,6 @@
 package http
 
 import (
-	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -25,7 +24,7 @@ func StartHttpServer() {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		Handler(w, r)
 	})
-	log.Println("HTTP代理服务启动")
+	log.Info("HTTP代理服务启动")
 	err := http.ListenAndServe(":80", mux)
 	if err != nil {
 		return

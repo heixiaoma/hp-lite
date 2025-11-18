@@ -7,12 +7,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/quic-go/quic-go"
 	net2 "hp-server-lib/net/base"
 	"hp-server-lib/protol"
-	"log"
 	"math/big"
 	"strconv"
+
+	"github.com/quic-go/quic-go"
 )
 
 type HpQuicServer struct {
@@ -63,7 +63,7 @@ func (quicServer *HpQuicServer) StartServer(port int) {
 	}
 	listener, err := quic.ListenAddr(":"+strconv.Itoa(port), quicServer.generateTLSConfig(), q)
 	if err != nil {
-		log.Println("不能创建UDP隧道服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
+		log.Error("不能创建UDP隧道服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
 	}
 	quicServer.listener = listener
 	//设置读
@@ -71,14 +71,14 @@ func (quicServer *HpQuicServer) StartServer(port int) {
 		for {
 			conn, err := listener.Accept(context.Background())
 			if err != nil {
-				log.Println("QUIC获取连接错误：" + err.Error())
+				log.Error("QUIC获取连接错误：" + err.Error())
 			}
 			go func() {
 				for {
 					stream, err := conn.AcceptStream(context.Background())
 					if err != nil {
 						go quicServer.ChannelInactive(net2.NewQuicMuxStream(stream), net2.NewQuicMuxSession(conn))
-						log.Printf("接收流错误：全部关闭:%s", err.Error())
+						log.Error("接收流错误：全部关闭:", err.Error())
 						return
 					}
 					// 为每个连接启动一个新的处理 goroutine
@@ -87,7 +87,7 @@ func (quicServer *HpQuicServer) StartServer(port int) {
 			}()
 		}
 	}()
-	log.Printf("数据传输服务启动成功UDP:%d", port)
+	log.Info("数据传输服务启动成功UDP:", port)
 }
 
 func (quicServer *HpQuicServer) handler(stream *net2.MuxStream, conn *net2.MuxSession) {

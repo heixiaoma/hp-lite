@@ -2,7 +2,6 @@ package server
 
 import (
 	"bufio"
-	"log"
 	"net"
 	"strconv"
 )
@@ -21,7 +20,7 @@ func NewCmdServer() *CmdServer {
 func (tcpServer *CmdServer) StartServer(port int) {
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
-		log.Printf("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
+		log.Error("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
 		return
 	}
 	tcpServer.listener = listener
@@ -35,11 +34,11 @@ func (tcpServer *CmdServer) StartServer(port int) {
 			if err == nil {
 				tcpServer.handler(conn)
 			} else {
-				log.Println("TCP错误连接222:", err)
+				log.Error("TCP错误连接:", err)
 			}
 		}
 	}()
-	log.Printf("指令传输服务启动成功TCP:%d", port)
+	log.Infof("指令传输服务启动成功TCP:%d", port)
 
 }
 
@@ -62,7 +61,7 @@ func (tcpServer *CmdServer) handler(conn net.Conn) {
 
 			decode, e := handler.Decode(reader)
 			if e != nil {
-				log.Println("CMD解码错误:" + e.Error())
+				log.Error("CMD解码错误:" + e.Error())
 				handler.ChannelInactive(conn)
 				return
 			}

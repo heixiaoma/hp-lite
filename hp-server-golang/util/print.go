@@ -2,15 +2,17 @@ package util
 
 import (
 	"bytes"
-	"log"
 
+	daemon "github.com/kardianos/service"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
 )
 
+var log daemon.Logger
+
 func Print(msg string) {
-	log.Println(msg)
+	log.Info(msg)
 }
 
 func PrintStatus(data [][]string) string {

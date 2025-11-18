@@ -4,11 +4,14 @@ import (
 	"embed"
 	"fmt"
 	"hp-server-lib/web/controller"
-	"log"
 	"net/http"
 	"runtime/debug"
 	"strconv"
+
+	daemon "github.com/kardianos/service"
 )
+
+var log daemon.Logger
 
 //go:embed static
 var content embed.FS
@@ -27,7 +30,7 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				// 捕获异常并记录日志
-				log.Printf("服务器错误: %v\n栈情况: %s", err, string(debug.Stack()))
+				log.Errorf("服务器错误: %v\n栈情况: %s", err, string(debug.Stack()))
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				fmt.Fprintf(w, `{"error": "服务器错误", "message": "%v"}`, err)
@@ -94,5 +97,5 @@ func StartWebServer(port int) {
 	mux.HandleFunc("/client/giscus/token", giscusController.Token)
 
 	muxWithRecovery := recoveryMiddleware(mux)
-	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), muxWithRecovery))
+	log.Error(http.ListenAndServe(":"+strconv.Itoa(port), muxWithRecovery))
 }

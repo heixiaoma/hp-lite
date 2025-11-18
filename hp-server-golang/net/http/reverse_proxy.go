@@ -3,13 +3,13 @@ package http
 import (
 	"crypto/tls"
 	"fmt"
+	daemon "github.com/kardianos/service"
 	"hp-server-lib/bean"
 	"hp-server-lib/config"
 	"hp-server-lib/entity"
 	"hp-server-lib/net/base"
 	"hp-server-lib/service"
 	"hp-server-lib/util"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -17,6 +17,8 @@ import (
 	"strings"
 	"time"
 )
+
+var log daemon.Logger
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	host := r.Host
@@ -29,7 +31,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		proxy := httputil.NewSingleHostReverseProxy(target)
-		log.Printf("代理地址: %s %s", target, r.URL.Path)
+		log.Infof("代理地址: %s %s", target, r.URL.Path)
 		proxy.ServeHTTP(w, r)
 		return
 	}
@@ -57,7 +59,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			reverse.ReverseProxy = proxy
 		}
 
-		log.Printf("来源: %s 访问地址: http://%s%s", clientIP, host, r.URL.Path)
+		log.Infof("来源: %s 访问地址: http://%s%s", clientIP, host, r.URL.Path)
 		reverse.ReverseProxy.ServeHTTP(w, r)
 		return
 	}
@@ -120,7 +122,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		}
 		info.ReverseProxy = proxy
 	}
-	log.Printf("来源: %s 访问地址: http://%s%s", clientIP, host, r.URL.Path)
+	log.Infof("来源: %s 访问地址: http://%s%s", clientIP, host, r.URL.Path)
 	info.ReverseProxy.ServeHTTP(w, r)
 }
 

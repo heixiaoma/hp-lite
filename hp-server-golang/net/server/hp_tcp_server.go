@@ -1,12 +1,12 @@
 package server
 
 import (
-	"github.com/xtaci/smux"
 	net2 "hp-server-lib/net/base"
 	"hp-server-lib/protol"
-	"log"
 	"net"
 	"strconv"
+
+	"github.com/xtaci/smux"
 )
 
 type HpTcpServer struct {
@@ -25,7 +25,7 @@ func NewHPTcpServer(handler net2.HpHandler) *HpTcpServer {
 func (tcpServer *HpTcpServer) StartServer(port int) {
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
-		log.Println("不能创建TCP隧道服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
+		log.Error("不能创建TCP隧道服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error() + " 提示：" + err.Error())
 	}
 	tcpServer.listener = listener
 
@@ -34,7 +34,7 @@ func (tcpServer *HpTcpServer) StartServer(port int) {
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
-				log.Println("TCP获取连接错误：" + err.Error())
+				log.Error("TCP获取连接错误：" + err.Error())
 			}
 			session, _ := smux.Server(conn, nil)
 			go func() {
@@ -42,7 +42,7 @@ func (tcpServer *HpTcpServer) StartServer(port int) {
 					stream, err := session.AcceptStream()
 					if err != nil {
 						go tcpServer.ChannelInactive(net2.NewTcpMuxStream(stream), net2.NewTcpMuxSession(session))
-						log.Printf("接收流错误：全部关闭:%s", err.Error())
+						log.Errorf("接收流错误：全部关闭:%s", err.Error())
 						return
 					}
 					// 为每个连接启动一个新的处理 goroutine
@@ -51,7 +51,7 @@ func (tcpServer *HpTcpServer) StartServer(port int) {
 			}()
 		}
 	}()
-	log.Printf("数据传输服务启动成功TCP:%d", port)
+	log.Infof("数据传输服务启动成功TCP:%d", port)
 }
 
 func (quicServer *HpTcpServer) handler(stream *net2.MuxStream, session *net2.MuxSession) {

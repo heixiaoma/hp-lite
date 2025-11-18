@@ -9,12 +9,14 @@ import (
 	"hp-server-lib/protol"
 	"hp-server-lib/util"
 	"io"
-	"log"
 	"net"
 	"strings"
 
+	daemon "github.com/kardianos/service"
 	"github.com/pires/go-proxyproto"
 )
+
+var log daemon.Logger
 
 type TcpHandler struct {
 	tcpConn   net.Conn
@@ -114,10 +116,10 @@ func (h *TcpHandler) ChannelActive(conn net.Conn) {
 		}
 		go h.handlerStream(stream)
 	} else {
-		log.Println("TCP服务激活创建流失败:" + err.Error())
+		log.Error("TCP服务激活创建流失败:" + err.Error())
 		err := h.conn.Close()
 		if err != nil {
-			log.Println("TCP服务关闭失败:" + err.Error())
+			log.Error("TCP服务关闭失败:" + err.Error())
 		}
 	}
 }

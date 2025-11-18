@@ -5,7 +5,6 @@ import (
 	"hp-server-lib/bean"
 	net2 "hp-server-lib/net/base"
 	"hp-server-lib/util"
-	"log"
 	"net"
 	"strconv"
 )
@@ -35,7 +34,7 @@ func NewTcpServer(conn *net2.MuxSession, userInfo bean.UserConfigInfo) *TcpServe
 func (tcpServer *TcpServer) StartServer(port int) bool {
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
-		log.Printf("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error())
+		log.Errorf("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error())
 		return false
 	}
 	tcpServer.listener = listener
@@ -94,7 +93,7 @@ func (tcpServer *TcpServer) handler(conn net.Conn) {
 		}
 		err, handler := NewTcpHandler(conn, tcpServer.conn, tcpServer.userInfo)
 		if err != nil {
-			log.Println(err.Error())
+			log.Error(err.Error())
 			return
 		}
 		handler.ChannelActive(conn)
@@ -112,14 +111,14 @@ func (tcpServer *TcpServer) handler(conn net.Conn) {
 
 			decode, e := handler.Decode(reader)
 			if e != nil {
-				log.Println("TCP解码错误:" + e.Error())
+				log.Error("TCP解码错误:" + e.Error())
 				handler.ChannelInactive(conn)
 				return
 			}
 			if decode != nil {
 				err := handler.ChannelRead(conn, decode)
 				if err != nil {
-					log.Println("TCP发送内网端错误:" + err.Error())
+					log.Error("TCP发送内网端错误:" + err.Error())
 					return
 				}
 			}

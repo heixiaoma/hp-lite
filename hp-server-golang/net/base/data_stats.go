@@ -3,9 +3,10 @@ package base
 import (
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
-	"log"
 	"sync"
 	"time"
+
+	"github.com/go-acme/lego/v4/log"
 )
 
 // 定义存储发送、接收、pv、uv的数据结构
@@ -85,7 +86,7 @@ func saveStats() {
 			Time:       milli,
 			CreateTime: time.Now(),
 		})
-		log.Printf("ConfigID: %d, Sent: %d bytes, Received: %d bytes, PV: %d, UV: %d\n",
+		log.Infof("ConfigID: %d, Sent: %d bytes, Received: %d bytes, PV: %d, UV: %d\n",
 			configID, stats.sent, stats.received, stats.pv, len(stats.uv))
 		stats.mu.Unlock()
 		return true

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"hp-server-lib/entity"
 	"hp-server-lib/service"
-	"log"
 	"net/http"
 )
 
@@ -53,10 +52,10 @@ func StartHttpsServer() {
 		TLSConfig: tlsConfig,
 	}
 	// 启动 HTTPS 服务
-	log.Println("HTTPS代理服务启动")
+	log.Info("HTTPS代理服务启动")
 	err := server.ListenAndServeTLS("", "") // 证书由 GetCertificate 动态选择
 	if err != nil {
-		log.Fatalf("HTTPS代理服务启动失败: %v", err)
+		log.Errorf("HTTPS代理服务启动失败: %v", err)
 	}
 
 }

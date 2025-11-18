@@ -8,7 +8,6 @@ import (
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
 	"hp-server-lib/net/acme"
-	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -71,7 +70,7 @@ func (receiver *DomainService) DomainList(userId int, page int, pageSize int, ke
 			// 解析证书
 			cert, err := x509.ParseCertificate(block.Bytes)
 			if err != nil {
-				log.Printf(err.Error())
+				log.Error(err.Error())
 				data.Tips = "证书格式错误."
 				continue
 			} else {

@@ -9,7 +9,11 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	daemon "github.com/kardianos/service"
 )
+
+var log daemon.Logger
 
 // Server is accepting connections and handling the details of the SOCKS5 protocol
 type Server struct {
@@ -35,16 +39,10 @@ type Server struct {
 	ListenBindAcceptTimeout time.Duration
 	// reserveListenBind is a pool for reusing bind listeners across requests.
 	reserveListenBind reserveListen
-	// Logger error log
-	Logger Logger
 	// Context is default context
 	Context context.Context
 	// BytesPool getting and returning temporary bytes for use by io.CopyBuffer
 	BytesPool BytesPool
-}
-
-type Logger interface {
-	Println(v ...interface{})
 }
 
 // ListenAndServe is used to create a listener and serve on it
@@ -88,10 +86,7 @@ func (s *Server) Serve(l net.Listener) error {
 // ServeConn is used to serve a single connection.
 func (s *Server) ServeConn(conn net.Conn) {
 	defer conn.Close()
-	err := s.serveConn(conn)
-	if err != nil && s.Logger != nil && !isClosedConnError(err) {
-		//s.Logger.Println(err)
-	}
+	_ = s.serveConn(conn)
 }
 
 func (s *Server) serveConn(conn net.Conn) error {
@@ -255,7 +250,7 @@ func (s *Server) handleBind(req *request) error {
 	if s.ListenBindReuseTimeout > 0 {
 		listener, err = s.reserveListenBind.getOrNew(addr, func() (net.Listener, error) {
 			return s.proxyListenBind(ctx, "tcp", addr)
-		}, s.ListenBindReuseTimeout, s.ListenBindAcceptTimeout, s.Logger)
+		}, s.ListenBindReuseTimeout, s.ListenBindAcceptTimeout)
 	} else {
 		listener, err = s.proxyListenBind(ctx, "tcp", addr)
 	}
@@ -376,9 +371,7 @@ func (s *Server) handleAssociate(req *request) error {
 			reader := bytes.NewBuffer(buf[3:n])
 			targetAddr, err := readAddr(reader)
 			if err != nil {
-				if s.Logger != nil {
-					s.Logger.Println(err)
-				}
+				log.Error(err.Error())
 				continue
 			}
 			target := &net.UDPAddr{
@@ -394,18 +387,14 @@ func (s *Server) handleAssociate(req *request) error {
 			headWriter.Write([]byte{0, 0, 0})
 			err = writeAddrWithStr(headWriter, gotAddr)
 			if err != nil {
-				if s.Logger != nil {
-					s.Logger.Println(err)
-				}
+				log.Error(err.Error())
 				continue
 			}
 			prefixLen := headWriter.Len()
 
 			// Check if data length plus header exceeds maximum UDP packet limit
 			if prefixLen+n > maxUdpPacket {
-				if s.Logger != nil {
-					s.Logger.Println(fmt.Errorf("dropping packet: data length (%d) + header length (%d) = %d exceeds max UDP packet size %d", n, prefixLen, prefixLen+n, maxUdpPacket))
-				}
+				log.Info(fmt.Errorf("dropping packet: data length (%d) + header length (%d) = %d exceeds max UDP packet size %d", n, prefixLen, prefixLen+n, maxUdpPacket))
 				continue
 			}
 
@@ -494,7 +483,7 @@ type holdListener struct {
 	closed atomic.Bool
 }
 
-func (r *reserveListen) getOrNew(key string, newFunc func() (net.Listener, error), reuse, accept time.Duration, logger Logger) (net.Listener, error) {
+func (r *reserveListen) getOrNew(key string, newFunc func() (net.Listener, error), reuse, accept time.Duration) (net.Listener, error) {
 	r.mut.Lock()
 	defer r.mut.Unlock()
 
@@ -521,12 +510,11 @@ func (r *reserveListen) getOrNew(key string, newFunc func() (net.Listener, error
 		_, ok := listener.(setDeadline)
 		if !ok {
 			accept = 0
-			if logger != nil {
-				logger.Println("reserve bind listener does not support SetDeadline, disabling accept timeout")
-			}
+			log.Error("reserve bind listener does not support SetDeadline, disabling accept timeout")
+
 		}
 	}
-	go reserve.run(reuse, accept, logger)
+	go reserve.run(reuse, accept)
 	return &holdListener{r: reserve}, nil
 }
 
@@ -534,7 +522,7 @@ type setDeadline interface {
 	SetDeadline(t time.Time) error
 }
 
-func (r *reserved) run(reuse, accept time.Duration, logger Logger) {
+func (r *reserved) run(reuse, accept time.Duration) {
 	defer func() {
 		r.base.Close()
 		close(r.conns)
@@ -546,9 +534,8 @@ func (r *reserved) run(reuse, accept time.Duration, logger Logger) {
 		}
 		conn, err := r.base.Accept()
 		if err != nil {
-			if logger != nil {
-				logger.Println("reserve bind listen accept error:", err)
-			}
+			log.Error("reserve bind listen accept error:" + err.Error())
+
 			return
 		}
 
@@ -556,9 +543,7 @@ func (r *reserved) run(reuse, accept time.Duration, logger Logger) {
 		case r.conns <- conn:
 		case <-time.After(reuse):
 			conn.Close()
-			if logger != nil {
-				logger.Println("reserve bind listen reuse timeout")
-			}
+			log.Error("reserve bind listen reuse timeout")
 			return
 		}
 	}

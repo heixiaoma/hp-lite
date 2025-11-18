@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"log"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -85,7 +84,7 @@ func DecodeToken(token string) (int, string, int64, error) {
 	defer func() {
 		if err := recover(); err != nil {
 			// 捕获异常并记录日志
-			log.Printf("解析Token错误: %v\n栈情况: %s", err, string(debug.Stack()))
+			log.Errorf("解析Token错误: %v\n栈情况: %s", err, string(debug.Stack()))
 		}
 	}()
 
