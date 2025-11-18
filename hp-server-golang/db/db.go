@@ -2,13 +2,14 @@ package db
 
 import (
 	"fmt"
+	"hp-server-lib/entity"
+	"hp-server-lib/log"
+	"os"
+	"path/filepath"
+
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"hp-server-lib/entity"
-	"log"
-	"os"
-	"path/filepath"
 )
 
 var DB *gorm.DB
@@ -25,7 +26,7 @@ func init() {
 	// 获取底层的 sql.DB 实例
 	sqlDB, err := DB.DB()
 	if err != nil {
-		log.Fatal("failed to get sql.DB instance", err)
+		log.Errorf("failed to get sql.DB instance", err)
 	}
 
 	// 设置连接池参数

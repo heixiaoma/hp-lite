@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"hp-server-lib/log"
 	"io"
 	"runtime/debug"
 	"strconv"

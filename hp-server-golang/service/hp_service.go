@@ -1,10 +1,10 @@
 package service
 
 import (
-	daemon "github.com/kardianos/service"
 	"hp-server-lib/bean"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
+	"hp-server-lib/log"
 	"hp-server-lib/message"
 	net2 "hp-server-lib/net/base"
 	"hp-server-lib/net/tunnel"
@@ -14,8 +14,6 @@ import (
 	"sync"
 	"time"
 )
-
-var log daemon.Logger
 
 // 端口->隧道服务
 var HP_CACHE_TUN = sync.Map{}

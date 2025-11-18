@@ -2,13 +2,10 @@ package ext
 
 import (
 	"hp-server-lib/ext/socks5"
+	"hp-server-lib/log"
 	"net"
 	"time"
-
-	daemon "github.com/kardianos/service"
 )
-
-var log daemon.Logger
 
 type SocksServer struct {
 	socks5.Server

@@ -3,15 +3,12 @@ package web
 import (
 	"embed"
 	"fmt"
+	"hp-server-lib/log"
 	"hp-server-lib/web/controller"
 	"net/http"
 	"runtime/debug"
 	"strconv"
-
-	daemon "github.com/kardianos/service"
 )
-
-var log daemon.Logger
 
 //go:embed static
 var content embed.FS

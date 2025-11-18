@@ -3,10 +3,10 @@ package http
 import (
 	"crypto/tls"
 	"fmt"
-	daemon "github.com/kardianos/service"
 	"hp-server-lib/bean"
 	"hp-server-lib/config"
 	"hp-server-lib/entity"
+	"hp-server-lib/log"
 	"hp-server-lib/net/base"
 	"hp-server-lib/service"
 	"hp-server-lib/util"
@@ -17,8 +17,6 @@ import (
 	"strings"
 	"time"
 )
-
-var log daemon.Logger
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	host := r.Host

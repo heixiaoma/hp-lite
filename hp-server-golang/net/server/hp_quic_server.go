@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"hp-server-lib/log"
 	net2 "hp-server-lib/net/base"
 	"hp-server-lib/protol"
 	"math/big"
@@ -87,7 +88,7 @@ func (quicServer *HpQuicServer) StartServer(port int) {
 			}()
 		}
 	}()
-	log.Info("数据传输服务启动成功UDP:", port)
+	log.Infof("数据传输服务启动成功UDP:%d", port)
 }
 
 func (quicServer *HpQuicServer) handler(stream *net2.MuxStream, conn *net2.MuxSession) {

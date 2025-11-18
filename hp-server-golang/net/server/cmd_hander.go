@@ -3,15 +3,13 @@ package server
 import (
 	"bufio"
 	"errors"
-	daemon "github.com/kardianos/service"
+	"hp-server-lib/log"
 	cmdMessage "hp-server-lib/message"
 	"hp-server-lib/protol"
 	"hp-server-lib/service"
 	"net"
 	"runtime/debug"
 )
-
-var log daemon.Logger
 
 type CmdClientHandler struct {
 	*service.CmdService

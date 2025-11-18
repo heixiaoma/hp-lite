@@ -3,7 +3,9 @@ package tunnel
 import (
 	"bufio"
 	"errors"
+	"github.com/pires/go-proxyproto"
 	"hp-server-lib/bean"
+	"hp-server-lib/log"
 	"hp-server-lib/message"
 	"hp-server-lib/net/base"
 	"hp-server-lib/protol"
@@ -11,12 +13,7 @@ import (
 	"io"
 	"net"
 	"strings"
-
-	daemon "github.com/kardianos/service"
-	"github.com/pires/go-proxyproto"
 )
-
-var log daemon.Logger
 
 type TcpHandler struct {
 	tcpConn   net.Conn

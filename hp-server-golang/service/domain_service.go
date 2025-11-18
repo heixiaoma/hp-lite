@@ -7,6 +7,7 @@ import (
 	"hp-server-lib/bean"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
+	"hp-server-lib/log"
 	"hp-server-lib/net/acme"
 	"strconv"
 	"strings"

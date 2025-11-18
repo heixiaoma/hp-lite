@@ -2,14 +2,12 @@ package util
 
 import (
 	"bytes"
+	"hp-server-lib/log"
 
-	daemon "github.com/kardianos/service"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
 )
-
-var log daemon.Logger
 
 func Print(msg string) {
 	log.Info(msg)

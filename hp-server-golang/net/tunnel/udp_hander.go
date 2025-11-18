@@ -2,6 +2,7 @@ package tunnel
 
 import (
 	"hp-server-lib/bean"
+	"hp-server-lib/log"
 	"hp-server-lib/message"
 	"hp-server-lib/net/base"
 	"hp-server-lib/protol"

@@ -3,6 +3,7 @@ package tunnel
 import (
 	"bufio"
 	"hp-server-lib/bean"
+	"hp-server-lib/log"
 	net2 "hp-server-lib/net/base"
 	"hp-server-lib/util"
 	"net"

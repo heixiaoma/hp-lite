@@ -4,16 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"hp-server-lib/log"
 	"io"
 	"net"
 	"sync"
 	"sync/atomic"
 	"time"
-
-	daemon "github.com/kardianos/service"
 )
-
-var log daemon.Logger
 
 // Server is accepting connections and handling the details of the SOCKS5 protocol
 type Server struct {

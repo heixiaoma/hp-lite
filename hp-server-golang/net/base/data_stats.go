@@ -3,10 +3,9 @@ package base
 import (
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
+	"hp-server-lib/log"
 	"sync"
 	"time"
-
-	"github.com/go-acme/lego/v4/log"
 )
 
 // 定义存储发送、接收、pv、uv的数据结构
@@ -106,11 +105,11 @@ func clearStats() {
 		statsMap.Delete(key)
 		return true
 	})
-	log.Println("统计数据已清除")
+	log.Infof("统计数据已清除")
 }
 
 func init() {
-	log.Printf("数据统计服务已启动")
+	log.Info("数据统计服务已启动")
 	ticker := time.NewTicker(5 * time.Minute)
 	go func() {
 		for {

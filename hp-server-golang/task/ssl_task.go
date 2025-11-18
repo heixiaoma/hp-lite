@@ -5,16 +5,14 @@ import (
 	"encoding/pem"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
+	"hp-server-lib/log"
 	"hp-server-lib/service"
 	"strconv"
 	"time"
 
 	"github.com/gogf/gf/v2/os/gcron"
-	daemon "github.com/kardianos/service"
 	"golang.org/x/net/context"
 )
-
-var log daemon.Logger
 
 // StartSslTask 每天检查下证书过期问题，过期的就自动续签
 func StartSslTask() {

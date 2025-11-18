@@ -2,6 +2,7 @@ package ext
 
 import (
 	"encoding/base64"
+	"hp-server-lib/log"
 	"io"
 	"net"
 	"net/http"

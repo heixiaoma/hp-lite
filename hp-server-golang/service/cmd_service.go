@@ -5,6 +5,7 @@ import (
 	"hp-server-lib/bean"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
+	"hp-server-lib/log"
 	cmdMessage "hp-server-lib/message"
 	"hp-server-lib/protol"
 	"net"
