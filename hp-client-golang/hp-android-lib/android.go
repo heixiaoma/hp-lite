@@ -19,11 +19,18 @@ func Start(c string, callback Callback) {
 	if c != "" {
 		log.Printf("使用连接码模式连接")
 		base32 := util.DecodeFromLowerCaseBase32(strings.TrimSpace(c))
-		log.Printf(base32)
 		con := strings.Split(base32, ",")
+		if len(con) != 2 {
+			callback.SendResult("连接码错误")
+			return
+		}
 		server := con[0]
 		deviceId := con[1]
 		split := strings.Split(server, ":")
+		if len(split) != 2 {
+			callback.SendResult("连接码错误")
+			return
+		}
 		serverPort, _ := strconv.Atoi(split[1])
 		cmdClient = cmd.NewCmdClient(callback.SendResult)
 		cmdClient.Connect(split[0], serverPort, deviceId)
