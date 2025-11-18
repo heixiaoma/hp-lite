@@ -153,13 +153,17 @@ func main() {
 	prg := &program{
 		stopChan: make(chan struct{}),
 	}
-
+	workDir, err := os.Getwd()
+	if err != nil {
+		syslog.Fatalf("获取当前工作目录失败：%v", err)
+	}
 	// 配置系统服务参数
 	serviceConfig := &daemon.Config{
-		Name:        "hp-server", // 服务唯一标识
-		DisplayName: "hp-server", // 服务显示名称
-		Description: "hp-server 核心服务（含隧道、管理后台、证书管理等功能）",
-		Arguments:   []string{"-conf", configPath}, // 固化配置文件路径
+		Name:             "hp-lite-server", // 服务唯一标识
+		DisplayName:      "hp-lite-server", // 服务显示名称
+		Description:      "hp-lite-server 核心服务（含隧道、管理后台、证书管理等功能）",
+		Arguments:        []string{"-conf", configPath}, // 固化配置文件路径
+		WorkingDirectory: workDir,
 	}
 
 	// 创建服务实例
@@ -187,6 +191,9 @@ func main() {
 		syslog.Println("   停止服务：", os.Args[0], "-action stop")
 		syslog.Println("   查看状态：", os.Args[0], "-action status")
 		syslog.Println("   卸载服务：", os.Args[0], "-action uninstall")
+		syslog.Println("   [注意事项]：")
+		syslog.Println("   1、安装服务后请不要删除当前文件，如果需要删除当前文件，请先停止服务、然后在卸载服务、最后在删除文件")
+		syslog.Println("   2、更新程序前请先停止服务再替换程序然后再启动服务")
 
 	case "start":
 		if err := s.Start(); err != nil {

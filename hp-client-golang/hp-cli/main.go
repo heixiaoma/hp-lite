@@ -235,6 +235,10 @@ func main() {
 		log.Println("   停止服务：", os.Args[0], "-action stop")
 		log.Println("   查看状态：", os.Args[0], "-action status")
 		log.Println("   卸载服务：", os.Args[0], "-action uninstall")
+		log.Println("   卸载服务：", os.Args[0], "-action uninstall")
+		log.Println("   [注意事项]：")
+		log.Println("   1、安装服务后请不要删除当前文件，如果需要删除当前文件，请先停止服务、然后在卸载服务、最后在删除文件")
+		log.Println("   2、更新程序前请先停止服务再替换程序然后再启动服务")
 
 	case "start":
 		err = s.Start()
