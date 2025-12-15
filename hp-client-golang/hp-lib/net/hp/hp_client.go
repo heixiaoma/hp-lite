@@ -14,6 +14,7 @@ import (
 )
 
 type HpClient struct {
+	quit       chan struct{}
 	CallMsg    func(message string)
 	conn       *net.MuxSession
 	quicStream *quic.Stream

@@ -16,6 +16,8 @@ var localRouter = sync.Map{}
 // tunnel 隧道数据
 var tunnel = sync.Map{}
 
+var syncLock sync.Mutex // 全局锁
+
 func CloseTunnel() {
 	tunnel.Range(func(key, value any) bool {
 		client := value.(*HpClient)
@@ -38,6 +40,10 @@ func CloseTunnel() {
 
 // RefreshRouter 刷新本地的云端配置数据
 func RefreshRouter(wears []*bean.LocalInnerWear, callMsg func(msg string)) {
+
+	syncLock.Lock()
+	defer syncLock.Unlock() // 确保锁最终释放
+
 	// 遍历缓存并删除所有数据
 	cloudRouter.Range(func(key, value any) bool {
 		cloudRouter.Delete(key)
@@ -67,12 +73,13 @@ func RefreshRouter(wears []*bean.LocalInnerWear, callMsg func(msg string)) {
 
 	//云端和本地比较少得添加
 	cloudRouter.Range(func(key1, value1 any) bool {
-		_, ok := localRouter.Load(key1)
-		//云端找不到的数据，就需要删除掉
-		if !ok {
-			//todo 开启新的
+		configKey := key1.(string) // 假设 ConfigKey 是字符串
+		_, ok := localRouter.LoadOrStore(configKey, value1)
+		if !ok { // 首次存储成功，才启动 tunnel
 			startTunnel(value1.(*bean.LocalInnerWear), callMsg)
-			localRouter.Store(key1, value1)
+		} else {
+			// 已存在，无需重复启动（可打印日志排查重复调用原因）
+			callMsg("配置 " + configKey + " 已存在，无需重复启动隧道")
 		}
 		return true
 	})
@@ -91,33 +98,47 @@ func PrintTable(callMsg func(msg string)) {
 
 // startTunnel 开启新的隧道
 func startTunnel(data *bean.LocalInnerWear, callMsg func(msg string)) {
+	configKey := data.ConfigKey
 	//开始进行真正的映射了
+	if oldClient, ok := tunnel.Load(configKey); ok {
+		oldHpClient := oldClient.(*HpClient)
+		close(oldHpClient.quit) // 关闭旧的退出通道，让旧 goroutine 退出
+		oldHpClient.Close()     // 关闭旧连接
+		tunnel.Delete(data.ConfigKey)
+	}
+
 	hpClient := NewHpClient(callMsg)
 	tunnel.Store(data.ConfigKey, hpClient)
 	hpClient.Connect(data)
+
 	go func() {
 		flagStatus := false
+		ticker := time.NewTicker(10 * time.Second)
+		defer func() {
+			ticker.Stop()
+			hpClient.Close()
+			tunnel.Delete(configKey)
+		}()
+
 		for {
-			//检查本地存储是否存在，如果不存在就需要关闭了
-			_, ok := localRouter.Load(data.ConfigKey)
-			if ok {
+			select {
+			case <-hpClient.quit:
+				hpClient.CallMsg("隧道监控 goroutine 已退出:" + data.LocalAddress)
+				return
+			case <-ticker.C: // 定时检查
+				_, ok := localRouter.Load(configKey)
+				if !ok {
+					return // 本地已删除，退出
+				}
 				status := hpClient.GetStatus()
 				if !status {
-					//开始重新连接
 					hpClient.CallMsg("隧道正在重新连接:" + data.LocalAddress)
 					hpClient.Connect(data)
 				}
 				if flagStatus != status {
-					//连接有变化就打印一次
 					PrintTable(hpClient.CallMsg)
 					flagStatus = status
 				}
-				time.Sleep(time.Duration(10) * time.Second)
-			} else {
-				//云端数据都删除了，我们就需要停止服务了
-				hpClient.Close()
-				tunnel.Delete(data.ConfigKey)
-				return
 			}
 		}
 	}()
