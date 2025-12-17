@@ -5,6 +5,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"hp-server-lib/bean"
+	"hp-server-lib/config"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
 	"hp-server-lib/log"
@@ -154,6 +155,10 @@ func (receiver *DomainService) RemoveData(id int) bool {
 }
 
 func (receiver *DomainService) AddData(userDomain entity.UserDomainEntity) error {
+	if !config.ConfigData.Tunnel.OpenDomain {
+		return errors.New("配置文件未启用open-domain参数此功能受限")
+	}
+
 	userDomain.CertificateContent = strings.TrimSpace(userDomain.CertificateContent)
 	userDomain.CertificateKey = strings.TrimSpace(userDomain.CertificateKey)
 	if userDomain.Id == nil {

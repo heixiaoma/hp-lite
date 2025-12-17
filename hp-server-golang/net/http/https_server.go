@@ -7,6 +7,7 @@ import (
 	"hp-server-lib/log"
 	"hp-server-lib/service"
 	"net/http"
+	"os"
 )
 
 // 根据域名返回证书和目标后端服务地址
@@ -57,6 +58,7 @@ func StartHttpsServer() {
 	err := server.ListenAndServeTLS("", "") // 证书由 GetCertificate 动态选择
 	if err != nil {
 		log.Errorf("HTTPS代理服务启动失败: %v", err)
+		os.Exit(1)
 	}
 
 }

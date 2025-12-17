@@ -4,6 +4,7 @@ import (
 	"hp-server-lib/log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -28,6 +29,7 @@ func StartHttpServer() {
 	log.Info("HTTP代理服务启动")
 	err := http.ListenAndServe(":80", mux)
 	if err != nil {
-		return
+		log.Errorf("HTTP代理服务启动失败: %v", err)
+		os.Exit(1)
 	}
 }
