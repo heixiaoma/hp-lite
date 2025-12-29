@@ -59,7 +59,7 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 					}
 				}
 				if flag {
-					return
+					break
 				}
 			}
 
