@@ -7,6 +7,7 @@ import (
 	"hp-lib/net/connect"
 	handler2 "hp-lib/net/handler"
 	"hp-lib/protol"
+	"sync"
 
 	"github.com/quic-go/quic-go"
 	"github.com/xtaci/smux"
@@ -19,9 +20,9 @@ type HpClient struct {
 	conn       *net.MuxSession
 	quicStream *quic.Stream
 	tcpStream  *smux.Stream
-
-	Data    *bean.LocalInnerWear
-	handler *handler2.HpClientHandler
+	syncLock   sync.Mutex
+	Data       *bean.LocalInnerWear
+	handler    *handler2.HpClientHandler
 }
 
 func NewHpClient(callMsg func(message string)) *HpClient {
@@ -61,6 +62,8 @@ func (hpClient *HpClient) Connect(data *bean.LocalInnerWear) {
 }
 
 func (hpClient *HpClient) GetStatus() bool {
+	hpClient.syncLock.Lock()
+	defer hpClient.syncLock.Unlock() // 确保锁最终释放
 	if hpClient.handler != nil && hpClient.conn != nil {
 		if hpClient.conn.IsTcp() {
 			if hpClient.conn.TcpSession != nil {
