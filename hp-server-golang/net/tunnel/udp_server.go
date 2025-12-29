@@ -37,17 +37,18 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 	udpServer.udpConn = conn
 	//设置读
 	go func() {
+		buffer := make([]byte, 8192)
 		// 创建缓冲区用于接收数据
-		buffer := make([]byte, 1450)
 		for {
 			if udpServer.conn == nil {
 				break
 			}
 			n, addr, err := conn.ReadFromUDP(buffer)
 			if err != nil {
+				log.Error("udp读取数据错误 原因：" + err.Error())
 				break
 			}
-
+			bytes := buffer[:n]
 			ip := util.GetClientIPFromUDP(addr)
 			if len(udpServer.userInfo.AllowedIps) > 0 {
 				ips := udpServer.userInfo.AllowedIps
@@ -71,7 +72,6 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 					}
 				}
 			}
-
 			value, ok := udpServer.cache.Load(addr.String())
 			if !ok {
 				err, handler := NewUdpHandler(udpServer, conn, udpServer.conn, addr, udpServer.userInfo)
@@ -81,10 +81,10 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 				}
 				handler.ChannelActive(conn)
 				udpServer.cache.Store(addr.String(), handler)
-				go handler.ChannelRead(conn, buffer[:n])
+				go handler.ChannelRead(conn, bytes)
 			} else {
 				handler := value.(*UdpHandler)
-				go handler.ChannelRead(conn, buffer[:n])
+				go handler.ChannelRead(conn, bytes)
 			}
 		}
 
