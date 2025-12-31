@@ -6,16 +6,14 @@ import (
 	"hp-lib/protol"
 	"net"
 	"strconv"
-	"sync/atomic"
 )
 
 type TcpConnection struct {
-	IsClose atomic.Value
+	conn net.Conn
 }
 
 func NewTcpConnection() *TcpConnection {
 	t := &TcpConnection{}
-	t.IsClose.Store(false)
 	return t
 }
 
@@ -25,15 +23,12 @@ func (connection *TcpConnection) Connect(host string, port int, handler net2.Han
 		call("不能能连到服务器：" + host + ":" + strconv.Itoa(port) + " 原因：" + err.Error())
 		return nil
 	}
+	connection.conn = conn
 	handler.ChannelActive(conn)
 	//设置读
 	go func() {
 		reader := bufio.NewReader(conn)
 		for {
-			if connection.IsClosed() {
-				handler.ChannelInactive(conn)
-				return
-			}
 			//尝试读检查连接激活
 			_, err := reader.Peek(1)
 			if err != nil {
@@ -53,10 +48,7 @@ func (connection *TcpConnection) Connect(host string, port int, handler net2.Han
 	}()
 	return conn
 }
-func (receiver *TcpConnection) IsClosed() bool {
-	return receiver.IsClose.Load().(bool)
-}
 
 func (receiver *TcpConnection) Close() {
-	receiver.IsClose.Store(true)
+	receiver.conn.Close()
 }
