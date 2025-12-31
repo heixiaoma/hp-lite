@@ -50,5 +50,7 @@ func (connection *TcpConnection) Connect(host string, port int, handler net2.Han
 }
 
 func (receiver *TcpConnection) Close() {
-	receiver.conn.Close()
+	if receiver.conn != nil {
+		receiver.conn.Close()
+	}
 }
