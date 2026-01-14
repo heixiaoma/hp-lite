@@ -9,6 +9,8 @@ type UserCustomEntity struct {
 
 	Password string `json:"password"`
 
+	Email string `json:"email"`
+
 	Desc string `json:"desc"`
 
 	CreateTime time.Time `json:"createTime"`

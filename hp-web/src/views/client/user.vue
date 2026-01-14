@@ -31,8 +31,8 @@
         <a-form-item label="用户名 " name="username"  :rules="[{ required: true, message: '必填用户名'}]">
           <a-input v-model:value="formState.username" allow-clear placeholder="用户名"/>
         </a-form-item>
-        <a-form-item label="密码" name="password"  :rules="[{ required: true, message: '必填密码'},{ min: 6, message: '密码长度不能少于6位', trigger: 'blur' },]">
-          <a-input allow-clear v-model:value="formState.password" placeholder="密码"/>
+        <a-form-item label="邮箱" name="email">
+          <a-input v-model:value="formState.email" allow-clear placeholder="邮箱地址"/>
         </a-form-item>
         <a-form-item label="备注" name="desc"  :rules="[{ required: true, message: '必填备注'}]">
           <a-input allow-clear v-model:value="formState.desc" placeholder="备注"/>
@@ -59,7 +59,7 @@ const dataLoading = ref(false);
 const addVisible = ref(false);
 const formState = reactive({
   username: "",
-  password: "",
+  email:"",
   desc:"",
   id:""
 })
@@ -94,7 +94,7 @@ const removeData = (item) => {
 
 const edit = (item) => {
   formState.username = item.username
-  formState.password = item.password
+  formState.email = item.email
   formState.desc = item.desc
   formState.id = item.id
   addVisible.value=true
@@ -103,7 +103,7 @@ const edit = (item) => {
 const columns = [
   {title: '编号', dataIndex: 'id', key: 'id'},
   {title: '用户名', dataIndex: 'username', key: 'username'},
-  {title: '密码', dataIndex: 'password', key: 'password'},
+  {title: '邮箱', dataIndex: 'email', key: 'email'},
   {title: '备注', dataIndex: 'desc', key: 'desc'},
   {title: '创建时间', dataIndex: 'createTime', key: 'createTime'},
   {title: '操作', key: 'action'},
@@ -118,7 +118,7 @@ const handleTableChange = (item) => {
 
 const addModal = () => {
   formState.username = ""
-  formState.password = ""
+  formState.email = ""
   formState.desc = ""
   formState.id = undefined
   addVisible.value = true

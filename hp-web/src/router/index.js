@@ -3,6 +3,7 @@ import {createMemoryHistory, createRouter, createWebHashHistory, createWebHistor
 // 通用UI
 const home = () => import('../views/home/index.vue');
 const home_login = () => import('../views/home/login.vue');
+const forgot_password = () => import('../views/home/forgot-password.vue');
 
 // 客户端的UI
 const client_monitor = () => import('../views/client/monitor.vue');
@@ -15,11 +16,13 @@ const client_domain = () => import('../views/client/domain.vue');
 const client_waf = () => import('../views/client/waf.vue');
 const client_reverse = () => import('../views/client/reverse.vue');
 const client_forward = () => import('../views/client/forward.vue');
+const client_settings = () => import('../views/client/settings.vue');
 
 const routes = [
     {path: '/', component: home},
 
     {path: '/home/login', component: home_login},
+    {path: '/forgot-password', component: forgot_password},
     {path: '/giscus', redirect: '/client/teach'},
     //前端UI
     {
@@ -35,6 +38,7 @@ const routes = [
             {path: 'domain', component: client_domain, name: "domain"},
             {path: 'reverse', component: client_reverse, name: "reverse"},
             {path: 'forward', component: client_forward, name: "forward"},
+            {path: 'settings', component: client_settings, name: "settings"},
         ],
     },
 ]

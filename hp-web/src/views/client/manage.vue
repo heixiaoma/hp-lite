@@ -30,6 +30,9 @@
 <!--                  <a-icon type="user" class="menu-icon" />-->
 <!--                  <span>个人资料</span>-->
 <!--                </a-menu-item>-->
+                <a-menu-item key="settings" class="menu-item">
+                  <span>个人设置</span>
+                </a-menu-item>
 <!--                <a-menu-item key="setting" class="menu-item">-->
 <!--                  <a-icon type="setting" class="menu-icon" />-->
 <!--                  <span>系统设置</span>-->
@@ -188,6 +191,8 @@ export default {
     const handleMenuClick = ({ key }) => {
       if (key === 'logout') {
         handleLoginOut();
+      } else if (key === 'settings') {
+        router.push('/client/settings');
       }
     };
 

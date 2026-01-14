@@ -84,6 +84,7 @@
 
             <a-form-item class="remember-me">
               <a-checkbox v-model:checked="rememberMe">记住我</a-checkbox>
+              <a href="#" @click.prevent="handleForgotPassword" class="forgot-password">忘记密码？</a>
             </a-form-item>
 
             <a-form-item>
@@ -186,6 +187,10 @@ const handleSubmit = () => {
   }).catch(error => {
     console.log('表单验证失败:', error);
   });
+};
+
+const handleForgotPassword = () => {
+  router.push("/forgot-password");
 };
 </script>
 

@@ -14,3 +14,10 @@ tunnel:
 acme:
   email: '232323@qq.com' #申请证书必须写一个邮箱可以随便写
   http-port: '5634' #证书验证会访问http接口，会通过80转发过来，所以这个端口不用暴露外网
+
+email:
+  smtp-host: 'smtp.qq.com' #SMTP服务器地址
+  smtp-port: 587 #SMTP端口，通常为587(TLS)或465(SSL)
+  from: 'your-email@qq.com' #发件人邮箱地址
+  password: 'your-app-password' #邮箱密码或应用专用密码
+  from-name: 'HP-Lite' #发件人名称

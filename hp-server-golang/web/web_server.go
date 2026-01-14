@@ -48,6 +48,13 @@ func StartWebServer(port int) {
 	mux.HandleFunc("/client/user/list", clientUserController.List)
 	mux.HandleFunc("/client/user/removeUser", clientUserController.Del)
 
+	emailController := controller.NewEmailController()
+	mux.HandleFunc("/email/sendCode", emailController.SendCode)
+	mux.HandleFunc("/email/verifyEmail", emailController.VerifyEmail)
+	mux.HandleFunc("/email/resetPassword", emailController.ResetPassword)
+	mux.HandleFunc("/user/setEmail", emailController.SetUserEmail)
+	mux.HandleFunc("/user/getEmail", emailController.GetUserEmail)
+
 	deviceController := controller.DeviceController{}
 	mux.HandleFunc("/client/device/list", deviceController.List)
 	mux.HandleFunc("/client/device/add", deviceController.Add)
