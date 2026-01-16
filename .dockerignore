@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+
+# Node
+hp-web/node_modules
+
+# Go source (keep compiled binaries)
+*.go
+go.mod
+go.sum
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Client
+hp-client-golang/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Build scripts
+*.bat
+*.ps1
+*.sh

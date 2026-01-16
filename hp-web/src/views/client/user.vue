@@ -31,6 +31,9 @@
         <a-form-item label="用户名 " name="username"  :rules="[{ required: true, message: '必填用户名'}]">
           <a-input v-model:value="formState.username" allow-clear placeholder="用户名"/>
         </a-form-item>
+        <a-form-item label="密码" name="password" :rules="[{ required: !formState.id, message: '必填密码'}, { min: 6, message: '密码长度不能少于6位' }]">
+          <a-input-password v-model:value="formState.password" allow-clear :placeholder="formState.id ? '留空则不修改密码' : '请输入密码（至少6位）'"/>
+        </a-form-item>
         <a-form-item label="邮箱" name="email">
           <a-input v-model:value="formState.email" allow-clear placeholder="邮箱地址"/>
         </a-form-item>
@@ -59,6 +62,7 @@ const dataLoading = ref(false);
 const addVisible = ref(false);
 const formState = reactive({
   username: "",
+  password: "",
   email:"",
   desc:"",
   id:""
@@ -94,6 +98,7 @@ const removeData = (item) => {
 
 const edit = (item) => {
   formState.username = item.username
+  formState.password = "" // 编辑时不显示密码
   formState.email = item.email
   formState.desc = item.desc
   formState.id = item.id
@@ -118,6 +123,7 @@ const handleTableChange = (item) => {
 
 const addModal = () => {
   formState.username = ""
+  formState.password = ""
   formState.email = ""
   formState.desc = ""
   formState.id = undefined

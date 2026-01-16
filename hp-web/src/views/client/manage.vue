@@ -45,10 +45,25 @@
             </template>
           </a-dropdown>
 
-          <div class="user-mini" @click="handleLoginOut">
-            <a-button type="text" class="mini-logout">
-              <span>退出登录</span>
-            </a-button>
+          <div class="user-mini">
+            <a-dropdown
+                trigger="click"
+                :overlay-style="{ borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }"
+            >
+              <a-button type="text" class="mini-user-btn">
+                <span class="mini-username">{{ userInfo.email || '未登录' }}</span>
+              </a-button>
+              <template #overlay>
+                <a-menu @click="handleMenuClick" class="user-menu">
+                  <a-menu-item key="settings" class="menu-item">
+                    <span>个人设置</span>
+                  </a-menu-item>
+                  <a-menu-item key="logout" class="menu-item logout-item">
+                    <span>退出登录</span>
+                  </a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
           </div>
         </div>
       </div>
@@ -394,9 +409,24 @@ export default {
   display: none;
 }
 
-.mini-logout {
+.mini-user-btn {
   color: #fff !important;
-  padding: 4px 8px !important;
+  padding: 4px 12px !important;
+  border-radius: 16px !important;
+  transition: background-color 0.2s !important;
+}
+
+.mini-user-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.mini-username {
+  font-size: 14px;
+  max-width: 120px;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-menu {

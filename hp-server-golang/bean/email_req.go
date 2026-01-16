@@ -8,6 +8,7 @@ type ReqSendCode struct {
 type ReqVerifyCode struct {
 	Email string `json:"email"`
 	Code  string `json:"code"`
+	Type  string `json:"type"` // verify_email, reset_password
 }
 
 type ReqResetPassword struct {
@@ -19,4 +20,9 @@ type ReqResetPassword struct {
 type ReqSetEmail struct {
 	Email string `json:"email"`
 	Code  string `json:"code"`
+}
+
+type ReqChangePassword struct {
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
 }

@@ -155,7 +155,7 @@ import {
   SecurityScanOutlined,
   CheckCircleOutlined
 } from '@ant-design/icons-vue';
-import { sendCode, verifyCode, resetPassword } from '../../api/client/email';
+import { sendCode as sendCodeApi, verifyEmail as verifyCodeApi, resetPassword as resetPasswordApi } from '../../api/client/email';
 
 const router = useRouter();
 const emailFormRef = ref(null);
@@ -224,14 +224,14 @@ const passwordRules = {
 const sendCode = () => {
   emailFormRef.value.validate().then(() => {
     sendingCode.value = true;
-    sendCode({
+    sendCodeApi({
       email: emailForm.email,
       type: 'reset_password'
     }).then(res => {
       sendingCode.value = false;
       if (res.code === 200) {
         codeSent.value = true;
-        codeTimer.value = 1800; // 30分钟
+        codeTimer.value = 60; // 60秒
         notification.success({
           message: '验证码已发送',
           description: res.msg || '请检查您的邮箱'
@@ -256,9 +256,10 @@ const sendCode = () => {
 const verifyCode = () => {
   codeFormRef.value.validate().then(() => {
     verifyingCode.value = true;
-    verifyCode({
+    verifyCodeApi({
       email: emailForm.email,
-      code: codeForm.code
+      code: codeForm.code,
+      type: 'reset_password'
     }).then(res => {
       verifyingCode.value = false;
       if (res.code === 200) {
@@ -286,7 +287,7 @@ const verifyCode = () => {
 const resetPassword = () => {
   passwordFormRef.value.validate().then(() => {
     resettingPassword.value = true;
-    resetPassword({
+    resetPasswordApi({
       email: emailForm.email,
       code: codeForm.code,
       password: passwordForm.password

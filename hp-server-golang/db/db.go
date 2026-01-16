@@ -26,7 +26,7 @@ func init() {
 	// 获取底层的 sql.DB 实例
 	sqlDB, err := DB.DB()
 	if err != nil {
-		log.Errorf("failed to get sql.DB instance", err)
+		log.Errorf("failed to get sql.DB instance: %v", err)
 	}
 
 	// 设置连接池参数

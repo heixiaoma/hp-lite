@@ -38,3 +38,11 @@ export function getEmail() {
         method: 'get'
     })
 }
+
+export function changePassword(data) {
+    return http({
+        url: '/user/changePassword',
+        method: 'post',
+        data
+    })
+}

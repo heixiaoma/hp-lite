@@ -87,7 +87,7 @@
 
               <a-list-item>
                 <template #actions>
-                  <a href="#" @click.prevent="handleChangePassword">修改</a>
+                  <a href="#" @click.prevent="handleChangeEmail">修改</a>
                 </template>
                 <a-list-item-meta title="绑定邮箱">
                   <template #description>
@@ -104,16 +104,16 @@
           <div class="tab-content">
             <a-descriptions :column="1" bordered>
               <a-descriptions-item label="用户ID">
-                {{ userInfo.id || '-' }}
+                {{ userInfoData.id || '-' }}
               </a-descriptions-item>
               <a-descriptions-item label="用户名">
-                {{ userInfo.username || '-' }}
+                {{ userInfoData.username || '-' }}
               </a-descriptions-item>
               <a-descriptions-item label="邮箱">
                 {{ currentEmail || '未绑定' }}
               </a-descriptions-item>
               <a-descriptions-item label="创建时间">
-                {{ formatTime(userInfo.createTime) }}
+                {{ formatTime(userInfoData.createTime) }}
               </a-descriptions-item>
             </a-descriptions>
           </div>
@@ -159,7 +159,7 @@ import { reactive, ref, onMounted } from 'vue';
 import { notification } from 'ant-design-vue';
 import { MailOutlined, SecurityScanOutlined } from '@ant-design/icons-vue';
 import userInfo from '../../data/userInfo';
-import { sendCode, getEmail, setEmail } from '../../api/client/email';
+import { sendCode, getEmail, setEmail, changePassword } from '../../api/client/email';
 
 const emailFormRef = ref(null);
 const passwordFormRef = ref(null);
@@ -170,6 +170,14 @@ const sendingEmailCode = ref(false);
 const bindingEmail = ref(false);
 const changePasswordModalVisible = ref(false);
 const emailCodeTimer = ref(0);
+
+// 用户信息
+const userInfoData = reactive({
+  id: '',
+  username: '',
+  email: '',
+  createTime: ''
+});
 
 const emailForm = reactive({
   newEmail: '',
@@ -246,7 +254,7 @@ const sendEmailCode = () => {
         message: '验证码已发送',
         description: res.msg || '请检查您的邮箱'
       });
-      emailCodeTimer.value = 1800; // 30分钟
+      emailCodeTimer.value = 60; // 60秒
       startEmailCodeTimer();
     } else {
       notification.error({
@@ -312,14 +320,38 @@ const handleChangePassword = () => {
   changePasswordModalVisible.value = true;
 };
 
+const handleChangeEmail = () => {
+  activeTabKey.value = 'email';
+};
+
 const submitChangePassword = () => {
   passwordFormRef.value.validate().then(() => {
-    // TODO: 调用修改密码接口
-    notification.success({
-      message: '密码修改成功',
-      description: '您的密码已成功修改'
+    changePassword({
+      oldPassword: passwordForm.oldPassword,
+      newPassword: passwordForm.newPassword
+    }).then(res => {
+      if (res.code === 200) {
+        notification.success({
+          message: '密码修改成功',
+          description: '您的密码已成功修改，请使用新密码登录'
+        });
+        changePasswordModalVisible.value = false;
+        // 清空表单
+        passwordForm.oldPassword = '';
+        passwordForm.newPassword = '';
+        passwordForm.confirmPassword = '';
+      } else {
+        notification.error({
+          message: '密码修改失败',
+          description: res.msg || '修改密码失败，请重试'
+        });
+      }
+    }).catch(() => {
+      notification.error({
+        message: '密码修改失败',
+        description: '请稍后重试'
+      });
     });
-    changePasswordModalVisible.value = false;
   });
 };
 
@@ -329,15 +361,25 @@ const formatTime = (time) => {
 };
 
 onMounted(() => {
+  // 从localStorage获取用户信息
+  const userData = userInfo.getUserInfo();
+  if (userData) {
+    userInfoData.id = userData.id || '';
+    userInfoData.username = userData.email || '';
+    userInfoData.createTime = userData.createTime || '';
+  }
+
   // 获取当前邮箱
   getEmail().then(res => {
     if (res.code === 200) {
       currentEmail.value = res.data.email || '';
+      userInfoData.email = res.data.email || '';
     }
   }).catch(() => {
     // 从userInfo中获取
     const data = userInfo.getUserInfo();
     currentEmail.value = data?.email || '';
+    userInfoData.email = data?.email || '';
   });
 });
 </script>

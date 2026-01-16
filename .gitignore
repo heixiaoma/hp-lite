@@ -1,11 +1,27 @@
-# idea ignore
+# IDE & Local Config
+.claude/
 .idea/
-*.ipr
-*.iml
-*.iws
-/target
-/log
-node_modules
-/dist
-/*.db
-/queue
+.vscode/
+*.local.json
+
+# Dependencies
+node_modules/
+
+# Build Output
+dist/
+target/
+hp-server-golang/target/
+hp-client-golang/hp-cli/target/
+hp-server-golang/docker/hp-lite-server-amd64
+
+# Runtime Data
+hp-server-golang/data/
+
+# Logs
+*.log
+
+# Temp files
+t.go
+
+# Generated Static Files (keep directory but ignore content if generated)
+hp-server-golang/web/static/

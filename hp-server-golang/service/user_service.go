@@ -9,6 +9,7 @@ import (
 )
 
 type UserService struct {
+	passwordService *PasswordService
 }
 
 func (receiver *UserService) Login(login bean.ReqLogin) *bean.ResLoginUser {
@@ -16,9 +17,16 @@ func (receiver *UserService) Login(login bean.ReqLogin) *bean.ResLoginUser {
 		return bean.NewAdminUser(login)
 	} else {
 		userQuery := entity.UserCustomEntity{}
-		db.DB.Where("username = ?  and password = ?", login.Email, login.Password).First(&userQuery)
+		db.DB.Where("username = ?", login.Email).First(&userQuery)
 		if userQuery.Id != nil {
-			return bean.NewClientUser(*userQuery.Id, userQuery.Username)
+			// 初始化passwordService
+			if receiver.passwordService == nil {
+				receiver.passwordService = &PasswordService{}
+			}
+			// 验证密码
+			if receiver.passwordService.VerifyPassword(userQuery.Password, login.Password) {
+				return bean.NewClientUser(*userQuery.Id, userQuery.Username)
+			}
 		}
 	}
 	return nil

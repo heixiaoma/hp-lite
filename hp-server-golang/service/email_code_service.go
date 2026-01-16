@@ -36,6 +36,20 @@ func (e *EmailCodeService) GenerateCode(email, codeType string, userId *int) (st
 	return code, nil
 }
 
+// 仅检查验证码是否存在且未过期，不修改使用状态
+func (e *EmailCodeService) CheckCode(email, code, codeType string) (bool, error) {
+	var emailCode entity.EmailCodeEntity
+	err := db.DB.Where("email = ? AND code = ? AND type = ?", email, code, codeType).
+		Where("expire_time > ?", time.Now()).
+		First(&emailCode).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 // 验证码是否有效
 func (e *EmailCodeService) VerifyCode(email, code, codeType string) (bool, error) {
 	var emailCode entity.EmailCodeEntity

@@ -1,0 +1,25 @@
+services:
+  hp-lite-server:
+    image: hp-lite-server:latest
+    container_name: hp-lite-server
+    restart: unless-stopped
+    ports:
+      - "9999:9999"    # 管理后台端口
+      - "16666:16666"  # 控制指令端口
+      - "9091:9091/tcp" # 隧道传输数据端口 TCP
+      - "9091:9091/udp" # 隧道传输数据端口 UDP
+    volumes:
+      - C:\Users\zhangweijie\Desktop\nwct\app.yml:/hp-lite-server/app.yml:ro
+      - hp-lite-data:/hp-lite-server/data
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      - hp-lite-network
+
+volumes:
+  hp-lite-data:
+    driver: local
+
+networks:
+  hp-lite-network:
+    driver: bridge

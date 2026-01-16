@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hp-server-lib/log"
 	"hp-server-lib/web/controller"
+	"hp-server-lib/web/middleware"
 	"net/http"
 	"runtime/debug"
 	"strconv"
@@ -52,8 +53,9 @@ func StartWebServer(port int) {
 	mux.HandleFunc("/email/sendCode", emailController.SendCode)
 	mux.HandleFunc("/email/verifyEmail", emailController.VerifyEmail)
 	mux.HandleFunc("/email/resetPassword", emailController.ResetPassword)
-	mux.HandleFunc("/user/setEmail", emailController.SetUserEmail)
-	mux.HandleFunc("/user/getEmail", emailController.GetUserEmail)
+	mux.HandleFunc("/user/setEmail", middleware.AuthMiddleware(emailController.SetUserEmail))
+	mux.HandleFunc("/user/getEmail", middleware.AuthMiddleware(emailController.GetUserEmail))
+	mux.HandleFunc("/user/changePassword", middleware.AuthMiddleware(emailController.ChangePassword))
 
 	deviceController := controller.DeviceController{}
 	mux.HandleFunc("/client/device/list", deviceController.List)

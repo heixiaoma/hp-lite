@@ -24,7 +24,7 @@ func (e *EmailService) SendVerificationCode(toEmail string) (string, error) {
     <style>
         body { font-family: Arial, sans-serif; }
         .container { max-width: 600px; margin: 0 auto; }
-        .header { background: linear-gradient(135deg, #4b6ff6 0%, #1890ff 100%); color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+        .header { background: linear-gradient(135deg, #4b6ff6 0%%, #1890ff 100%%); color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
         .content { background: #f5f5f5; padding: 20px; }
         .code { font-size: 32px; font-weight: bold; color: #1890ff; text-align: center; padding: 20px; background: white; margin: 20px 0; border-radius: 5px; }
         .footer { background: white; padding: 20px; text-align: center; color: #666; border-radius: 0 0 5px 5px; font-size: 12px; }
@@ -67,7 +67,7 @@ func (e *EmailService) SendPasswordReset(toEmail string, resetCode string) error
     <style>
         body { font-family: Arial, sans-serif; }
         .container { max-width: 600px; margin: 0 auto; }
-        .header { background: linear-gradient(135deg, #4b6ff6 0%, #1890ff 100%); color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+        .header { background: linear-gradient(135deg, #4b6ff6 0%%, #1890ff 100%%); color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
         .content { background: #f5f5f5; padding: 20px; }
         .code { font-size: 32px; font-weight: bold; color: #1890ff; text-align: center; padding: 20px; background: white; margin: 20px 0; border-radius: 5px; }
         .footer { background: white; padding: 20px; text-align: center; color: #666; border-radius: 0 0 5px 5px; font-size: 12px; }
@@ -104,6 +104,11 @@ func (e *EmailService) sendEmail(to, subject, body string) error {
 	smtpHost := cfg.SmtpHost
 	smtpPort := strconv.Itoa(cfg.SmtpPort)
 
+	// 验证配置
+	if from == "" || password == "" || smtpHost == "" {
+		return fmt.Errorf("邮件配置不完整，请检查配置文件中的email配置项")
+	}
+
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 
 	msg := fmt.Sprintf("From: %s <%s>\r\nTo: %s\r\nSubject: %s\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n%s",
@@ -111,7 +116,10 @@ func (e *EmailService) sendEmail(to, subject, body string) error {
 
 	addr := smtpHost + ":" + smtpPort
 	err := smtp.SendMail(addr, auth, from, []string{to}, []byte(msg))
-	return err
+	if err != nil {
+		return fmt.Errorf("SMTP发送失败 (%s:%s): %v", smtpHost, smtpPort, err)
+	}
+	return nil
 }
 
 // 生成6位随机验证码

@@ -35,7 +35,7 @@ func NewTcpServer(conn *net2.MuxSession, userInfo bean.UserConfigInfo) *TcpServe
 func (tcpServer *TcpServer) StartServer(port int) bool {
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
-		log.Errorf("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error())
+		log.Error("不能创建TCP服务器：" + ":" + strconv.Itoa(port) + " 原因：" + err.Error())
 		return false
 	}
 	tcpServer.listener = listener

@@ -35,7 +35,11 @@ func (receiver ClientUserController) Add(w http.ResponseWriter, r *http.Request)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		receiver.AddData(msg)
+		// 处理AddData返回的错误
+		if err := receiver.AddData(msg); err != nil {
+			json.NewEncoder(w).Encode(bean.ResError("保存用户失败: " + err.Error()))
+			return
+		}
 		json.NewEncoder(w).Encode(bean.ResOk(nil))
 	}
 }
