@@ -30,7 +30,7 @@ func NewUdpHandler(udpServer *UdpServer, udpConn *net.UDPConn, conn *base.MuxSes
 	if err != nil {
 		return err, nil
 	}
-	return nil, &UdpHandler{udpServer: udpServer, udpConn: udpConn, conn: conn, channelId: util.NewId(), addr: addr, lastActiveAt: time.Now(), protocol: s, localIp: s2, localPort: i}
+	return nil, &UdpHandler{udpServer: udpServer, udpConn: udpConn, conn: conn, channelId: util.NewId(), userInfo: userInfo, addr: addr, lastActiveAt: time.Now(), protocol: s, localIp: s2, localPort: i}
 }
 func (h *UdpHandler) handlerStream(stream *base.MuxStream) {
 	defer stream.Close()
