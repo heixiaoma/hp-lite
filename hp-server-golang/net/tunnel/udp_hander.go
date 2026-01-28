@@ -51,6 +51,7 @@ func (receiver *UdpHandler) ReadStreamData(data *message.HpMessage) {
 	if data.Type == message.HpMessage_DATA {
 		receiver.lastActiveAt = time.Now()
 		receiver.udpConn.WriteToUDP(data.Data, receiver.addr)
+		base.AddSent(receiver.userInfo.ConfigId, int64(len(data.Data)))
 	}
 	if data.Type == message.HpMessage_DISCONNECTED {
 		receiver.udpConn.Close()
@@ -88,7 +89,7 @@ func (h *UdpHandler) ChannelActive(udpConn *net.UDPConn) {
 			select {
 			case <-ticker.C:
 				sub := time.Now().Sub(h.lastActiveAt)
-				if sub.Seconds() > 60 {
+				if sub.Seconds() > 60*5 {
 					value, ok := h.udpServer.cache.Load(h.addr.String())
 					if ok {
 						handler := value.(*UdpHandler)
@@ -112,6 +113,7 @@ func (h *UdpHandler) ChannelRead(udpConn *net.UDPConn, data interface{}) {
 		},
 		Data: data.([]byte),
 	}
+	base.AddReceived(h.userInfo.ConfigId, int64(len(m.Data)))
 	if h.stream != nil {
 		h.stream.Write(protol.Encode(m))
 		h.lastActiveAt = time.Now()
