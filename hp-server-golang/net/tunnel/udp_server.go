@@ -81,16 +81,16 @@ func (udpServer *UdpServer) StartServer(port int) bool {
 				}
 				handler.ChannelActive(conn)
 				udpServer.cache.Store(addr.String(), handler)
-				go handler.ChannelRead(conn, bytes)
+				handler.ChannelRead(conn, bytes)
 			} else {
 				handler := value.(*UdpHandler)
-				go handler.ChannelRead(conn, bytes)
+				handler.ChannelRead(conn, bytes)
 			}
 		}
 
 		udpServer.cache.Range(func(key, value any) bool {
 			handler := value.(*UdpHandler)
-			go handler.ChannelInactive(conn)
+			handler.ChannelInactive(conn)
 			udpServer.cache.Delete(key)
 			return true
 		})
