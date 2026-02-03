@@ -80,7 +80,7 @@
       <div class="container">
         <h2 class="section-title">项目许可声明（MIT License）</h2>
         <div class="policy-content">
-          <p>版权所有 (c) [2025] [黑小马]</p>
+          <p>版权所有 (c) [2025-{{new Date().getFullYear()}}] [黑小马]</p>
           <p>本内网穿透项目采用 <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer">MIT开源许可证</a> 授权。在使用本项目前，请您仔细阅读以下条款：</p>
           <ol>
             <li><strong>授权范围</strong>：您有权对本项目进行复制、使用、修改、合并、发布、分发、再授权及销售副本，可用于个人搭建、学习研究及符合法律法规的商业用途。但在所有副本或重要衍生部分中，必须保留本版权声明及许可条款。</li>
@@ -117,7 +117,7 @@
     <!-- 页脚 -->
     <footer class="footer">
       <div class="container">
-        <p>&copy; 2025 HP-Lite 内网穿透项目</p>
+        <p>&copy; 2025-{{new Date().getFullYear()}} HP-Lite 内网穿透项目</p>
       </div>
       <div>
         全网数据平台合计统计

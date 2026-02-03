@@ -3,10 +3,17 @@
     <canvas id="canvas"></canvas>
     <a-tabs v-if="showText" >
       <a-tab-pane class="info-panel" key="1" tab="连接码">{{text}}</a-tab-pane>
-      <a-tab-pane class="info-panel" key="2" tab="docker">
-        docker run --name hp-lite --restart=always -d -e  c={{text}} heixiaoma/hp-lite:latest
+      <a-tab-pane class="info-panel" key="2" tab="Docker">
+        <a-tag color="#87d068">官方源</a-tag>
+        <p>docker run --name hp-lite --restart=always -d -e  c={{text}} heixiaoma/hp-lite:latest</p>
+        <a-tag color="#2db7f5">阿里源</a-tag>
+        <p>docker run --name hp-lite --restart=always -d -e  c={{text}} registry.cn-shenzhen.aliyuncs.com/heixiaoma/hp-lite:latest</p>
       </a-tab-pane>
       <a-tab-pane class="info-panel" key="3" tab="Win命令行">
+        <a-divider>临时运行</a-divider>
+        <a-steps :current="-1" direction="vertical">
+          <a-step title="安装" :description="'hp-lite.exe -c '+text+''" />
+        </a-steps>
         <a-divider>后台运行</a-divider>
         <a-steps :current="-1" direction="vertical">
           <a-step title="安装" :description="'hp-lite.exe -c '+text+' -action install'" />
@@ -15,9 +22,33 @@
           <a-step title="状态查看" description="hp-lite.exe -action status" />
           <a-step title="卸载" description="hp-lite.exe -action uninstall" />
         </a-steps>
+      </a-tab-pane>
+      <a-tab-pane class="info-panel" key="4" tab="X86命令行">
         <a-divider>临时运行</a-divider>
         <a-steps :current="-1" direction="vertical">
-          <a-step title="安装" :description="'hp-lite.exe -c '+text+''" />
+          <a-step title="安装" :description="' hp-lite-amd64 -c '+text+''" />
+        </a-steps>
+        <a-divider>后台运行</a-divider>
+        <a-steps :current="-1" direction="vertical">
+          <a-step title="安装" :description="'hp-lite-amd64 -c '+text+' -action install'" />
+          <a-step title="启动" description="hp-lite-amd64 -action start" />
+          <a-step title="停止" description="hp-lite-amd64 -action stop" />
+          <a-step title="状态查看" description="hp-lite-amd64 -action status" />
+          <a-step title="卸载" description="hp-lite-amd64 -action uninstall" />
+        </a-steps>
+      </a-tab-pane>
+      <a-tab-pane class="info-panel" key="5" tab="Arm64命令行">
+        <a-divider>临时运行</a-divider>
+        <a-steps :current="-1" direction="vertical">
+          <a-step title="安装" :description="'hp-lite-arm64 -c '+text+''" />
+        </a-steps>
+        <a-divider>后台运行</a-divider>
+        <a-steps :current="-1" direction="vertical">
+          <a-step title="安装" :description="'hp-lite-arm64 -c '+text+' -action install'" />
+          <a-step title="启动" description="hp-lite-arm64 -action start" />
+          <a-step title="停止" description="hp-lite-arm64 -action stop" />
+          <a-step title="状态查看" description="hp-lite-arm64 -action status" />
+          <a-step title="卸载" description="hp-lite-arm64 -action uninstall" />
         </a-steps>
       </a-tab-pane>
     </a-tabs>
@@ -53,6 +84,7 @@ export default {
   text-align: center;
 }
 .info-panel{
+  text-align: left;
   max-height: 35vh;
   overflow-y: scroll;
   /* Firefox：设置滚动条为极简样式 + 窄宽度 */
