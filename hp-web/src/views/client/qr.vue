@@ -12,7 +12,7 @@
       <a-tab-pane class="info-panel" key="3" tab="Win命令行">
         <a-divider>临时运行</a-divider>
         <a-steps :current="-1" direction="vertical">
-          <a-step title="安装" :description="'hp-lite.exe -c '+text+''" />
+          <a-step title="启动" :description="'hp-lite.exe -c '+text+''" />
         </a-steps>
         <a-divider>后台运行</a-divider>
         <a-steps :current="-1" direction="vertical">
@@ -26,7 +26,7 @@
       <a-tab-pane class="info-panel" key="4" tab="X86命令行">
         <a-divider>临时运行</a-divider>
         <a-steps :current="-1" direction="vertical">
-          <a-step title="安装" :description="' hp-lite-amd64 -c '+text+''" />
+          <a-step title="启动" :description="' hp-lite-amd64 -c '+text+''" />
         </a-steps>
         <a-divider>后台运行</a-divider>
         <a-steps :current="-1" direction="vertical">
@@ -40,7 +40,7 @@
       <a-tab-pane class="info-panel" key="5" tab="Arm64命令行">
         <a-divider>临时运行</a-divider>
         <a-steps :current="-1" direction="vertical">
-          <a-step title="安装" :description="'hp-lite-arm64 -c '+text+''" />
+          <a-step title="启动" :description="'hp-lite-arm64 -c '+text+''" />
         </a-steps>
         <a-divider>后台运行</a-divider>
         <a-steps :current="-1" direction="vertical">
