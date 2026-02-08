@@ -47,6 +47,15 @@ type UserConfigEntity struct {
 	Domain *string `json:"domain"`
 
 	/**
+	 * 防护类型、0 无防护(域名+外网端口都可访问)、1 全防护（域名防护+外网端口不可访问） 、2 半防护（域名防护+外网端口可访问-无防护）
+	 */
+	SafeType int `json:"safeType"`
+	/**
+	 * 防护配置ID
+	 */
+	SafeId int `json:"safeId"`
+
+	/**
 	 * 状态
 	 */
 	StatusMsg string `json:"statusMsg"`

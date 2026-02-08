@@ -46,6 +46,15 @@
         <a-form-item label="备注" name="desc"  :rules="[{ required: true, message: '必填备注'}]">
           <a-input v-model:value="formState.desc" placeholder="备注"/>
         </a-form-item>
+
+        <a-form-item label="防火墙规则" name="safeId" :rules="[{required: false,message: '防火墙规则比选，没有就去创建一个' }]">
+          <a-select
+              v-model:value="formState.safeId"
+              :options="safeOptions"
+          >
+          </a-select>
+        </a-form-item>
+
       </a-form>
       <template #footer>
         <a-button class="btn view" @click="addVisible=!addVisible">取消</a-button>
@@ -61,7 +70,9 @@ import {getReverse, removeReverse, saveReverse} from "../../api/client/reverse.j
 import {onMounted, reactive, ref} from "vue";
 import {notification} from "ant-design-vue";
 import {queryDomain} from "../../api/client/domain.js";
+import {querySafe} from "../../api/client/safe.js";
 
+const safeOptions = ref([]);
 
 const formTable = ref();
 const listData = ref();
@@ -81,7 +92,23 @@ const pagination = reactive({
   pageSize: 10,
 });
 
+
+const loadSafes=()=>{
+  querySafe({}).then(res => {
+    const result = res.data.data;
+    console.log(result)
+    safeOptions.value=[]
+    result.forEach(r => {
+      safeOptions.value.push({
+        value: r.id,
+        label: r.ruleName,
+      });
+    });
+  })
+}
+
 const loadData = () => {
+  loadSafes()
   loadDomains()
   dataLoading.value = true
   getReverse({
@@ -109,6 +136,7 @@ const edit = (item) => {
   formState.domain = item.domain
   formState.address = item.address
   formState.desc = item.desc
+  formState.safeId = item.safeId
   formState.id = item.id
   addVisible.value=true
 }

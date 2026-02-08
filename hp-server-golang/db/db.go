@@ -42,6 +42,7 @@ func init() {
 	DB.AutoMigrate(&entity.UserDomainEntity{})
 	DB.AutoMigrate(&entity.UserWafEntity{})
 	DB.AutoMigrate(&entity.UserFwdEntity{})
+	DB.AutoMigrate(&entity.UserSafeEntity{})
 	DB.AutoMigrate(&entity.UserReverseEntity{})
 }
 

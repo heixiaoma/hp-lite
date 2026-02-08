@@ -1,6 +1,8 @@
 package entity
 
-import "net/http/httputil"
+import (
+	"net/http"
+)
 
 // 开启OpenDomain 才行
 type UserReverseEntity struct {
@@ -16,6 +18,8 @@ type UserReverseEntity struct {
 
 	Domain *string `json:"domain"`
 
+	SafeId int `json:"safeId"`
+
 	Address *string `json:"address"`
 	/**
 	 * 备注
@@ -26,7 +30,7 @@ type UserReverseEntity struct {
 
 	UserDesc string `json:"userDesc"  gorm:"-"`
 
-	ReverseProxy *httputil.ReverseProxy `json:"-" gorm:"-"`
+	ReverseProxy http.Handler `json:"-" gorm:"-"`
 }
 
 func (UserReverseEntity) TableName() string {

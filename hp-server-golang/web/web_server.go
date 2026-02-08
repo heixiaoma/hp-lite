@@ -80,6 +80,12 @@ func StartWebServer(port int) {
 	mux.HandleFunc("/client/waf/list", wafController.List)
 	mux.HandleFunc("/client/waf/remove", wafController.Del)
 
+	safeController := controller.SafeController{}
+	mux.HandleFunc("/client/safe/save", safeController.Add)
+	mux.HandleFunc("/client/safe/list", safeController.List)
+	mux.HandleFunc("/client/safe/remove", safeController.Del)
+	mux.HandleFunc("/client/safe/query", safeController.Query)
+
 	reverseController := controller.ReverseController{}
 	mux.HandleFunc("/client/reverse/save", reverseController.Add)
 	mux.HandleFunc("/client/reverse/list", reverseController.List)

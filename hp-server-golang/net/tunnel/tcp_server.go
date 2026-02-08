@@ -8,6 +8,7 @@ import (
 	"hp-server-lib/util"
 	"net"
 	"strconv"
+	"strings"
 )
 
 type TcpServer struct {
@@ -70,6 +71,12 @@ func (tcpServer *TcpServer) handler(conn net.Conn) {
 		}()
 
 		ip := util.GetClientIP(conn)
+
+		//检查防护模式，如果是1 就是全防，拒绝非127.0.0.1得地址
+		if tcpServer.userInfo.SafeType == 1 && !strings.EqualFold(ip, "127.0.0.1") {
+			return
+		}
+
 		if len(tcpServer.userInfo.AllowedIps) > 0 {
 			ips := tcpServer.userInfo.AllowedIps
 			flag := true

@@ -16,6 +16,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/corazawaf/coraza/v3"
+	"github.com/corazawaf/coraza/v3/debuglog"
+	txhttp "github.com/corazawaf/coraza/v3/http"
+	"github.com/corazawaf/coraza/v3/types"
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +59,23 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 					InsecureSkipVerify: true,
 				},
 			}
-			reverse.ReverseProxy = proxy
+
+			rule := service.GetRule(reverse.SafeId)
+			if rule != "" {
+				wafConfig := coraza.NewWAFConfig().WithDebugLogger(debuglog.Default()).WithErrorCallback(func(rule types.MatchedRule) {
+					msg := rule.ErrorLog()
+					log.Errorf("[防火墙拦截][%s] %s\n", rule.Rule().Severity(), msg)
+				}).WithDirectives(rule)
+				waf, err := coraza.NewWAF(wafConfig)
+				if err != nil {
+					log.Error("防火墙错误：" + err.Error())
+					reverse.ReverseProxy = proxy
+				} else {
+					reverse.ReverseProxy = txhttp.WrapHandler(waf, proxy)
+				}
+			} else {
+				reverse.ReverseProxy = proxy
+			}
 		}
 
 		log.Infof("来源: %s 访问地址: http://%s%s", clientIP, host, r.URL.Path)
@@ -118,7 +139,27 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				InsecureSkipVerify: true,
 			},
 		}
-		info.ReverseProxy = proxy
+		//检查是否开启了防火墙
+		if info.SafeType == 0 {
+			info.ReverseProxy = proxy
+		} else {
+			rule := service.GetRule(info.SafeId)
+			if rule != "" {
+				wafConfig := coraza.NewWAFConfig().WithDebugLogger(debuglog.Default()).WithErrorCallback(func(rule types.MatchedRule) {
+					msg := rule.ErrorLog()
+					log.Errorf("[防火墙拦截][%s] %s\n", rule.Rule().Severity(), msg)
+				}).WithDirectives(rule)
+				waf, err := coraza.NewWAF(wafConfig)
+				if err != nil {
+					log.Error("防火墙错误：" + err.Error())
+					info.ReverseProxy = proxy
+				} else {
+					info.ReverseProxy = txhttp.WrapHandler(waf, proxy)
+				}
+			} else {
+				info.ReverseProxy = proxy
+			}
+		}
 	}
 	log.Infof("来源: %s 访问地址: http://%s%s", clientIP, host, r.URL.Path)
 	info.ReverseProxy.ServeHTTP(w, r)

@@ -46,6 +46,8 @@ func (receiver *HpService) loadUserConfigInfo(configKey string) *bean.UserConfig
 		RemotePort:   *userQuery.RemotePort,
 		Ip:           userQuery.ServerIp,
 		TunType:      userQuery.TunType,
+		SafeType:     userQuery.SafeType,
+		SafeId:       userQuery.SafeId,
 		MaxConn:      -1,
 	}
 	//防火墙参数配置
