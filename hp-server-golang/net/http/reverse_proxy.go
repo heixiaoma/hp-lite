@@ -131,6 +131,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		proxy := httputil.NewSingleHostReverseProxy(target)
+		proxy.ErrorHandler = func(writer http.ResponseWriter, request *http.Request, err error) {
+			log.Errorf("反向代理错误：%s", err.Error())
+			Error(w, DeviceNotFound(), http.StatusInternalServerError)
+		}
 		proxy.Transport = &http.Transport{
 			MaxIdleConns:        1000,
 			MaxIdleConnsPerHost: 500,
