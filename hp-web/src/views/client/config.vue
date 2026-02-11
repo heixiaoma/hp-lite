@@ -175,11 +175,31 @@
           <a-form-item label="&nbsp;绑定访问域名&nbsp;&nbsp;" name="domain" v-if="showInput.domain">
             <a-select
                 v-model:value="formState.domain"
-                show-search
                 placeholder="选择一个域名"
                 :options="domainOptions"
             ></a-select>
           </a-form-item>
+
+
+          <a-form-item label="防火墙模式"  name="safeType" :rules="[{required: false, message: 'Please input your username!' }]" v-if="showInput.domain&&formState.domain">
+            <a-select
+                v-model:value="formState.safeType"
+            >
+              <a-select-option :value="0">无防护 (域名+外网端口都可访问)</a-select-option>
+              <a-select-option :value="1">全防护（域名防护+外网端口不可访问）</a-select-option>
+              <a-select-option :value="2">半防护（域名防护+外网端口可访问但无防护）</a-select-option>
+            </a-select>
+          </a-form-item>
+
+          <a-form-item label="防火墙规则" name="safeId" :rules="[{required: showInput.domain&&formState.domain&&formState.safeType!==0,message: '防火墙规则比选，没有就去创建一个' }]" v-if="showInput.domain&&formState.domain&&formState.safeType!==0">
+            <a-select
+                v-model:value="formState.safeId"
+                placeholder="选择一个规则"
+                :options="safeOptions"
+            >
+            </a-select>
+          </a-form-item>
+
 
           <a-divider>其他选项配置</a-divider>
 
@@ -188,8 +208,8 @@
             <a-select
                 v-model:value="formState.status"
             >
-              <a-select-option value="0">有效</a-select-option>
-              <a-select-option value="1">无效</a-select-option>
+              <a-select-option :value="0">有效</a-select-option>
+              <a-select-option :value="1">无效</a-select-option>
             </a-select>
           </a-form-item>
 
@@ -221,8 +241,10 @@ import {removeConfig, getConfigList, getDeviceKey, addConfig, refConfig, changeS
 import {useRoute} from 'vue-router'
 import userInfo from "../../data/userInfo";
 import {queryDomain} from "../../api/client/domain.js";
+import {querySafe} from "../../api/client/safe.js";
 
 const domainOptions = ref([]);
+const safeOptions = ref([]);
 
 const route = useRoute()
 const pagination = reactive({
@@ -252,7 +274,9 @@ const formState = reactive({
   domain: undefined,
   localAddress: "",
   proxyVersion: "NONE",
-  status: '0',
+  status: 0,
+  safeType: 0,
+  safeId: 0,
   tunType:"TCP",
 })
 
@@ -291,6 +315,19 @@ const loadDomains=()=>{
       });
   })
 }
+const loadSafes=()=>{
+  querySafe({}).then(res => {
+      const result = res.data.data;
+      console.log(result)
+      safeOptions.value=[]
+      result.forEach(r => {
+        safeOptions.value.push({
+          value: r.id,
+          label: r.ruleName,
+        });
+      });
+  })
+}
 
 const loadDeviceKey = () => {
   getDeviceKey().then(res => {
@@ -325,6 +362,7 @@ const userKeyByUserInfo = (deviceKey) => {
 
 const loadData = () => {
   loadDomains()
+  loadSafes()
   currentConfigList.value = []
   configLoading.value = true
   getConfigList(pagination).then(res => {
@@ -364,8 +402,11 @@ const editConfigData = (item) => {
     item.tunType="QUIC"
   }
   formState.tunType = item.tunType
-  formState.status = item.status+""
+  formState.status = item.status
+  formState.safeId = item.safeId
+  formState.safeType = item.safeType
   addConfigVisible.value = true;
+  console.log(formState)
 }
 const refConfigData = (item) => {
   configLoading.value = true
@@ -390,12 +431,13 @@ const addConfigModal = () => {
   formState.proxyVersion = "NONE"
   formState.tunType='TCP'
   formState.status = "0"
+  formState.safeType = 0
+  formState.safeId = 0
   addConfigVisible.value = true;
 };
 const addConfigOk = () => {
   formTable.value.validate().then(res => {
     console.log("添加配置表单", formState)
-    formState.status=parseInt(formState.status)
     addConfig(
         {
           packageId: route.query.packageId,
@@ -457,6 +499,17 @@ const openAddress = (item) => {
     if (item.domain){
     address.push("http://"+item.domain)
     address.push("https://"+item.domain)
+      switch (item.safeType){
+        case 0:
+          address.push("无防护")
+          break;
+        case 1:
+          address.push("全防护")
+          break;
+        case 2:
+          address.push("半防护")
+          break;
+      }
     }
   }
 
