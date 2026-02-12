@@ -6,53 +6,9 @@
       <a-table :loading="dataLoading" :columns="columns" rowKey="id" :data-source="listData"
                :locale="{emptyText: '暂无数据,添加一个试试看看'}"
                :pagination="pagination"
-               @change="handleTableChange"
-               :scroll="{ x: 'max-content' }">
+               @change="handleTableChange">
 
         <template #bodyCell="{ column ,record}">
-          <template v-if="column.key === 'allowedIps'">
-            <template v-if="column.key === 'allowedIps'">
-              <div v-if="record.allowedIps.length>0" v-for="(item,index) in record.allowedIps">
-                <a-tag color="#87d068">{{item}}</a-tag>
-              </div>
-              <div v-else>
-                <a-tag color="#87d068">未启用</a-tag>
-              </div>
-            </template>
-          </template>
-          <template v-if="column.key === 'blockedIps'">
-            <div v-if="record.blockedIps.length>0" v-for="(item,index) in record.blockedIps">
-              <a-tag color="#f50">{{item}}</a-tag>
-            </div>
-            <div v-else>
-              <a-tag color="#f50">未启用</a-tag>
-            </div>
-          </template>
-          <template v-if="column.key === 'rateLimit'">
-            <div v-if="record.rateLimit<=0">
-              不限制
-            </div>
-            <div v-else>
-              {{record.rateLimit}}
-            </div>
-          </template>
-          <template v-if="column.key === 'inLimit'">
-            <div v-if="record.inLimit<=0">
-              不限制
-            </div>
-            <div v-else>
-              {{record.inLimit}}
-            </div>
-          </template>
-          <template v-if="column.key === 'outLimit'">
-            <div v-if="record.outLimit<=0">
-              不限制
-            </div>
-            <div v-else>
-              {{record.outLimit}}
-            </div>
-          </template>
-
           <template v-if="column.key === 'user'">
             <div v-if="!record.userDesc&&!record.username">
               自用
@@ -81,7 +37,6 @@
         <a-form-item label="规则" name="rule" :rules="[{ required: true, message: '规则'}]">
           <div class="monaco-container" style="height: 400px; border: 1px solid #e5e7eb;">
           <MonacoEditor
-              v-if="monacoLoaded"
               v-model:value="formState.rule"
               language="seclang"
               :options="editorOptions"
@@ -112,8 +67,6 @@ import * as monaco from 'monaco-editor'
 import 'monaco-editor/min/vs/editor/editor.main.css'
 
 
-const monacoLoaded = ref(false)
-
 // 编辑器配置
 const editorOptions = {
   fontSize: 14,
@@ -139,44 +92,94 @@ onMounted(async () => {
 
     // 3. 重构 tokenizer 规则（核心：避开 rx 解析陷阱）
     monaco.languages.setMonarchTokensProvider('seclang', {
+      defaultToken: 'text',
+
+      keywords: [
+        'SecRule', 'SecAction', 'SecMarker', 'SecRequestBodyAccess',
+        'SecResponseBodyAccess', 'SecRuleEngine', 'SecDebugLogLevel',
+        'SecAuditEngine', 'SecAuditLogParts', 'SecAuditLog',
+        'SecDataDir', 'SecTmpDir', 'SecPcreMatchLimit'
+      ],
+
+      actions: [
+        'id', 'phase', 't', 'msg', 'log', 'nolog', 'pass', 'deny',
+        'allow', 'status', 'setvar', 'expirevar', 'chain',
+        'skip', 'skipAfter', 'capture', 'ctl', 'severity',
+        'tag', 'ver', 'rev', 'accuracy', 'maturity'
+      ],
+
+      operators: [
+        '@rx', '@pm', '@pmFromFile', '@eq', '@ne', '@gt', '@ge',
+        '@lt', '@le', '@streq', '@contains', '@beginsWith',
+        '@endsWith', '@detectSQLi', '@detectXSS', '@validateByteRange',
+        '@validateUrlEncoding', '@validateUtf8Encoding',
+        '@within'
+      ],
+
+      variables: [
+        'ARGS', 'ARGS_NAMES', 'REQUEST_URI', 'REQUEST_METHOD',
+        'REQUEST_HEADERS', 'REQUEST_HEADERS_NAMES',
+        'REQUEST_BODY', 'REQUEST_COOKIES',
+        'REQUEST_COOKIES_NAMES',
+        'RESPONSE_BODY', 'RESPONSE_STATUS',
+        'TX', 'IP', 'SESSION', 'GLOBAL',
+        'FILES', 'FILES_TMPNAMES', 'FILES_NAMES',
+        'MATCHED_VAR', 'MATCHED_VARS',
+        'MATCHED_VAR_NAME', 'MATCHED_VARS_NAMES'
+      ],
+
       tokenizer: {
         root: [
-          // ------------ 1. 注释（最高优先级）------------
+          // ---------------- 注释 ----------------
           [/#.*/, 'comment'],
 
-          // ------------ 2. 核心指令（SecRule/SecAction）------------
-          [/SecRule\b/, 'keyword'],
-          [/SecAction\b/, 'keyword'],
+          // ---------------- 核心指令 ----------------
+          [/\b(SecRule|SecAction|SecMarker)\b/, 'keyword'],
 
-          // ------------ 3. OWASP CRS 选项关键字（id:/phase: 等）------------
-          [/id:/, 'attribute'],
-          [/phase:/, 'attribute'],
-          [/t:/, 'attribute'],
-          [/msg:/, 'attribute'],
-          [/log:/, 'attribute'],
-          [/nolog:/, 'attribute'],
-          [/pass:/, 'attribute'],
-          [/deny:/, 'attribute'],
-          [/allow:/, 'attribute'],
-          [/status:/, 'attribute'],
-          [/setvar:/, 'attribute'],
+          // ---------------- 变量集合 ----------------
+          [/\b(ARGS|TX|IP|SESSION|GLOBAL|REQUEST_\w+|RESPONSE_\w+|FILES\w*)\b/, 'variable'],
 
+          // 带子键的集合 ARGS:username
+          [/\b(ARGS|TX|IP|SESSION|GLOBAL|REQUEST_\w+|FILES\w*):[A-Za-z0-9_\-]+/, 'variable'],
 
+          // ---------------- 操作符 ----------------
+          [/@[a-zA-Z]+/, 'operator'],
 
-          // ------------ 5. 字符串（单/双引号）------------
-          [/"[^"]*"/, 'string'],
-          [/'[^']*'/, 'string'],
+          // ---------------- Action key ----------------
+          [/\b(id|phase|t|msg|log|nolog|pass|deny|allow|status|setvar|expirevar|chain|skip|skipAfter|capture|ctl|severity|tag|ver|rev|accuracy|maturity)\b(?=:)/, 'attribute'],
 
-          // ------------ 6. 正则内容（@rx 后的内容）------------
-          [/\^[^,]+/, 'regexp'],  // 匹配 @rx 后的正则（以^开头，到逗号结束）
+          // ---------------- 数字 ----------------
+          [/\b\d+\b/, 'number'],
 
-          // ------------ 7. 标识符（REQUEST_URI 等）------------
-          [/REQUEST_\w+/, 'variable'],
-          [/POST\b/, 'variable'],
-          [/GET\b/, 'variable']
+          // ---------------- 正则内容 ----------------
+          [/\/.*?\//, 'regexp'],      // /regex/
+          [/\^.*$/, 'regexp'],       // ^regex
+
+          // ---------------- 字符串 ----------------
+          [/"/, { token: 'string.quote', next: '@string_double' }],
+          [/'/, { token: 'string.quote', next: '@string_single' }],
+
+          // ---------------- 运算符 ----------------
+          [/[!~<>]=?/, 'operator'],
+          [/[=|&]/, 'operator'],
+
+          // ---------------- 分隔符 ----------------
+          [/[(),]/, 'delimiter']
+        ],
+
+        string_double: [
+          [/[^\\"]+/, 'string'],
+          [/\\./, 'string.escape'],
+          [/"/, { token: 'string.quote', next: '@pop' }]
+        ],
+
+        string_single: [
+          [/[^\\']+/, 'string'],
+          [/\\./, 'string.escape'],
+          [/'/, { token: 'string.quote', next: '@pop' }]
         ]
       },
-      // 简化注释配置，避免额外校验
+
       comments: {
         lineComment: '#'
       }
@@ -201,13 +204,10 @@ onMounted(async () => {
         'editor.foreground': '#D4D4D4'
       }
     })
-
     // 5. 强制应用主题和语言
     monaco.editor.setTheme('seclang-theme')
-    monacoLoaded.value = true
   } catch (e) {
     console.error('Monaco 初始化失败：', e)
-    monacoLoaded.value = true
   }
 })
 
@@ -273,7 +273,7 @@ const edit = (itemOld) => {
 const columns = [
   {title: '编号', dataIndex: 'id', key: 'id'},
   {title: '规则名字', dataIndex: 'ruleName', key: 'ruleName'},
-  {title: '规则内容', dataIndex: 'rule', key: 'rule'},
+  {title: '规则内容', dataIndex: 'rule', key: 'rule',ellipsis: true},
   {title: '归属', dataIndex: 'user', key: 'user'},
   {title: '操作', key: 'action'},
 ];
