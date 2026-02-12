@@ -72,14 +72,22 @@
   </div>
 
   <div>
-    <a-modal  v-model:visible="addVisible" title="添加">
+    <a-modal  v-model:visible="addVisible" title="添加" width="80%">
       <div class="config-info">
       <a-form :model="formState" ref="formTable" :layout="'vertical'" >
         <a-form-item label="规则名字" name="ruleName"  :rules="[{ required: true, message: '规则名字'}]">
           <a-input style="width: 90%" v-model:value="formState.ruleName" placeholder="规则名字"/>
         </a-form-item>
         <a-form-item label="规则" name="rule" :rules="[{ required: true, message: '规则'}]">
-          <a-textarea style="width: 90%" v-model:value="formState.rule" placeholder="ModSecurity SecLang 规则集，或者 OWASP 核心规则集 v4"/>
+          <div class="monaco-container" style="height: 400px; border: 1px solid #e5e7eb;">
+          <MonacoEditor
+              v-if="monacoLoaded"
+              v-model:value="formState.rule"
+              language="seclang"
+              :options="editorOptions"
+              @mounted="handleEditorMounted"
+          />
+          </div>
         </a-form-item>
       </a-form>
       </div>
@@ -98,6 +106,121 @@
 import {getSafe, removeSafe, saveSafe} from "../../api/client/safe";
 import {onMounted, reactive, ref} from "vue";
 import {notification} from "ant-design-vue";
+
+import MonacoEditor from 'monaco-editor-vue3'
+import * as monaco from 'monaco-editor'
+import 'monaco-editor/min/vs/editor/editor.main.css'
+
+
+const monacoLoaded = ref(false)
+
+// 编辑器配置
+const editorOptions = {
+  fontSize: 14,
+  lineNumbers: 'on',
+  lineWrapping: true,
+  tabSize: 2,
+  minimap: { enabled: true },
+  scrollBeyondLastLine: false,
+  placeholder: '请输入 ModSecurity SecLang 规则（兼容 OWASP CRS v4）...',
+  theme: 'seclang-theme'
+}
+
+onMounted(async () => {
+  try {
+    // 1. 先注销已存在的 seclang 语言（避免重复注册）
+    const existingLang = monaco.languages.getLanguages().find(l => l.id === 'seclang')
+    if (existingLang) {
+      monaco.languages.unregister(existingLang.id)
+    }
+
+    // 2. 注册 seclang 语言（极简配置，避免解析器校验）
+    monaco.languages.register({ id: 'seclang' })
+
+    // 3. 重构 tokenizer 规则（核心：避开 rx 解析陷阱）
+    monaco.languages.setMonarchTokensProvider('seclang', {
+      tokenizer: {
+        root: [
+          // ------------ 1. 注释（最高优先级）------------
+          [/#.*/, 'comment'],
+
+          // ------------ 2. 核心指令（SecRule/SecAction）------------
+          [/SecRule\b/, 'keyword'],
+          [/SecAction\b/, 'keyword'],
+
+          // ------------ 3. OWASP CRS 选项关键字（id:/phase: 等）------------
+          [/id:/, 'attribute'],
+          [/phase:/, 'attribute'],
+          [/t:/, 'attribute'],
+          [/msg:/, 'attribute'],
+          [/log:/, 'attribute'],
+          [/nolog:/, 'attribute'],
+          [/pass:/, 'attribute'],
+          [/deny:/, 'attribute'],
+          [/allow:/, 'attribute'],
+          [/status:/, 'attribute'],
+          [/setvar:/, 'attribute'],
+
+
+
+          // ------------ 5. 字符串（单/双引号）------------
+          [/"[^"]*"/, 'string'],
+          [/'[^']*'/, 'string'],
+
+          // ------------ 6. 正则内容（@rx 后的内容）------------
+          [/\^[^,]+/, 'regexp'],  // 匹配 @rx 后的正则（以^开头，到逗号结束）
+
+          // ------------ 7. 标识符（REQUEST_URI 等）------------
+          [/REQUEST_\w+/, 'variable'],
+          [/POST\b/, 'variable'],
+          [/GET\b/, 'variable']
+        ]
+      },
+      // 简化注释配置，避免额外校验
+      comments: {
+        lineComment: '#'
+      }
+    })
+
+    // 4. 注册主题（仅用基础 token 类型，无自定义属性）
+    monaco.editor.defineTheme('seclang-theme', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '808080', fontStyle: 'italic' },
+        { token: 'keyword', foreground: '569CD6', fontStyle: 'bold' },
+        { token: 'attribute', foreground: '9CDCFE' },
+        { token: 'type', foreground: 'DCDCAA' },
+        { token: 'regexp', foreground: 'B5CEA8' },
+        { token: 'string', foreground: 'CE9178' },
+        { token: 'variable', foreground: '9CDCFE' }
+      ],
+      colors: {
+        'editor.background': '#1E1E1E',
+        'editor.lineHighlightBackground': '#2A2A2A',
+        'editor.foreground': '#D4D4D4'
+      }
+    })
+
+    // 5. 强制应用主题和语言
+    monaco.editor.setTheme('seclang-theme')
+    monacoLoaded.value = true
+  } catch (e) {
+    console.error('Monaco 初始化失败：', e)
+    monacoLoaded.value = true
+  }
+})
+
+// 编辑器挂载后兜底（确保语言生效）
+const handleEditorMounted = (editor) => {
+  // 直接设置模型语言，跳过解析器的规则校验
+  const model = editor.getModel()
+  if (model) {
+    monaco.editor.setModelLanguage(model, 'seclang')
+  }
+  monaco.editor.setTheme('seclang-theme')
+  console.log('已注册语言：', monaco.languages.getLanguages().map(l => l.id))
+}
 
 const listData = ref();
 const formTable = ref();
