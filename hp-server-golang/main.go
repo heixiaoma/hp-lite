@@ -105,7 +105,8 @@ func (p *program) starServer() {
 	if config.ConfigData.Tunnel.OpenDomain {
 		go http.StartHttpServer()
 		go http.StartHttpsServer()
-		//缓存域名配置
+		//缓存域名配置、初始化正向代理服务
+		go service.InitForward()
 		go service.InitDomainCache()
 		go service.InitReverseECache()
 		//acme挑战
