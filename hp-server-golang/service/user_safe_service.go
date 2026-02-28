@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/corazawaf/coraza/v3"
 	"hp-server-lib/bean"
 	"hp-server-lib/db"
 	"hp-server-lib/entity"
@@ -65,6 +66,11 @@ type UserSafeService struct {
 }
 
 func (receiver *UserSafeService) AddData(userId int, custom entity.UserSafeEntity) error {
+	wafConfig := coraza.NewWAFConfig().WithDirectives(custom.Rule)
+	_, err := coraza.NewWAF(wafConfig)
+	if err != nil {
+		return err
+	}
 	custom.UserId = userId
 	db.DB.Save(&custom)
 	safeRule.Delete(custom.Id)

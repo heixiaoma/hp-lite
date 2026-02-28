@@ -125,7 +125,7 @@ func (h *HttpFwdServer) Start(close func()) bool {
 		Handler: http.HandlerFunc(h.handler),
 	}
 	go func() {
-		log.Infof("Proxy server started on %s", addr)
+		log.Infof("Http代理服务器启动在 %s", addr)
 		if err := h.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Error(err)
 		}
