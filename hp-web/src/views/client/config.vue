@@ -13,7 +13,7 @@
 
         <template v-if="column.key === 'server'">
           <div v-for="(item,index) in openAddress(record)">
-            <a-tag color="pink">{{item}}</a-tag>
+            <a-tag style="margin-bottom: 2px" color="pink">{{item}}</a-tag>
           </div>
         </template>
 
