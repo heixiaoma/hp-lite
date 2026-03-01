@@ -64,11 +64,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			if rule != "" {
 				wafConfig := coraza.NewWAFConfig().WithDebugLogger(debuglog.Default()).WithErrorCallback(func(rule types.MatchedRule) {
 					msg := rule.ErrorLog()
-					log.Errorf("[防火墙拦截][%s] %s\n", rule.Rule().Severity(), msg)
+					log.Errorf("[反向代理防火墙拦截][%s] %s\n", rule.Rule().Severity(), msg)
 				}).WithDirectives(rule)
 				waf, err := coraza.NewWAF(wafConfig)
 				if err != nil {
-					log.Error("防火墙错误：" + err.Error())
+					log.Error("反向代理防火墙拦截错误：" + err.Error())
 					reverse.ReverseProxy = proxy
 				} else {
 					reverse.ReverseProxy = txhttp.WrapHandler(waf, proxy)
@@ -151,11 +151,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			if rule != "" {
 				wafConfig := coraza.NewWAFConfig().WithDebugLogger(debuglog.Default()).WithErrorCallback(func(rule types.MatchedRule) {
 					msg := rule.ErrorLog()
-					log.Errorf("[防火墙拦截][%s] %s\n", rule.Rule().Severity(), msg)
+					log.Errorf("[穿透代理防火墙拦截][%s] %s\n", rule.Rule().Severity(), msg)
 				}).WithDirectives(rule)
 				waf, err := coraza.NewWAF(wafConfig)
 				if err != nil {
-					log.Error("防火墙错误：" + err.Error())
+					log.Error("穿透代理防火墙拦截错误：" + err.Error())
 					info.ReverseProxy = proxy
 				} else {
 					info.ReverseProxy = txhttp.WrapHandler(waf, proxy)
