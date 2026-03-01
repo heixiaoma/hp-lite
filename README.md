@@ -3,7 +3,7 @@
 </p>
 <p align="center">
     <a >
-        <img src="https://img.shields.io/badge/hp_lite-5.0-red.svg?style=flat" />
+        <img src="https://img.shields.io/badge/hp_lite-6.0-red.svg?style=flat" />
     </a>
    <a >
         <img src="https://img.shields.io/badge/QQ群-1065301527-blue.svg?style=flat" />
