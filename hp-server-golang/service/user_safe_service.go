@@ -6,6 +6,8 @@ import (
 	"hp-server-lib/entity"
 	"sync"
 	"time"
+
+	"github.com/corazawaf/coraza/v3"
 )
 
 var (
@@ -65,9 +67,36 @@ type UserSafeService struct {
 }
 
 func (receiver *UserSafeService) AddData(userId int, custom entity.UserSafeEntity) error {
+	wafConfig := coraza.NewWAFConfig().WithDirectives(custom.Rule)
+	_, err := coraza.NewWAF(wafConfig)
+	if err != nil {
+		return err
+	}
 	custom.UserId = userId
 	db.DB.Save(&custom)
-	safeRule.Delete(custom.Id)
+	safeRule.Delete(*custom.Id)
+	//查找使用了当前配置得穿透，进行重置
+	//重置反向代理
+	DOMAIN_REVERSE_INFO.Range(func(key, value any) bool {
+		reverse := value.(*entity.UserReverseEntity)
+		if reverse != nil {
+			if reverse.SafeId == *custom.Id {
+				reverse.ReverseProxy = nil
+			}
+		}
+		return true
+	})
+	//重置穿透代理
+	DOMAIN_HP_INFO.Range(func(key, value any) bool {
+		reverse := value.(*bean.UserConfigInfo)
+		if reverse != nil {
+			if reverse.SafeId == *custom.Id {
+				reverse.ReverseProxy = nil
+			}
+		}
+		return true
+
+	})
 	return nil
 }
 

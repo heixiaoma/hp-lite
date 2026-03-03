@@ -39,6 +39,7 @@ func (s *SocksServer) Start(close func()) bool {
 	s.listener = listener
 	go func() {
 		defer close()
+		log.Infof("Socks5代理服务器启动在 %s", s.port)
 		if err := s.Serve(s.listener); err != nil {
 			if opErr, ok := err.(*net.OpError); ok && opErr.Err.Error() == "use of closed network connection" {
 				// 正常关闭

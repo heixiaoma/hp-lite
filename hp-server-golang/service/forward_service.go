@@ -14,8 +14,32 @@ var FORWARD_CACHE = sync.Map{}
 type ForwardService struct {
 }
 
-func (receiver *ForwardService) AddData(custom entity.UserFwdEntity) error {
+func InitForward() {
+	page := 1
+	pageSize := 100
+	for {
+		var results []*entity.UserFwdEntity
+		tx := db.DB.Model(&entity.UserFwdEntity{}).
+			Offset((page - 1) * pageSize).
+			Limit(pageSize).
+			Find(&results)
+		if tx.Error != nil {
+			break
+		}
+		// 如果本页没有数据，说明结束
+		if len(results) == 0 {
+			break
+		}
+		// 放入缓存
+		for _, r := range results {
+			start(*r)
+		}
+		// 下一页
+		page++
+	}
+}
 
+func (receiver *ForwardService) AddData(custom entity.UserFwdEntity) error {
 	if custom.Id != nil {
 		value, ok := FORWARD_CACHE.Load(*custom.Id)
 		if ok {
@@ -23,12 +47,15 @@ func (receiver *ForwardService) AddData(custom entity.UserFwdEntity) error {
 			proxy.Stop()
 		}
 	}
-
 	tx := db.DB.Save(&custom)
 	if tx.Error != nil {
 		return tx.Error
 	}
+	start(custom)
+	return nil
+}
 
+func start(custom entity.UserFwdEntity) {
 	if *custom.Type == "1" && *custom.Status == "1" {
 		server := ext.NewHttpFwdServer(*custom.Port, *custom.User, *custom.Pwd)
 		start := server.Start(func() {
@@ -47,7 +74,6 @@ func (receiver *ForwardService) AddData(custom entity.UserFwdEntity) error {
 			FORWARD_CACHE.Store(*custom.Id, server)
 		}
 	}
-	return nil
 }
 
 func (receiver *ForwardService) ListData(userId int, page int, pageSize int) *bean.ResPage {

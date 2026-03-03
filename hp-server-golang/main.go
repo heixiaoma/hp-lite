@@ -102,6 +102,8 @@ func (p *program) starServer() {
 	go hpTcpServer.StartServer(config.ConfigData.Tunnel.Port)
 	//管理后台
 	go web.StartWebServer(config.ConfigData.Admin.Port)
+	//初始化正向代理服务
+	go service.InitForward()
 	if config.ConfigData.Tunnel.OpenDomain {
 		go http.StartHttpServer()
 		go http.StartHttpsServer()
