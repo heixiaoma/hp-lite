@@ -17,3 +17,5 @@
 * 技巧
     * [操作流程](zh-cn/skill/index.md)
 
+* 隐私政策
+    * [隐私政策](zh-cn/pp/index.md)

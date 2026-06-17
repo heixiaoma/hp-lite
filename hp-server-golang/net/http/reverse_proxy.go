@@ -170,6 +170,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func Error(w http.ResponseWriter, error string, code int) {
+	defer func() {
+		if err := recover(); err != nil {
+			// 连接已关闭，忽略
+		}
+	}()
 	h := w.Header()
 
 	// Delete the Content-Length header, which might be for some other content.
@@ -187,4 +192,5 @@ func Error(w http.ResponseWriter, error string, code int) {
 	h.Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(code)
 	fmt.Fprintln(w, error)
+
 }
