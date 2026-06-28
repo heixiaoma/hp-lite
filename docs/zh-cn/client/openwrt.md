@@ -4,10 +4,11 @@
 > 这里讲解docker方式使用,和IPK安装包方式，如果都不支持 请参考linux 方式进行部署
 
 ### IPK文件方式
-> hp-lite6.0 ipk文件由群友制作
+> hp-lite6.0 ipk文件由两位群友制作
 * 哔站演示地址：https://b23.tv/0Xzc7fP
-* IPK文件下载地址：https://github.com/zyh-htu/luci-app-hp-lite/releases
-> 请确保自己的openwrt的CPU架构下载对应的包，目前只支持 arm64和x86架构的IPK文件
+* IPK文件下载地址1：https://github.com/zyh-htu/luci-app-hp-lite/releases
+* IPK文件下载地址2：https://github.com/liuyi-htu/luci-app-hp-lite/releases/
+> 请确保自己的openwrt的CPU架构下载对应的包，目前只支持 arm64和x86架构的IPK文件、感谢群友的分享提供。有问题可以在群里沟通交流
 
 
 ![img4.png](../../tech/openwrt/img4.png)
