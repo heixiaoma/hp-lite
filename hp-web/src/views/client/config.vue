@@ -430,7 +430,7 @@ const addConfigModal = () => {
   formState.domain = undefined
   formState.proxyVersion = "NONE"
   formState.tunType='TCP'
-  formState.status = "0"
+  formState.status = 0
   formState.safeType = 0
   formState.safeId = 0
   addConfigVisible.value = true;
