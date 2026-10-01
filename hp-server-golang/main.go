@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	daemon "github.com/kardianos/service"
 	"gopkg.in/yaml.v3"
@@ -31,7 +32,15 @@ type program struct {
 	// closers 收集所有可关闭的服务，Stop 时按顺序释放
 	closers []namedCloser
 	wg      sync.WaitGroup
+	// stopOnce 保证 Stop 只执行一次：系统服务/信号可能重复触发 Stop，
+	// 重复执行会 panic(close of closed channel)，导致 -action stop 直接失败
+	stopOnce sync.Once
 }
+
+// stopWaitTimeout 等待业务 goroutine 退出的最长时长。
+// 一旦某个 server 收不到退出信号，Stop 会永久卡在 WaitGroup 上，
+// 系统服务就会一直停在"正在停止"，随后 start/stop/status/uninstall 全部超时失败。
+const stopWaitTimeout = 5 * time.Second
 
 // namedCloser 描述一个可关闭的资源（名字用于日志，Close 用于释放）。
 type namedCloser struct {
@@ -52,16 +61,34 @@ func (p *program) Start(s daemon.Service) error {
 
 // Stop 服务停止入口（实现接口）
 func (p *program) Stop(s daemon.Service) error {
-	if daemon.Interactive() {
-		logger.Info("服务以交互模式停止")
-	} else {
-		logger.Info("服务正在停止")
-	}
-	// 收尾：先按注册顺序反向关闭所有服务，再通知 run 退出
-	p.shutdown()
-	close(p.stopChan) // 发送退出信号
-	p.wg.Wait()
+	p.stopOnce.Do(func() {
+		if daemon.Interactive() {
+			logger.Info("服务以交互模式停止")
+		} else {
+			logger.Info("服务正在停止")
+		}
+		// 收尾：先按注册顺序反向关闭所有服务，再通知 run 退出
+		p.shutdown()
+		close(p.stopChan) // 发送退出信号
+		p.waitDone()
+	})
 	return nil
+}
+
+// waitDone 带超时地等待业务 goroutine 退出，超时后不再阻塞，
+// 避免 Stop 永久卡住使 -action stop/start/uninstall 全部失效
+func (p *program) waitDone() {
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		p.wg.Wait()
+	}()
+	select {
+	case <-done:
+		logger.Info("所有服务已正常退出")
+	case <-time.After(stopWaitTimeout):
+		logger.Errorf("等待服务退出超时（%v），强制结束停止流程", stopWaitTimeout)
+	}
 }
 
 // shutdown 统一关闭所有 server（先关 listener，再让 goroutine 退出）
@@ -161,8 +188,9 @@ func (p *program) starServer() {
 		defer p.wg.Done()
 		web.StartWebServer(config.ConfigData.Admin.Port)
 	}()
-	// web.StartWebServer 当前用 http.ListenAndServe，没有 server 句柄，无法在此处关闭。
-	// 如果后续想干净停服，可改为 server.ListenAndServe + 存 *http.Server。
+	// 管理后台必须注册关闭方法：ListenAndServe 会一直阻塞，
+	// 不 Close 的话 p.wg 永远等不到 Done，Stop 会卡死导致所有 -action 操作失效
+	p.register("web-server", web.StopWebServer)
 	//初始化正向代理服务
 	go service.InitForward()
 	if config.ConfigData.Tunnel.OpenDomain {
@@ -171,11 +199,13 @@ func (p *program) starServer() {
 			defer p.wg.Done()
 			http.StartHttpServer()
 		}()
+		p.register("http-proxy-server", http.StopHttpServer)
 		p.wg.Add(1)
 		go func() {
 			defer p.wg.Done()
 			http.StartHttpsServer()
 		}()
+		p.register("https-proxy-server", http.StopHttpsServer)
 		//缓存域名配置
 		go service.InitDomainCache()
 		go service.InitReverseECache()
@@ -303,5 +333,11 @@ func main() {
 		if err := s.Run(); err != nil {
 			syslog.Fatalf("交互模式运行失败：%v", err)
 		}
+
+	default:
+		// 未知指令必须报错，否则"加了 -action 却什么都没发生"，看起来就像命令失效
+		fmt.Fprintf(os.Stderr, "未知的操作指令：%s\n\n", serviceAction)
+		flag.Usage()
+		os.Exit(2)
 	}
 }

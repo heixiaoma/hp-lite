@@ -101,5 +101,17 @@ func StartWebServer(port int) {
 	mux.HandleFunc("/client/giscus/token", middleware.Auth(giscusController.Token))
 
 	muxWithRecovery := recoveryMiddleware(mux)
-	log.Error(http.ListenAndServe(":"+strconv.Itoa(port), muxWithRecovery))
+	webServer = &http.Server{Addr: ":" + strconv.Itoa(port), Handler: muxWithRecovery}
+	log.Error(webServer.ListenAndServe())
+}
+
+// webServer 保存管理后台服务句柄，StopWebServer 时用于释放端口
+var webServer *http.Server
+
+// StopWebServer 关闭管理后台（服务停止/重启时必须释放端口，否则 -action stop 会卡住）
+func StopWebServer() {
+	if webServer != nil {
+		_ = webServer.Close()
+		webServer = nil
+	}
 }

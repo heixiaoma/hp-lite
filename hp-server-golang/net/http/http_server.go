@@ -19,6 +19,9 @@ func getClientIP(r *http.Request) string {
 	return host
 }
 
+// httpProxyServer 保存 HTTP 代理服务句柄，StopHttpServer 时用于释放 80 端口
+var httpProxyServer *http.Server
+
 func StartHttpServer() {
 	mux := http.NewServeMux()
 	// 使用反向代理处理所有请求
@@ -26,10 +29,19 @@ func StartHttpServer() {
 		Handler(w, r)
 	})
 	log.Info("HTTP代理服务启动")
-	err := http.ListenAndServe(":80", mux)
+	httpProxyServer = &http.Server{Addr: ":80", Handler: mux}
+	err := httpProxyServer.ListenAndServe()
 	if err != nil {
 		// 不要 os.Exit(1)：一个端口冲突会顺手把 DB、QUIC、TCP、Web 后台全带走。
 		// 返回后外层 goroutine 自然结束，由 main 的 WaitGroup 收尾。
 		log.Errorf("HTTP代理服务启动失败: %v", err)
+	}
+}
+
+// StopHttpServer 关闭 HTTP 代理服务，Stop 由服务停止流程调用
+func StopHttpServer() {
+	if httpProxyServer != nil {
+		_ = httpProxyServer.Close()
+		httpProxyServer = nil
 	}
 }

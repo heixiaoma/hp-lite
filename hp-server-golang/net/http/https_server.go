@@ -47,17 +47,28 @@ func StartHttpsServer() {
 		Handler(w, r)
 	})
 	// 创建 HTTPS 服务器
-	server := &http.Server{
+	httpsProxyServer = &http.Server{
 		Addr:      ":443",
 		Handler:   mux,
 		TLSConfig: tlsConfig,
 	}
 	// 启动 HTTPS 服务
 	log.Info("HTTPS代理服务启动")
-	err := server.ListenAndServeTLS("", "") // 证书由 GetCertificate 动态选择
+	err := httpsProxyServer.ListenAndServeTLS("", "") // 证书由 GetCertificate 动态选择
 	if err != nil {
 		// 同样不要 os.Exit(1)，由 main 的 WaitGroup 收尾。
 		log.Errorf("HTTPS代理服务启动失败: %v", err)
 	}
 
+}
+
+// httpsProxyServer 保存 HTTPS 代理服务句柄，StopHttpsServer 时用于释放 443 端口
+var httpsProxyServer *http.Server
+
+// StopHttpsServer 关闭 HTTPS 代理服务，Stop 由服务停止流程调用
+func StopHttpsServer() {
+	if httpsProxyServer != nil {
+		_ = httpsProxyServer.Close()
+		httpsProxyServer = nil
+	}
 }
