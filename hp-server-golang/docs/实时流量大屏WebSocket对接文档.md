@@ -199,7 +199,7 @@
     "statusCounts": { "2xx": 150000, "3xx": 3200, "4xx": 4800, "5xx": 423 },
     "topCountries": [{ "key": "中国", "count": 120000 }, { "key": "United States", "count": 20431 }],
     "topDomains": [{ "key": "example.com", "count": 98231 }],
-    "topIps":     [{ "key": "112.80.248.75", "count": 8321 }],
+    "topIps":     [{ "key": "112.80.248.75", "count": 8321, "country": "中国", "countryCode": "CN", "province": "江苏省", "city": "南京市", "isp": "联通" }],
     "topPaths":   [{ "key": "/api/user/info", "count": 6634 }],
     "uptimeSec": 86400
   }
@@ -218,11 +218,15 @@
 | `statusCounts` | map | 状态码分类分布，key 为 `1xx`~`5xx`，缺失的类别即无数据 |
 | `topCountries` | TopItem[] | 来源国家 Top10（来自 ip2region，未启用时为空数组） |
 | `topDomains` | TopItem[] | 域名 Top10，按 count 降序 |
-| `topIps` | TopItem[] | 来源 IP Top10 |
+| `topIps` | TopIpItem[] | 来源 IP Top10，带归属地 |
 | `topPaths` | TopItem[] | 路径 Top10 |
 | `uptimeSec` | int64 | ws 服务启动至今的秒数 |
 
 `TopItem`：`{ "key": string, "count": int64 }`
+
+`TopIpItem`（仅 `topIps`）：在 `TopItem` 基础上多 5 个归属地字段
+`{ "key", "count", "country", "countryCode", "province", "city", "isp" }`
+归属地来自该 IP 最近一次请求的解析结果；未启用 ip2region 时这 5 个字段为空字符串。
 
 ### 3.4 pong / subscribe
 

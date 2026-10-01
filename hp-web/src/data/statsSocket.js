@@ -7,9 +7,11 @@ const WS_PATH = '/client/ws/stats'
 
 /* 服务端下发队列上限 1024，前端消费跟不上会被主动断开连接。
    所以本地缓冲 + 节流批量交给 UI，并且只保留最近 MAX_ROWS 条 —— 多出来的直接丢，
-   绝不因为渲染慢而积压 */
+   绝不因为渲染慢而积压。
+   MAX_ROWS 要 >= 大屏请求流的窗口（STREAM_ROWS = 2000）：比它小的话，
+   高 QPS 下每 200ms 的突发会先在这里被截掉，UI 那边永远填不满窗口 */
 const FLUSH_MS = 200
-const MAX_ROWS = 200
+const MAX_ROWS = 2000
 
 // 指数退避：1s / 2s / 4s ... 上限 30s（文档 §6.3）
 const RETRY_MIN = 1000

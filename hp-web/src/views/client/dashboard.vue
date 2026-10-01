@@ -137,7 +137,39 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel panel--profile">
+        <h2>访客画像<em>本地最近 {{ pool.length }} 条</em></h2>
+        <div class="profile">
+          <div v-for="g in profileGroups" :key="g.label" class="profile__group">
+            <span class="profile__label">{{ g.label }}</span>
+            <ul class="profile__list">
+              <li v-for="it in g.items" :key="it.key">
+                <span class="profile__name" :title="`${it.key} · ${fmtNum(it.count)} 条`">{{ it.key }}</span>
+                <b>{{ it.pct }}</b>
+                <span class="profile__bar"><i :style="{width: it.pct}"/></span>
+              </li>
+              <li v-if="!g.items.length" class="profile__empty">暂无数据</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel panel--top">
+        <h2>TOP 来源国家<em>累计</em></h2>
+        <ul class="rank">
+          <li v-for="(it, i) in topCountries" :key="it.key">
+            <span class="rank__no">{{ i + 1 }}</span>
+            <span class="rank__name" :title="`${it.key} · ${fmtNum(it.count)} 条`">{{ it.key }}</span>
+            <span class="rank__num">{{ fmtNum(it.count) }}</span>
+            <span class="rank__bar">
+              <i :style="{width: pct(it.count, topCountries)}"/>
+            </span>
+          </li>
+          <li v-if="!topCountries.length" class="rank__empty">暂无数据</li>
+        </ul>
+      </div>
+
+      <div class="panel panel--top">
         <h2>TOP 域名</h2>
         <ul class="rank">
           <li v-for="(it, i) in topDomains" :key="it.key">
@@ -157,27 +189,40 @@
           实时请求流<em>最近 {{ stream.length }} 条 · 均 {{ streamStat.avg }}ms
           · 异常 {{ streamStat.bad }} · {{ fmtBytes(streamStat.bytes) }}</em>
         </h2>
-        <ul v-if="stream.length" class="stream">
+        <ul v-if="stream.length" class="stream" :class="{'is-dense': dense}">
           <li v-for="r in stream" :key="r.id">
-            <span class="stream__time">{{ shortTime(r.time) }}</span>
-            <span class="stream__method" :class="`m-${String(r.method || '').toLowerCase()}`">{{ r.method }}</span>
-            <span class="stream__uri" :title="r.uri">{{ r.domain }}{{ r.path }}</span>
-            <span class="stream__status" :class="`s-${r.statusClass}`">{{ r.statusCode }}</span>
-            <span class="stream__dur">{{ r.durationMs }}ms</span>
-            <span class="stream__size" :title="`${fmtNum(r.totalSize)} B`">{{ fmtBytes(r.totalSize) }}</span>
-            <span class="stream__ip" :title="r.sourceIp">{{ r.sourceIp }}</span>
+            <div class="stream__row">
+              <span class="stream__time">{{ shortTime(r.time) }}</span>
+              <span class="stream__method" :class="`m-${String(r.method || '').toLowerCase()}`">{{ r.method }}</span>
+              <span class="stream__uri" :title="r.uri">{{ r.domain }}{{ r.path }}</span>
+              <span class="stream__status" :class="`s-${r.statusClass}`">{{ r.statusCode }}</span>
+              <span class="stream__dur">{{ r.durationMs }}ms</span>
+              <span class="stream__size" :title="`${fmtNum(r.totalSize)} B`">{{ fmtBytes(r.totalSize) }}</span>
+            </div>
+            <!-- 第二行是来源画像：归属地 + 运营商 + 客户端，完整 UA 放在 title 里 -->
+            <div class="stream__meta" :title="metaTitle(r)">
+              <span class="stream__flag">{{ r.sourceCountryCode || '--' }}</span>
+              <span class="stream__ip">{{ r.sourceIp }}</span>
+              <span class="stream__geo">{{ geoText(r) }}</span>
+              <!-- 境外 IP 常常没有运营商，空着比挂一个「-」干净 -->
+              <span v-if="r.sourceIsp" class="stream__isp">{{ r.sourceIsp }}</span>
+              <span v-if="r.scheme" class="stream__scheme">{{ r.scheme }}</span>
+              <span v-if="r.protocol" class="stream__proto">{{ r.protocol }}</span>
+              <span class="stream__ua">{{ clientText(r) }}</span>
+            </div>
           </li>
         </ul>
         <div v-else class="empty">等待请求流入…</div>
       </div>
 
-      <div class="panel">
-        <h2>TOP 来源 IP</h2>
+      <div class="panel panel--top">
+        <h2>TOP 来源 IP<em>带归属地</em></h2>
         <ul class="rank">
           <li v-for="(it, i) in topIps" :key="it.key">
             <span class="rank__no">{{ i + 1 }}</span>
             <span class="rank__name" :title="it.key">{{ it.key }}</span>
             <span class="rank__num">{{ fmtNum(it.count) }}</span>
+            <span class="rank__sub" :title="ipGeoText(it)">{{ ipGeoText(it) || '归属地未知' }}</span>
             <span class="rank__bar">
               <i :style="{width: pct(it.count, topIps)}"/>
             </span>
@@ -186,7 +231,7 @@
         </ul>
       </div>
 
-      <div class="panel">
+      <div class="panel panel--top">
         <h2>TOP 路径</h2>
         <ul class="rank">
           <li v-for="(it, i) in topPaths" :key="it.key">
@@ -216,9 +261,16 @@ const FILTERS = [
   {label: '5xx', value: '5xx'},
 ]
 
-// 趋势图窗口 60 个点，对应最近 60 秒；请求流只渲染最近 60 条
+// 趋势图窗口 60 个点，对应最近 60 秒
 const SERIES_LEN = 60
-const STREAM_ROWS = 60
+/* 请求流保留最近 2000 条。行数是 DOM 规模的大头：每条 2 行约 12 个节点，
+   2000 条约 2.4w 个节点，靠 .stream li 上的 content-visibility 把屏幕外的行
+   跳过渲染，滚动和更新才不卡。要继续加量得先上虚拟滚动 */
+const STREAM_ROWS = 2000
+/* 画像统计窗口：设备/系统/浏览器/运营商只在 stat 明细里、summary 不汇总，得自己数。
+   500 条足够稳住榜首；不跟请求流一样存 2000 条，是因为这批数据每条进来都要重算四遍
+   TOP（成本随条数线性涨），而分布的精度过了 500 条基本不再变化 */
+const POOL_ROWS = 500
 
 // 环形图分段色：白底需要更饱和的深色才看得清，深色主题的荧光色在白底上会发飘
 const STATUS_CLASSES = [
@@ -239,6 +291,11 @@ const chartBoxRef = ref(null)
 const hoverIdx = ref(-1)
 const summary = ref({})
 const stream = ref([])
+// 只用于统计画像、不参与渲染，所以不放在 stream 里（stream 会被裁到 60 条）
+const pool = ref([])
+/* 每条新记录都跑一次入场动画，高 QPS 下会同时挂着几百个动画，帧率直接掉一半。
+   批量太大时整批不做动画 —— 那个速度下本来也看不出单条滑入 */
+const dense = ref(false)
 // 每秒一个采样点：q=请求数，b=流量字节，t=时间戳(ms)。
 // 三个字段必须落在同一条记录里，否则悬停取值会错位
 const series = ref([])
@@ -298,6 +355,61 @@ const fmtClock = (ms) => {
   const p = (n) => String(n).padStart(2, '0')
   return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
 }
+
+/* ---------- 来源画像解析 ----------
+   stat 明细里带了归属地（国家/省/市/运营商）和客户端（浏览器/系统/设备），
+   但大屏之前只用到了 IP，这些字段全被丢掉了。下面把它们还原出来 */
+
+// 「四川省」这种全称在窄列里太占地方，去掉行政后缀只留「四川」
+const ADMIN_SUFFIX = /(省|市|自治区|特别行政区)$/
+const shortArea = (s) => String(s || '').trim().replace(ADMIN_SUFFIX, '')
+
+/* 两套字段名：stat 明细是 sourceXxx，summary 的 topIps 是 xxx。
+   统一成一套，后面拼文案就不用管数据来自哪 */
+const asGeo = (o) => ({
+  country: String((o && (o.sourceCountry || o.country)) || '').trim(),
+  code: String((o && (o.sourceCountryCode || o.countryCode)) || '').trim(),
+  province: String((o && (o.sourceProvince || o.province)) || '').trim(),
+  city: String((o && (o.sourceCity || o.city)) || '').trim(),
+  isp: String((o && (o.sourceIsp || o.isp)) || '').trim(),
+})
+
+/* 归属地：国内取「省·市」，境外一般没有省市，退回国家名 */
+const geoText = (r) => {
+  if (!r) return '未知'
+  const g = asGeo(r)
+  const prov = shortArea(g.province)
+  const city = shortArea(g.city)
+  if (prov && city) return prov === city ? city : `${prov}·${city}`
+  if (prov || city) return prov || city
+  return g.country || '未知'
+}
+
+/* 国家 + 归属地 + 运营商，境外请求省市为空时 geoText 会退回国家名，别拼两遍 */
+const geoFullText = (r) => {
+  const g = asGeo(r)
+  const area = geoText(r)
+  const parts = []
+  if (g.country) parts.push(g.country)
+  if (area && area !== g.country && area !== '未知') parts.push(area)
+  if (g.isp) parts.push(g.isp)
+  return parts.join(' · ')
+}
+
+const clientText = (r) =>
+    [r.browser, r.os, r.device].filter(Boolean).join(' · ') || '-'
+
+/* 悬停补全：一行塞不下完整 UA，放到 title 里 */
+const metaTitle = (r) => [
+  `IP ${r.sourceIp || '-'}`,
+  [r.sourceCountry, r.sourceProvince, r.sourceCity].filter(Boolean).join(' '),
+  r.sourceIsp,
+  [r.scheme, r.protocol].filter(Boolean).join(' '),
+  r.browser,
+  r.os,
+  r.device,
+  r.userAgent,
+].filter(Boolean).join(' · ')
 
 const pct = (count, list) => {
   const max = (list || []).reduce((a, b) => Math.max(a, Number(b.count) || 0), 0)
@@ -373,8 +485,69 @@ const kpis = computed(() => [
 ])
 
 const topDomains = computed(() => summary.value.topDomains || [])
-const topIps = computed(() => summary.value.topIps || [])
-const topPaths = computed(() => summary.value.topPaths || [])
+const topIps = computed(() => rankSorted(summary.value.topIps))
+const topPaths = computed(() => rankSorted(summary.value.topPaths))
+/* 服务端 topCountries 是全量累计的国家榜，直接整榜用（面板里放不下就滚动），
+   不截断成 TOP3 —— 截断后大半国家根本看不见，等于没用这份数据 */
+const topCountries = computed(() => rankSorted(rankPct(summary.value.topCountries, 20)))
+
+/* 按字段取 TOP n。
+   分母用「识别出该字段的条数」而不是池子总量：字段为空的请求压根没进榜，
+   拿全量当分母会把占比整体压低（比如大量爬虫没有 UA） */
+const topBy = (field, n) => {
+  const m = new Map()
+  for (const r of pool.value) {
+    const k = String((r && r[field]) || '').trim()
+    if (!k) continue
+    m.set(k, (m.get(k) || 0) + 1)
+  }
+  const total = [...m.values()].reduce((a, b) => a + b, 0)
+  return [...m.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, n)
+      .map(([key, count]) => ({
+        key,
+        count,
+        pct: total ? `${Math.round((count / total) * 100)}%` : '0%',
+      }))
+}
+
+/* 这四项服务端 summary 都不汇总，只能从本地池子里统计；
+   来源国家服务端给了 topCountries，单独成榜（见 topCountries） */
+const profileGroups = computed(() => [
+  {label: '设备', items: topBy('device', 3)},
+  {label: '系统', items: topBy('os', 3)},
+  {label: '浏览器', items: topBy('browser', 3)},
+  {label: '运营商', items: topBy('sourceIsp', 3)},
+])
+
+/* TOP 来源 IP 的归属地直接读服务端 topIps 里带的 country/province/city/isp。
+   之前靠本地池子反查，样本只有 500 条且要等对应请求进来才有数据；
+   服务端是累计统计，既准又不用等 */
+const ipGeoText = (it) => geoFullText(it)
+
+/* 榜单排序：先按次数降序，次数并列时再按名字升序。
+   次数必须是第一维度 —— 榜的意义就是谁多谁在前。
+   名字只做第二维度：并列项（常见的是末尾一堆 count=1）如果只按次数排，
+   它们的先后全看服务端返回顺序，每次 summary 都可能不一样，看着就在乱跳；
+   用名字兜底把这批钉死。
+   numeric 让 IP 按段数值排（192.168.1.2 在 .10 前面），sensitivity: base 忽略大小写 */
+const NAME_OPT = {numeric: true, sensitivity: 'base'}
+const rankSorted = (list) => (list || []).slice().sort((a, b) => {
+  const diff = (Number(b && b.count) || 0) - (Number(a && a.count) || 0)
+  return diff || String(a && a.key).localeCompare(String(b && b.key), 'zh-Hans-CN', NAME_OPT)
+})
+
+/* 服务端 TOP 榜 -> 面板用的 {key, count, pct}。国家榜按全量累计，不是抽样 */
+const rankPct = (list, n) => {
+  const src = list || []
+  const total = src.reduce((a, b) => a + (Number(b.count) || 0), 0)
+  return src.slice(0, n).map((it) => ({
+    key: it.key,
+    count: Number(it.count) || 0,
+    pct: total ? `${Math.round(((Number(it.count) || 0) / total) * 100)}%` : '0%',
+  }))
+}
 
 const statusTotal = computed(() => {
   const c = summary.value.statusCounts || {}
@@ -533,8 +706,13 @@ const onStats = (batch) => {
   perSec += batch.length
   // 每条 stat 的 totalSize 就是这一跳的完整流量（请求+响应，含头）
   bytesPerSec += batch.reduce((a, r) => a + (Number(r && r.totalSize) || 0), 0)
+  const fresh = batch.slice().reverse()
+  // 200ms 一批，> 12 条即 > 60 QPS：这个速度下相邻记录看不出先后，动画纯属浪费
+  dense.value = fresh.length > 12
   // 新的在前；只保留最近 STREAM_ROWS 条，超出的直接丢
-  stream.value = batch.slice().reverse().concat(stream.value).slice(0, STREAM_ROWS)
+  stream.value = fresh.concat(stream.value).slice(0, STREAM_ROWS)
+  // 画像池同样只留最近 POOL_ROWS 条，够统计又不至于一直涨
+  pool.value = fresh.concat(pool.value).slice(0, POOL_ROWS)
 }
 
 const applyFilter = (v) => {
@@ -857,11 +1035,15 @@ onUnmounted(() => {
 }
 
 /* ---------- 面板 ---------- */
+/* 12 列 2 行。用 12 而不是 6，是因为各面板需要的宽度差得比较多：
+   6 列时状态码只能给 1/6（太窄，环和图例挤不下）或 2/6（太宽，内容撑不满、留白一堆）。
+   上行：吞吐 4 / 状态码 3 / 访客画像 3 / 来源国家 2；
+   下行：请求流 6（半宽，两行信息才排得开）+ 域名 / IP / 路径 各 2 */
 .board {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(12, 1fr);
   grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
@@ -906,11 +1088,24 @@ onUnmounted(() => {
   border-top: none;
 }
 
-.panel--stream {
-  grid-column: span 2;
+.panel--chart {
+  grid-column: span 4;
 }
 
-.panel--chart {
+.panel--ring {
+  grid-column: span 3;
+}
+
+/* 画像只剩 4 组（国家单独成榜了），3 列即可；省下的 2 列给 TOP 来源国家 */
+.panel--profile {
+  grid-column: span 3;
+}
+
+.panel--stream {
+  grid-column: span 6;
+}
+
+.panel--top {
   grid-column: span 2;
 }
 
@@ -1150,22 +1345,31 @@ onUnmounted(() => {
 /* ---------- 环形图 ----------
    横排布局：环形图固定宽，图例吃掉剩余宽度，
    这样底部还能留一整条给成功率 / 4xx / 5xx */
+/* 吃掉标题以下的全部高度，环和图例才能跟着面板一起长大，
+   否则面板一高就露出一大截空白（之前环写死 96px，240px 的面板里空着一半） */
 .ring-row {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
   min-height: 0;
 }
 
+/* 宽高都交给外层，svg 自己按 viewBox 居中缩放（不变形）。
+   面板矮的时候由高度兜住，不会把图例挤出去 */
 .ring-wrap {
   position: relative;
   flex: none;
+  width: 48%;
+  max-width: 240px;
+  height: 100%;
+  min-height: 0;
 }
 
 .ring {
   display: block;
-  width: 96px;
-  height: 96px;
+  width: 100%;
+  height: 100%;
 }
 
 .ring__track {
@@ -1189,17 +1393,19 @@ onUnmounted(() => {
   line-height: 1.2;
 }
 
+/* 环大了，中心的数字也跟着放大才压得住 */
 .ring__center b {
   display: block;
-  font-size: 17px;
+  font-size: 20px;
   color: var(--c-text);
 }
 
 .ring__center span {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--c-faint);
 }
 
+/* align-content: center 让图例在剩下的高度里居中，行距也拉开一点 */
 .legend {
   flex: 1;
   min-width: 0;
@@ -1207,22 +1413,25 @@ onUnmounted(() => {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 4px;
-  font-size: 10.5px;
+  align-content: center;
+  gap: 8px;
+  font-size: 12.5px;
   line-height: 1.3;
 }
 
+/* 行内留白把图例撑起来，环那侧才不会显得孤零零的 */
 .legend li {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  padding: 5px 0;
   color: var(--c-sub);
 }
 
 .legend i {
   flex: none;
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 2px;
 }
 
@@ -1247,7 +1456,7 @@ onUnmounted(() => {
   display: flex;
   gap: 6px;
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 10px;
   border-top: 1px solid var(--c-border);
 }
 
@@ -1261,13 +1470,13 @@ onUnmounted(() => {
 
 .ring-stat i {
   font-style: normal;
-  font-size: 9.5px;
+  font-size: 10.5px;
   white-space: nowrap;
   color: var(--c-faint);
 }
 
 .ring-stat b {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   font-family: 'DIN Alternate', 'SF Mono', Consolas, Menlo, monospace;
   font-variant-numeric: tabular-nums;
@@ -1333,6 +1542,16 @@ onUnmounted(() => {
   color: var(--c-sub);
 }
 
+/* 归属地副标题占第二行，和进度条一起排在名称列下面 */
+.rank__sub {
+  grid-column: 2 / -1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  color: var(--c-faint);
+}
+
 .rank__bar {
   grid-column: 1 / -1;
   height: 3px;
@@ -1355,6 +1574,79 @@ onUnmounted(() => {
   font-size: 11px;
 }
 
+/* ---------- 访客画像 ----------
+   设备 / 系统 / 浏览器 / 运营商四组（sourceCountry 不在服务端 summary 里，
+   来源国家走独立的 TOP 榜），每组取 TOP3。2×2 排布，竖着一列会顶出面板 */
+.profile {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 12px 16px;
+}
+
+.profile__label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--c-faint);
+}
+
+.profile__list {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.profile__list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 3px 6px;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.profile__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--c-text);
+}
+
+.profile__list b {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: right;
+  color: var(--c-sub);
+  font-variant-numeric: tabular-nums;
+}
+
+.profile__bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #eef2f7;
+}
+
+.profile__bar i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #0052d9, #21b7e8);
+  transition: width .5s ease;
+}
+
+.profile__empty {
+  font-size: 10.5px;
+  color: var(--c-faint);
+}
+
 /* ---------- 请求流 ---------- */
 .stream {
   margin: 0;
@@ -1367,22 +1659,106 @@ onUnmounted(() => {
   font-family: 'SF Mono', Consolas, Menlo, monospace;
 }
 
-/* 七列：时间 / 方法 / 地址 / 状态 / 耗时 / 流量 / 来源 IP。
-   行高压到 ~20px（原来是 25px），同样高度能多露一行多的内容 */
+/* 一条记录两行：第一行是请求本身，第二行是来源画像。
+   归属地/运营商/客户端原本就随 stat 带回来了，硬塞进同一行会把地址列压得没法看 */
+/* 屏幕外的行整块跳过渲染 —— 2000 条全部参与布局会拖垮滚动。
+   contain-intrinsic-size 给未渲染行一个预估高度（约等于两行的实际高度），
+   滚动条长度才不会一跳一跳 */
 .stream li {
-  display: grid;
-  grid-template-columns: 62px 40px minmax(0, 1fr) 30px 40px 48px 88px;
-  align-items: center;
-  gap: 7px;
   padding: 2px 0;
-  line-height: 1.35;
   border-bottom: 1px solid #f1f5f9;
   animation: slidein .32s ease;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 34px;
+}
+
+/* 时间 / 方法 / 地址 / 状态 / 耗时 / 流量 */
+.stream__row {
+  display: grid;
+  grid-template-columns: 62px 40px minmax(0, 1fr) 30px 40px 48px;
+  align-items: center;
+  gap: 7px;
+  line-height: 1.35;
+}
+
+/* 左侧一道竖线把副行挂在主行下面，视觉上仍是一条记录 */
+.stream__meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 1px 0 0 4px;
+  padding-left: 6px;
+  border-left: 2px solid var(--c-border);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--c-faint);
+}
+
+/* 每一项都可能超宽，统一省略号，免得某一项把整行撑破 */
+.stream__meta > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 国家代码徽章：一眼区分境内外 */
+.stream__flag {
+  flex: none;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  color: var(--c-brand);
+  background: rgba(0, 82, 217, .1);
+}
+
+.stream__geo {
+  color: var(--c-sub);
+}
+
+/* 运营商用暖色底，和灰色的 IP / 归属地拉开层次 */
+.stream__isp {
+  flex: none;
+  padding: 0 4px;
+  border-radius: 3px;
+  color: #b45309;
+  background: rgba(245, 158, 11, .12);
+}
+
+/* scheme：https 用青色标出来，明文 http 一眼能看出来用的是灰底 */
+.stream__scheme {
+  flex: none;
+  padding: 0 4px;
+  border-radius: 3px;
+  color: #0f766e;
+  background: rgba(13, 148, 136, .12);
+}
+
+/* 协议版本（HTTP/2.0 等），中性灰，不抢主信息的注意力 */
+.stream__proto {
+  flex: none;
+  padding: 0 4px;
+  border-radius: 3px;
+  color: var(--c-sub);
+  background: #eef2f7;
+}
+
+/* 客户端信息吃掉副行剩余宽度，并靠右对齐 */
+.stream__ua {
+  margin-left: auto;
+  color: var(--c-sub);
 }
 
 @keyframes slidein {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: none; }
+}
+
+/* 高 QPS 下关掉入场动画（dense 由每次批量的条数决定） */
+.stream.is-dense li {
+  animation: none;
 }
 
 /* 时间列自己再留一点右白，保证和方法徽章之间有明确间隔 */
@@ -1474,39 +1850,86 @@ onUnmounted(() => {
 }
 
 .stream::-webkit-scrollbar,
-.rank::-webkit-scrollbar {
+.rank::-webkit-scrollbar,
+.profile::-webkit-scrollbar {
   width: 5px;
 }
 
 .stream::-webkit-scrollbar-thumb,
-.rank::-webkit-scrollbar-thumb {
+.rank::-webkit-scrollbar-thumb,
+.profile::-webkit-scrollbar-thumb {
   background: #d8e0ea;
   border-radius: 3px;
 }
 
 /* ---------- 自适应 ---------- */
-/* 断点压到 900px 才拆行：KPI 拆成两行会把 board 的高度挤掉，
-   环形图的图例随即溢出（1500px 的断点太保守，一般笔记本宽度就会触发） */
+/* KPI 拆行会把 board 的高度挤掉，所以断点压到 900px 以下才拆行 */
 @media (max-width: 900px) {
   .kpi {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
-@media (max-width: 1200px) {
+/* 12 列要排得开得 1500px 起步：再窄下去，「TOP 来源 IP」这类只占 2/12 的面板
+   连一条 IPv4 + 归属地都放不下（1500px 时 2/12 ≈ 195px，刚好够）。
+   1500px 以下换成 2 列自适应高度，页面纵向滚动 */
+@media (max-width: 1500px) {
   .board {
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: none;
     grid-auto-rows: minmax(220px, auto);
   }
 
+  /* 只有图和数据流需要整行；环形图/画像/三个 TOP 榜在半宽里排得下，
+     全部拉成整行会让页面长出一倍 */
   .panel--chart,
   .panel--stream {
     grid-column: span 2;
   }
 
+  .panel--ring,
+  .panel--profile,
+  .panel--top {
+    grid-column: span 1;
+  }
+
+  /* 半宽的画像面板放不下 3 列（每列只剩 ~110px），退回 2 列 */
+  .profile {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .dash {
     height: auto;
+  }
+
+  /* 整行的图表没有兄弟面板撑着高度，会被 flex 撑得很高，给个上限 */
+  .panel--chart {
+    max-height: 340px;
+  }
+
+  /* 顶栏一行塞不下「标题 + 连接状态 + 筛选 + 时钟 + 全屏」。
+     不加 wrap 时 flex 会去压缩各块宽度，标题和状态就被挤成竖排了 */
+  .dash__head {
+    flex-wrap: wrap;
+    gap: 10px 14px;
+  }
+
+  .brand,
+  .dash__state {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  .dash__tools {
+    min-width: 0;
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+
+  .dash__filters button,
+  .dash__btn,
+  .dash__clock {
+    white-space: nowrap;
   }
 }
 
@@ -1522,7 +1945,10 @@ onUnmounted(() => {
   }
 
   .panel--chart,
-  .panel--stream {
+  .panel--ring,
+  .panel--profile,
+  .panel--stream,
+  .panel--top {
     grid-column: span 1;
   }
 
@@ -1530,17 +1956,25 @@ onUnmounted(() => {
     font-size: 21px;
   }
 
-  /* 请求流七列在窄屏装不下：隐掉时间 / 流量 / 来源 IP，
-     留下最能说明「发生了什么」的方法 + 地址 + 状态 + 耗时 */
-  .stream li {
+  /* 主行在窄屏只留「发生了什么」：方法 + 地址 + 状态 + 耗时 */
+  .stream__row {
     grid-template-columns: 40px minmax(0, 1fr) 30px 40px;
     gap: 6px;
   }
 
   .stream__time,
-  .stream__size,
-  .stream__ip {
+  .stream__size {
     display: none;
+  }
+
+  /* 副行留归属地 + 运营商；浏览器/系统/设备太宽，窄屏交给「访客画像」面板看 */
+  .stream__ua {
+    display: none;
+  }
+
+  /* 手机上画像面板只有一列宽，多列会把「Windows 10/11」压成省略号 */
+  .profile {
+    grid-template-columns: 1fr;
   }
 }
 </style>

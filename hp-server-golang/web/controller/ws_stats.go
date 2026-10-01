@@ -123,7 +123,7 @@ type SummaryData struct {
 	StatusCounts      map[string]int64 `json:"statusCounts"`      // 状态码分布 2xx/3xx/4xx/5xx
 	TopCountries      []TopItem        `json:"topCountries"`      // 来源国家/地区 Top10
 	TopDomains        []TopItem        `json:"topDomains"`        // 域名 Top10
-	TopIps            []TopItem        `json:"topIps"`            // 来源 IP Top10
+	TopIps            []TopIpItem      `json:"topIps"`            // 来源 IP Top10（含归属地）
 	TopPaths          []TopItem        `json:"topPaths"`          // 路径 Top10
 	UptimeSec         int64            `json:"uptimeSec"`         // 服务运行时长
 }
@@ -132,6 +132,26 @@ type SummaryData struct {
 type TopItem struct {
 	Key   string `json:"key"`
 	Count int64  `json:"count"`
+}
+
+// TopIpItem 来源 IP 榜单条目，附带该 IP 的归属地信息
+type TopIpItem struct {
+	Key         string `json:"key"`
+	Count       int64  `json:"count"`
+	Country     string `json:"country"`     // 国家，未启用 ip2region 时为空
+	CountryCode string `json:"countryCode"` // 国家代码，如 CN / US
+	Province    string `json:"province"`    // 省份 / 州
+	City        string `json:"city"`        // 城市
+	Isp         string `json:"isp"`         // 运营商 / 组织
+}
+
+// IpGeo 来源 IP 的归属地快照（不落库，仅用于 Top IP 榜展示）
+type IpGeo struct {
+	Country     string
+	CountryCode string
+	Province    string
+	City        string
+	Isp         string
 }
 
 // WsClient 一个 WebSocket 大屏连接句柄
@@ -451,7 +471,9 @@ var (
 	aggDomainCounts  = map[string]int64{}
 	aggIpCounts      = map[string]int64{}
 	aggPathCounts    = map[string]int64{}
-	aggQpsBuckets    [60]struct {
+	// aggIpGeo IP -> 归属地，给 Top IP 榜补充来源信息
+	aggIpGeo      = map[string]IpGeo{}
+	aggQpsBuckets [60]struct {
 		sec   int64
 		count int64
 	}
@@ -479,8 +501,20 @@ func aggregate(rec *HttpStatRecord) {
 	if rec.Domain != "" && len(aggDomainCounts) < wsMaxTrackKeys {
 		incCount(aggDomainCounts, rec.Domain)
 	}
-	if rec.SourceIp != "" && len(aggIpCounts) < wsMaxTrackKeys {
-		incCount(aggIpCounts, rec.SourceIp)
+	if rec.SourceIp != "" {
+		_, tracked := aggIpCounts[rec.SourceIp]
+		// 已跟踪过的 IP 继续累加；新 IP 受 wsMaxTrackKeys 限制，防止高并发下 map 无限膨胀
+		if tracked || len(aggIpCounts) < wsMaxTrackKeys {
+			incCount(aggIpCounts, rec.SourceIp)
+			// 归属地每次刷新：同一个 IP 换出口/库更新后展示的是最新结果
+			aggIpGeo[rec.SourceIp] = IpGeo{
+				Country:     rec.SourceCountry,
+				CountryCode: rec.SourceCountryCode,
+				Province:    rec.SourceProvince,
+				City:        rec.SourceCity,
+				Isp:         rec.SourceIsp,
+			}
+		}
 	}
 	if rec.Path != "" && len(aggPathCounts) < wsMaxTrackKeys {
 		incCount(aggPathCounts, rec.Path)
@@ -531,7 +565,7 @@ func BuildSummary() SummaryData {
 		StatusCounts:      copyCounts(aggStatusCounts),
 		TopCountries:      topN(aggCountryCounts, wsTopN),
 		TopDomains:        topN(aggDomainCounts, wsTopN),
-		TopIps:            topN(aggIpCounts, wsTopN),
+		TopIps:            topNIps(aggIpCounts, aggIpGeo, wsTopN),
 		TopPaths:          topN(aggPathCounts, wsTopN),
 		UptimeSec:         int64(time.Since(wsStartAt).Seconds()),
 	}
@@ -543,6 +577,27 @@ func copyCounts(m map[string]int64) map[string]int64 {
 		out[k] = v
 	}
 	return out
+}
+
+// topNIps 生成 Top IP 榜，并附上每个 IP 的归属地
+func topNIps(m map[string]int64, geo map[string]IpGeo, n int) []TopIpItem {
+	items := make([]TopIpItem, 0, len(m))
+	for k, v := range m {
+		item := TopIpItem{Key: k, Count: v}
+		if g, ok := geo[k]; ok {
+			item.Country = g.Country
+			item.CountryCode = g.CountryCode
+			item.Province = g.Province
+			item.City = g.City
+			item.Isp = g.Isp
+		}
+		items = append(items, item)
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].Count > items[j].Count })
+	if len(items) > n {
+		items = items[:n]
+	}
+	return items
 }
 
 func topN(m map[string]int64, n int) []TopItem {
