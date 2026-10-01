@@ -10,6 +10,7 @@ import (
 	"hp-server-lib/net/server"
 	"hp-server-lib/service"
 	"hp-server-lib/task"
+	"hp-server-lib/util"
 	"hp-server-lib/web"
 	syslog "log"
 	"os"
@@ -126,6 +127,13 @@ func (p *program) run() {
 		return
 	}
 	logger.Info("配置文件加载成功")
+
+	// 1.1 加载 IP 归属地库（内嵌在 web/static/data 下，失败不影响主流程）
+	if err := util.InitIp2RegionFromFS(web.StaticFS(),
+		"static/data/ip2region_v4.xdb",
+		"static/data/ip2region_v6.xdb"); err != nil {
+		logger.Error(fmt.Sprintf("IP归属地库加载失败，归属地字段将为空：%v", err))
+	}
 
 	// 2. 启动各类服务（带退出信号监听）
 	p.starServer()

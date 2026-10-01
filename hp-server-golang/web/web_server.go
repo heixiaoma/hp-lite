@@ -14,6 +14,12 @@ import (
 //go:embed static
 var content embed.FS
 
+// StaticFS 对外暴露内嵌的静态资源文件系统。
+// 随程序一起打包的数据文件（如 web/static/data/ip2region_v4.xdb）通过它读取，无需外部文件。
+func StaticFS() embed.FS {
+	return content
+}
+
 // 全局异常拦截器中间件
 func recoveryMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -17,6 +17,7 @@ import (
 	"hp-server-lib/config"
 	"hp-server-lib/entity"
 	"hp-server-lib/service"
+	"hp-server-lib/util"
 	"hp-server-lib/web/controller"
 )
 
@@ -52,6 +53,15 @@ func StatsInterceptor(next http.Handler) http.Handler {
 		}
 		rec.SourcePort = remotePort
 		rec.IpVersion = ipVersion(rec.SourceIp)
+
+		// 来源归属地（ip2region，未启用/未命中时字段留空）
+		if region, ok := util.LookupIpRegion(rec.SourceIp); ok {
+			rec.SourceCountry = region.Country
+			rec.SourceCountryCode = region.CountryCode
+			rec.SourceProvince = region.Province
+			rec.SourceCity = region.City
+			rec.SourceIsp = region.Isp
+		}
 
 		// 域名与入口端口
 		domain, port := splitHostPort(r.Host)

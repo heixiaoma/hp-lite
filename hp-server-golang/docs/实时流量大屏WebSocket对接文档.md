@@ -91,6 +91,11 @@
     "sourceIp": "112.80.248.75",
     "sourcePort": "54321",
     "ipVersion": "IPv4",
+    "sourceCountry": "中国",
+    "sourceCountryCode": "CN",
+    "sourceProvince": "江苏省",
+    "sourceCity": "南京市",
+    "sourceIsp": "联通",
 
     "targetIp": "192.168.1.10",
     "targetPort": "8080",
@@ -141,6 +146,11 @@
 | `sourceIp` | string | 客户端 IP（`X-Forwarded-For` 优先） |
 | `sourcePort` | string | 客户端端口，取不到为空串 |
 | `ipVersion` | string | `IPv4` / `IPv6` |
+| `sourceCountry` | string | 来源国家，如 `中国` / `United States`；未启用 ip2region 或库里查不到时为空，内网为 `局域网`、回环为 `本机` |
+| `sourceCountryCode` | string | 两位国家代码，如 `CN` / `US`，前端可用于渲染国旗；v3 库才有，v2 库为空 |
+| `sourceProvince` | string | 省份 / 州 |
+| `sourceCity` | string | 城市 |
+| `sourceIsp` | string | 运营商 / 组织，如 `联通` / `Google LLC` |
 | `targetIp` | string | 后端（被代理）IP |
 | `targetPort` | string | 后端端口 |
 | `domain` | string | Host 去掉端口 |
@@ -187,6 +197,7 @@
     "qps": 2640,
     "avgDurationMs": 42,
     "statusCounts": { "2xx": 150000, "3xx": 3200, "4xx": 4800, "5xx": 423 },
+    "topCountries": [{ "key": "中国", "count": 120000 }, { "key": "United States", "count": 20431 }],
     "topDomains": [{ "key": "example.com", "count": 98231 }],
     "topIps":     [{ "key": "112.80.248.75", "count": 8321 }],
     "topPaths":   [{ "key": "/api/user/info", "count": 6634 }],
@@ -205,6 +216,7 @@
 | `qps` | int64 | **最近 60 秒滑动窗口的平均 QPS**（整数除法，低流量时可能为 0） |
 | `avgDurationMs` | int64 | 全量平均耗时 |
 | `statusCounts` | map | 状态码分类分布，key 为 `1xx`~`5xx`，缺失的类别即无数据 |
+| `topCountries` | TopItem[] | 来源国家 Top10（来自 ip2region，未启用时为空数组） |
 | `topDomains` | TopItem[] | 域名 Top10，按 count 降序 |
 | `topIps` | TopItem[] | 来源 IP Top10 |
 | `topPaths` | TopItem[] | 路径 Top10 |
@@ -343,3 +355,30 @@ setInterval(() => {
 | `web/web_server.go:103-108` | 路由注册（ws 入口 + HTTP 兜底） |
 | `web/controller/ws_stats.go` | 连接管理、上行控制消息、定时推送、汇总计算 |
 | `net/http/stats_interceptor.go` | 数据面埋点，`BroadcastHttpStat` 调用点 |
+| `util/ip2region.go` | IP 归属地查询（ip2region xdb） |
+
+---
+
+## 9. IP 归属地（ip2region）
+
+归属地字段（`sourceCountry` / `sourceCountryCode` / `sourceProvince` / `sourceCity` / `sourceIsp`）由服务端 ip2region 库解析，**未启用时这些字段为空字符串**，不影响其它字段。
+
+### 启用方式
+
+数据文件已**内嵌进程序**，无需任何配置、无需外部文件：
+
+- `web/static/data/ip2region_v4.xdb`（IPv4 库，约 10MB）
+- `web/static/data/ip2region_v6.xdb`（IPv6 库，约 35MB，可选，不存在会自动跳过）
+
+通过 `web/web_server.go` 的 `//go:embed static` 打包，启动时由 `util.InitIp2RegionFromFS(web.StaticFS(), ...)` 载入内存。
+服务启动日志出现 `ip2region 加载成功：static/data/ip2region_v4.xdb|版本:IPv4` 即生效。
+
+更新库文件：替换 `web/static/data/` 下的 xdb 后重新编译即可（官方仓库 `lionsoul2014/ip2region` 的 `data/` 目录）。
+
+### 行为约定
+
+- 整库载入内存（零 IO 查询）+ IP 结果缓存（上限 10 万条，满了整体清空），单次查询微秒级，不阻塞代理主流程。
+- `127.0.0.1` 等国家/省份/城市统一为 `本机`；`10.x` / `172.16.x` / `192.168.x` 等内网地址为 `局域网`，不查库。
+- 未内嵌 IPv6 库时，IPv6 来源的归属地为空（启动日志会提示"未内嵌数据文件，跳过"）。
+- 库缺失或格式错误只打一条错误日志，不影响服务启动。
+- 注意：xdb 放在 `web/static/data/` 下会随静态目录一起被 `StaticController` 对外提供（即 `/data/ip2region_v4.xdb` 可被匿名下载）。若不想暴露，把文件移到非静态目录（例如 `web/data/`）并单独加一个 `//go:embed data`，再改 `main.go` 里的路径即可。

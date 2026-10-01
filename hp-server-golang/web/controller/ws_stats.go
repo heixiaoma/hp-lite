@@ -54,6 +54,13 @@ type HttpStatRecord struct {
 	SourcePort string `json:"sourcePort"` // 来源端口
 	IpVersion  string `json:"ipVersion"`  // IPv4 / IPv6
 
+	// 来源归属地维度（ip2region，未加载库时为空）
+	SourceCountry     string `json:"sourceCountry"`     // 国家，如：中国
+	SourceCountryCode string `json:"sourceCountryCode"` // 国家代码，如 CN / US
+	SourceProvince    string `json:"sourceProvince"`    // 省份
+	SourceCity        string `json:"sourceCity"`        // 城市
+	SourceIsp         string `json:"sourceIsp"`         // 运营商
+
 	// 目的维度
 	TargetIp   string `json:"targetIp"`   // 目的（后端）IP
 	TargetPort string `json:"targetPort"` // 目的端口
@@ -114,6 +121,7 @@ type SummaryData struct {
 	Qps               int64            `json:"qps"`               // 最近 60 秒平均 QPS
 	AvgDurationMs     int64            `json:"avgDurationMs"`     // 平均耗时
 	StatusCounts      map[string]int64 `json:"statusCounts"`      // 状态码分布 2xx/3xx/4xx/5xx
+	TopCountries      []TopItem        `json:"topCountries"`      // 来源国家/地区 Top10
 	TopDomains        []TopItem        `json:"topDomains"`        // 域名 Top10
 	TopIps            []TopItem        `json:"topIps"`            // 来源 IP Top10
 	TopPaths          []TopItem        `json:"topPaths"`          // 路径 Top10
@@ -437,12 +445,13 @@ var (
 	aggTotalRespSize int64
 	aggTotalDuration int64
 
-	aggMu           sync.Mutex
-	aggStatusCounts = map[string]int64{}
-	aggDomainCounts = map[string]int64{}
-	aggIpCounts     = map[string]int64{}
-	aggPathCounts   = map[string]int64{}
-	aggQpsBuckets   [60]struct {
+	aggMu            sync.Mutex
+	aggStatusCounts  = map[string]int64{}
+	aggCountryCounts = map[string]int64{}
+	aggDomainCounts  = map[string]int64{}
+	aggIpCounts      = map[string]int64{}
+	aggPathCounts    = map[string]int64{}
+	aggQpsBuckets    [60]struct {
 		sec   int64
 		count int64
 	}
@@ -464,6 +473,9 @@ func aggregate(rec *HttpStatRecord) {
 	bucket.count++
 
 	incCount(aggStatusCounts, rec.StatusClass)
+	if rec.SourceCountry != "" && len(aggCountryCounts) < wsMaxTrackKeys {
+		incCount(aggCountryCounts, rec.SourceCountry)
+	}
 	if rec.Domain != "" && len(aggDomainCounts) < wsMaxTrackKeys {
 		incCount(aggDomainCounts, rec.Domain)
 	}
@@ -517,6 +529,7 @@ func BuildSummary() SummaryData {
 		Qps:               sum / 60,
 		AvgDurationMs:     avg,
 		StatusCounts:      copyCounts(aggStatusCounts),
+		TopCountries:      topN(aggCountryCounts, wsTopN),
 		TopDomains:        topN(aggDomainCounts, wsTopN),
 		TopIps:            topN(aggIpCounts, wsTopN),
 		TopPaths:          topN(aggPathCounts, wsTopN),
