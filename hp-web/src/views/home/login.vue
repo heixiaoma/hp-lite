@@ -1,122 +1,106 @@
 <template>
-  <div class="login-page">
-    <!-- 背景装饰元素 -->
-    <div class="login-bg">
-      <div class="bg-shape bg-shape-1"></div>
-      <div class="bg-shape bg-shape-2"></div>
+  <div class="login">
+    <div class="login__bg">
+      <span class="login__blob login__blob--1"></span>
+      <span class="login__blob login__blob--2"></span>
+      <span class="login__blob login__blob--3"></span>
     </div>
 
-    <!-- 登录卡片 -->
-    <div class="login-card">
+    <div class="login__card">
       <!-- 左侧品牌区 -->
-      <div class="login-card-left">
-        <div class="login-logo">
-          <img src="/logo-back.png" alt="HP-Lite Logo" class="logo-image">
-          <span class="logo-text">HP-Lite</span>
-        </div>
-
-        <div class="login-info">
-          <h2 class="info-title">内网穿透</h2>
-          <p class="info-desc">无需公网IP，轻松实现内网服务外网访问</p>
-
-          <div class="login-features">
-            <div class="feature-item">
-              <i class="feature-icon"><CheckCircleOutlined /></i>
-              <span class="feature-text">云端集中管控</span>
-            </div>
-            <div class="feature-item">
-              <i class="feature-icon"><CheckCircleOutlined /></i>
-              <span class="feature-text">多设备多租户管理</span>
-            </div>
-            <div class="feature-item">
-              <i class="feature-icon"><CheckCircleOutlined /></i>
-              <span class="feature-text">域名与证书自动化管理</span>
-            </div>
-            <div class="feature-item">
-              <i class="feature-icon"><CheckCircleOutlined /></i>
-              <span class="feature-text">全协议流量可视化分析</span>
-            </div>
-            <div class="feature-item">
-              <i class="feature-icon"><CheckCircleOutlined /></i>
-              <span class="feature-text">穿透安全防护体系</span>
-            </div>
-            <div class="feature-item">
-              <i class="feature-icon"><CheckCircleOutlined /></i>
-              <span class="feature-text">正反向代理一体化支持</span>
-            </div>
+      <aside class="login__brand">
+        <div class="login__brand-top">
+          <div class="login__logo">
+            <img src="/logo-back.png" alt="HP-Lite Logo"/>
+            <span>HP-Lite</span>
           </div>
         </div>
-      </div>
+
+        <div class="login__brand-body">
+          <h2 class="login__brand-title">内网穿透</h2>
+          <p class="login__brand-desc">无需公网 IP，轻松实现内网服务外网访问</p>
+
+          <ul class="login__features">
+            <li v-for="f in features" :key="f">
+              <check-circle-icon/>
+              <span>{{ f }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="login__brand-foot">
+          <a href="javascript:void(0)" @click="goHome">← 返回首页</a>
+        </div>
+      </aside>
 
       <!-- 右侧表单区 -->
-      <div class="login-card-right">
-        <div class="login-form-container">
-          <h2 class="form-title">欢迎回来</h2>
-          <p class="form-subtitle">请登录您的账户继续使用</p>
+      <section class="login__form">
+        <div class="login__form-inner">
+          <h2 class="login__title">欢迎回来</h2>
+          <p class="login__subtitle">请登录您的账户继续使用</p>
 
-          <a-form ref="loginFormRef" size="large" :model="form" :rules="rules">
-            <a-form-item name="email">
-              <a-input
-                  v-model:value="form.email"
-                  allow-clear
-                  placeholder="用户名或邮箱"
-                  class="form-input"
-              >
-                <template #prefix>
-                  <UserOutlined class="input-icon" />
-                </template>
-              </a-input>
-            </a-form-item>
+          <t-form
+              ref="loginFormRef"
+              :data="form"
+              :rules="rules"
+              layout="vertical"
+              size="large"
+              :label-width="0"
+          >
+            <t-form-item name="email">
+              <t-input v-model="form.email" clearable placeholder="用户名或邮箱" size="large">
+                <template #prefix-icon><user-icon/></template>
+              </t-input>
+            </t-form-item>
 
-            <a-form-item name="password">
-              <a-input-password
-                  v-model:value="form.password"
-                  allow-clear
+            <t-form-item name="password">
+              <t-input
+                  v-model="form.password"
+                  type="password"
+                  clearable
                   placeholder="密码"
-                  class="form-input"
-                  @keyup.enter="handleSubmit"
-              >
-                <template #prefix>
-                  <LockOutlined class="input-icon" />
-                </template>
-              </a-input-password>
-            </a-form-item>
-
-            <a-form-item class="remember-me">
-              <a-checkbox v-model:checked="rememberMe">记住我</a-checkbox>
-            </a-form-item>
-
-            <a-form-item>
-              <a-button
-                  type="primary"
-                  @click="handleSubmit"
                   size="large"
-                  :loading="loading"
-                  class="login-button"
-                  block
+                  @enter="handleSubmit"
               >
-                登录
-              </a-button>
-            </a-form-item>
-          </a-form>
+                <template #prefix-icon><lock-on-icon/></template>
+              </t-input>
+            </t-form-item>
+
+            <div class="login__remember">
+              <t-checkbox v-model="rememberMe">记住我</t-checkbox>
+            </div>
+
+            <t-button theme="primary" size="large" block :loading="loading" @click="handleSubmit">
+              登录
+            </t-button>
+          </t-form>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { notification } from 'ant-design-vue';
-import { login } from "../../api/client/user";
+import {onMounted, reactive, ref} from 'vue';
+import {useRouter} from 'vue-router';
+import {MessagePlugin} from 'tdesign-vue-next';
+import {login} from "../../api/client/user";
 import userInfo from "../../data/userInfo";
-import { CheckCircleOutlined, LockOutlined, UserOutlined } from '@ant-design/icons-vue';
+import {CheckCircleIcon, LockOnIcon, UserIcon} from 'tdesign-icons-vue-next';
 
 const router = useRouter();
-const loginFormRef  = ref(null);
+const loginFormRef = ref(null);
 const loading = ref(false);
 const rememberMe = ref(false);
+
+const features = [
+  '云端集中管控',
+  '多设备多租户管理',
+  '域名与证书自动化管理',
+  '全协议流量可视化分析',
+  '穿透安全防护体系',
+  '正反向代理一体化支持',
+];
 
 const form = reactive({
   email: '',
@@ -125,18 +109,18 @@ const form = reactive({
 
 const rules = reactive({
   email: [
-    { required: true, message: '请输入用户名或邮箱', trigger: 'blur' },
+    {required: true, message: '请输入用户名或邮箱', trigger: 'blur'},
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' },
+    {required: true, message: '请输入密码', trigger: 'blur'},
+    {min: 6, message: '密码长度不能少于6位', trigger: 'blur'},
   ],
 });
 
 onMounted(() => {
   const savedUser = localStorage.getItem('hp-lite-user');
   if (savedUser) {
-    const { email, password, expTime } = JSON.parse(savedUser);
+    const {email, password, expTime} = JSON.parse(savedUser);
     if (expTime > Date.now()) {
       form.email = email;
       form.password = password;
@@ -150,306 +134,275 @@ onMounted(() => {
   }
 });
 
-const handleSubmit = () => {
-  loginFormRef.value.validate().then(() => {
-    loading.value = true;
-    login(form).then(res => {
-      loading.value = false;
-      if (res.code === 200) {
-        notification.success({
-          message: '登录成功',
-          description: '欢迎回来，正在为您跳转...',
-        });
-        // 存储用户信息
-        userInfo.setUserInfo(res.data);
-        // 记住登录状态
-        if (rememberMe.value) {
-          localStorage.setItem('hp-lite-user', JSON.stringify({
-            email: form.email,
-            password: form.password,
-            expTime: Date.now() + 30 * 24 * 60 * 60 * 1000 // 30天有效期
-          }));
-        } else {
-          localStorage.removeItem('hp-lite-user');
-        }
+const goHome = () => {
+  router.push('/');
+};
 
-        router.push("/client");
+const handleSubmit = async () => {
+  const result = await loginFormRef.value?.validate();
+  if (result !== true) return;
+
+  loading.value = true;
+  login(form).then(res => {
+    loading.value = false;
+    if (res.code === 200) {
+      MessagePlugin.success('登录成功，正在为您跳转...');
+      // 存储用户信息
+      userInfo.setUserInfo(res.data);
+      // 记住登录状态
+      if (rememberMe.value) {
+        localStorage.setItem('hp-lite-user', JSON.stringify({
+          email: form.email,
+          password: form.password,
+          expTime: Date.now() + 30 * 24 * 60 * 60 * 1000 // 30天有效期
+        }));
       } else {
-        notification.error({
-          message: '登录失败',
-          description: res.msg || '用户名或密码错误',
-        });
+        localStorage.removeItem('hp-lite-user');
       }
-    }).catch(error => {
-      loading.value = false;
-    });
-  }).catch(error => {
-    console.log('表单验证失败:', error);
+
+      router.push("/client");
+    } else {
+      MessagePlugin.error(res.msg || '用户名或密码错误');
+    }
+  }).catch(() => {
+    loading.value = false;
   });
 };
 </script>
 
-<style scoped lang="less">
-.login-page {
+<style scoped>
+.login {
+  position: relative;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   min-height: 100vh;
-  background-color: #f0f2f5;
-  position: relative;
+  padding: 24px;
+  background: var(--hp-bg);
   overflow: hidden;
-
-  .login-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-
-    .bg-shape {
-      position: absolute;
-      width: 600px;
-      height: 600px;
-      border-radius: 50%;
-      filter: blur(100px);
-      opacity: 0.3;
-    }
-
-    .bg-shape-1 {
-      background-color: #4b6ff6;
-      top: -300px;
-      left: -300px;
-    }
-
-    .bg-shape-2 {
-      background-color: #1890ff;
-      bottom: -300px;
-      right: -300px;
-    }
-  }
 }
 
-.login-card {
+.login__bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.login__blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+}
+
+.login__blob--1 {
+  width: 520px;
+  height: 520px;
+  background: rgba(75, 111, 246, .35);
+  top: -220px;
+  left: -160px;
+}
+
+.login__blob--2 {
+  width: 480px;
+  height: 480px;
+  background: rgba(47, 139, 251, .3);
+  bottom: -200px;
+  right: -140px;
+}
+
+.login__blob--3 {
+  width: 360px;
+  height: 360px;
+  background: rgba(34, 211, 238, .22);
+  top: 30%;
+  right: 30%;
+}
+
+.login__card {
+  position: relative;
   display: flex;
-  width: 900px;
-  height: 600px;
-  background-color: white;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  width: 940px;
+  max-width: 100%;
+  min-height: 600px;
+  background: #fff;
+  border-radius: 24px;
   overflow: hidden;
+  box-shadow: var(--hp-shadow-lg);
+}
+
+/* 左侧品牌 */
+.login__brand {
+  flex: 1;
+  background: var(--hp-grad);
+  color: #fff;
+  padding: 44px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   position: relative;
-  z-index: 1;
+  overflow: hidden;
+}
 
-  @media (max-width: 992px) {
-    width: 90%;
-    height: auto;
+.login__brand::after {
+  content: '';
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .1);
+  right: -180px;
+  bottom: -200px;
+}
+
+.login__logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.login__logo img {
+  width: 44px;
+  height: 44px;
+}
+
+.login__logo span {
+  font-size: 23px;
+  font-weight: 700;
+}
+
+.login__brand-body {
+  position: relative;
+}
+
+.login__brand-title {
+  margin: 0 0 12px;
+  font-size: 36px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.login__brand-desc {
+  margin: 0 0 34px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, .85);
+}
+
+.login__features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login__features li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, .92);
+}
+
+.login__features li :deep(svg) {
+  flex: none;
+  font-size: 18px;
+  color: rgba(255, 255, 255, .9);
+}
+
+.login__brand-foot {
+  position: relative;
+  font-size: 13px;
+}
+
+.login__brand-foot a {
+  color: rgba(255, 255, 255, .85);
+}
+
+.login__brand-foot a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* 右侧表单 */
+.login__form {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 48px;
+}
+
+.login__form-inner {
+  width: 100%;
+}
+
+.login__title {
+  margin: 0 0 8px;
+  font-size: 27px;
+  font-weight: 700;
+  color: var(--hp-text);
+}
+
+.login__subtitle {
+  margin: 0 0 30px;
+  font-size: 14px;
+  color: var(--hp-text-2);
+}
+
+.login__remember {
+  /* flex 消除行内基线的 3px 留白，让间距可精确控制 */
+  display: flex;
+  align-items: center;
+  /* 上 14px（紧贴所属字段，表归属）/ 下 24px（与提交按钮拉开） */
+  margin: 14px 0 24px;
+  /* 左边缘与标题 / 输入框 / 按钮严格对齐，不做内缩 */
+  padding-left: 0;
+}
+
+.login__remember :deep(.t-checkbox__label) {
+  color: var(--hp-text-2);
+  transition: color .2s;
+}
+
+.login__remember :deep(.t-checkbox:hover .t-checkbox__label) {
+  color: var(--hp-text);
+}
+
+/* TDesign 默认把输入框前缀图标设为 placeholder 灰（40% 黑），几乎看不见，这里提亮并用品牌色 */
+.login__form :deep(.t-input__prefix-icon) {
+  color: var(--td-brand-color);
+  font-size: 20px;
+}
+
+.login__form :deep(.t-input__prefix-icon .t-icon) {
+  color: inherit;
+}
+
+@media (max-width: 900px) {
+  .login__card {
     flex-direction: column;
+    min-height: auto;
   }
 
-  .login-card-left {
-    flex: 1;
-    background: linear-gradient(135deg, #4b6ff6 0%, #1890ff 100%);
-    color: white;
-    padding: 100px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-
-    @media (max-width: 992px) {
-      padding: 40px;
-    }
-
-    .login-logo {
-      display: flex;
-      align-items: center;
-
-      .logo-image {
-        width: 50px;
-        height: 50px;
-        margin-right: 15px;
-      }
-
-      .logo-text {
-        color: #ffffff;
-        font-size: 24px;
-        font-weight: 600;
-      }
-    }
-
-    .login-info {
-      .info-title {
-        color: #ffffff;
-        font-size: 32px;
-        font-weight: 500;
-        margin-bottom: 20px;
-      }
-
-      .info-desc {
-        font-size: 16px;
-        opacity: 0.8;
-        margin-bottom: 40px;
-      }
-
-      .login-features {
-        .feature-item {
-          display: flex;
-          align-items: center;
-          margin-bottom: 15px;
-
-          .feature-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 24px;
-            height: 24px;
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            margin-right: 10px;
-          }
-
-          .feature-text {
-            opacity: 0.9;
-          }
-        }
-      }
-    }
+  .login__brand {
+    padding: 32px;
   }
 
-  .login-card-right {
-    flex: 1;
-    padding: 60px;
-    display: flex;
-    align-items: center;
-
-    @media (max-width: 992px) {
-      padding: 40px;
-    }
-
-    .login-form-container {
-      width: 100%;
-
-      .form-title {
-        font-size: 28px;
-        font-weight: 600;
-        color: #28313b;
-        margin-bottom: 10px;
-      }
-
-      .form-subtitle {
-        font-size: 16px;
-        color: #808695;
-        margin-bottom: 40px;
-      }
-
-      .form-input {
-        height: 50px;
-        border-radius: 8px;
-        border: 1px solid #d9d9d9;
-
-        &:focus {
-          border-color: #4b6ff6;
-          box-shadow: 0 0 0 2px rgba(75, 111, 246, 0.2);
-        }
-      }
-
-      .input-icon {
-        color: #808695;
-        font-size: 18px;
-      }
-
-      .remember-me {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-
-        .forgot-password {
-          color: #4b6ff6;
-          text-decoration: none;
-
-          &:hover {
-            text-decoration: underline;
-          }
-        }
-      }
-
-      .login-button {
-        height: 50px;
-        border-radius: 8px;
-        background: linear-gradient(135deg, #4b6ff6 0%, #1890ff 100%);
-        font-size: 16px;
-        font-weight: 500;
-
-        &:hover, &:focus {
-          background-color: #3a5ee6;
-          border-color: #3a5ee6;
-        }
-      }
-
-      .login-register {
-        text-align: center;
-        margin-top: 20px;
-        color: #808695;
-
-        .register-link {
-          color: #4b6ff6;
-          text-decoration: none;
-          font-weight: 500;
-
-          &:hover {
-            text-decoration: underline;
-          }
-        }
-      }
-    }
-  }
-}
-
-/* 动画效果 */
-.login-card {
-  animation: fadeIn 0.6s ease-out;
-
-  .login-card-left {
-    animation: slideInLeft 0.6s ease-out;
+  .login__brand-title {
+    font-size: 28px;
   }
 
-  .login-card-right {
-    animation: slideInRight 0.6s ease-out;
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes slideInLeft {
-  from { transform: translateX(-100px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideInRight {
-  from { transform: translateX(100px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-/* 表单元素动画 */
-.form-input {
-  transition: all 0.3s ease;
-}
-
-.login-button {
-  transition: all 0.3s ease;
-  transform: translateY(0);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(75, 111, 246, 0.3);
+  .login__features {
+    display: none;
   }
 
-  &:active {
-    transform: translateY(0);
+  .login__brand-foot {
+    display: none;
+  }
+
+  .login__form {
+    padding: 32px;
   }
 }
 </style>

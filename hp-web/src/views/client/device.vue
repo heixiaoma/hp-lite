@@ -1,308 +1,314 @@
 <template>
-  <div>
-
-    <div>
-      <a-button class="btn edit" style="margin-bottom: 10px;" @click="addDeviceModal">添加设备</a-button>
-      <a-button class="btn view" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
+  <div class="hp-page">
+    <div class="hp-toolbar">
+      <t-button theme="primary" @click="addDeviceModal">
+        <template #icon><add-icon/></template>
+        添加设备
+      </t-button>
+      <t-button variant="outline" theme="primary" @click="loadData">
+        <template #icon><refresh-icon/></template>
+        刷新列表
+      </t-button>
     </div>
 
-    <a-table :columns="columns" :data-source="deviceList"  rowKey="deviceId" :loading="listLoading"
-             :locale="{emptyText: '暂无数据,添加一个试试看看'}"
-             :pagination="pagination"
-             @change="handleTableChange"
-             :scroll="{ x: 'max-content' }"
+    <t-table
+        class="hp-table"
+        row-key="deviceId"
+        :data="deviceList || []"
+        :columns="columns"
+        :loading="listLoading"
+        :pagination="pagination"
+        empty="暂无数据，添加一个试试看看"
+        table-layout="auto"
+        stripe
+        hover
+        @page-change="onPageChange"
     >
-      <template #bodyCell="{ column,record }">
-        <template v-if="column.key === 'online'">
-          <div class="panel-header">
-            <div class="device-info">
-              <div class="device-status">
-                <span class="status-dot" :class="record.online ? 'online' : 'offline'"></span>
-                <span class="status-text" :class="record.online ? 'online' : 'offline'">
-                    {{ record.online ? '在线中' : '未在线' }}
-                  </span>
-              </div>
-            </div>
-          </div>
-        </template>
-
-        <template v-if="column.key === 'action'">
-
-          <a-button class="btn view" style="margin-right: 5px" @click="showQr(record)">
-            连接码
-          </a-button>
-
-          <a-button class="btn edit" @click="edit(record)">
-            编辑
-          </a-button>
-        </template>
-
+      <template #desc="{ row }">
+        <div class="device-name">{{ row.desc }}</div>
       </template>
 
-      <template #expandedRowRender="{ record }">
-        <div class="panel-content">
-          <div class="device-details">
-            <!-- 基础信息 -->
-            <div class="info-section">
-              <h3 class="section-title">设备信息</h3>
-              <div class="info-row" style="flex-direction: column">
-                <span class="info-label">设备ID:</span>
-                <span class="info-value">{{ record.deviceId }}</span>
-              </div>
-              <div class="info-row" style="flex-direction: column">
-                <span class="info-label">连接码:</span>
-                <span class="info-value">{{ record.connectKey }}</span>
-              </div>
-            </div>
+      <template #online="{ row }">
+        <span class="hp-status" :class="row.online ? 'hp-status--online' : 'hp-status--offline'">
+          <i class="hp-status__dot"></i>
+          {{ row.online ? '在线中' : '未在线' }}
+        </span>
+      </template>
 
-            <!-- 性能监控 -->
-            <div v-if="record.memoryInfo" class="performance-section">
-              <h3 class="section-title">性能监控</h3>
+      <template #action="{ row }">
+        <div class="hp-actions">
+          <t-button size="small" variant="outline" theme="primary" @click="showQr(row)">连接码</t-button>
+          <t-button size="small" variant="outline" theme="primary" @click="edit(row)">编辑</t-button>
+        </div>
+      </template>
 
-              <!-- 内存使用率 -->
-              <div class="metric-item">
-                <div class="metric-header">
-                  <span class="metric-label">内存使用率</span>
-                  <span class="metric-value">
-                      {{ ((record.memoryInfo.useMem / record.memoryInfo.total) * 100).toFixed(1) }}%
-                    </span>
+      <template #expandedRow="{ row }">
+        <div class="device-detail">
+          <div class="detail-card">
+            <section class="detail-section">
+              <h4 class="detail-section__title">设备信息</h4>
+              <div class="detail-row">
+                <span class="detail-row__label">设备 ID</span>
+                <div class="detail-row__value is-code">
+                  <code class="hp-code" :title="row.deviceId">{{ row.deviceId }}</code>
+                  <t-button size="small" variant="text" theme="primary" @click="copyText(row.deviceId)">
+                    <template #icon><copy-icon/></template>
+                    复制
+                  </t-button>
                 </div>
-                <div class="progress-bar">
-                  <div class="progress-track">
-                    <div
-                        class="progress-fill memory"
-                        :style="{ width: ((record.memoryInfo.useMem / record.memoryInfo.total) * 100) + '%' }"
-                    ></div>
+              </div>
+              <div class="detail-row">
+                <span class="detail-row__label">连接码</span>
+                <div class="detail-row__value is-code">
+                  <code class="hp-code" :title="row.connectKey">{{ row.connectKey }}</code>
+                  <t-button size="small" variant="text" theme="primary" @click="copyText(row.connectKey)">
+                    <template #icon><copy-icon/></template>
+                    复制
+                  </t-button>
+                </div>
+              </div>
+            </section>
+
+            <section v-if="row.memoryInfo" class="detail-section">
+              <h4 class="detail-section__title">性能监控</h4>
+
+              <div class="metric-grid">
+                <div class="hp-metric">
+                  <div class="hp-metric__head">
+                    <span class="hp-metric__label">内存使用率</span>
+                    <span class="hp-metric__value">{{ memRate(row) }}%</span>
+                  </div>
+                  <t-progress theme="line" :percentage="memRate(row)" :label="false"/>
+                  <div class="hp-metric__foot">
+                    <span>已用 {{ (row.memoryInfo.useMem / 1024 / 1024).toFixed(2) }} MB</span>
+                    <span>共 {{ (row.memoryInfo.total / 1024 / 1024).toFixed(2) }} MB</span>
                   </div>
                 </div>
-                <div class="memory-details">
-                  <span class="memory-used">{{ (record.memoryInfo.useMem / 1024 / 1024).toFixed(2) }} MB</span>
-                  <span class="memory-total">{{ (record.memoryInfo.total / 1024 / 1024).toFixed(2) }} MB</span>
-                </div>
-              </div>
 
-              <!-- CPU使用率 -->
-              <div class="metric-item">
-                <div class="metric-header">
-                  <span class="metric-label">CPU使用率</span>
-                  <span class="metric-value">{{ record.memoryInfo.cpuRate.toFixed(1) }}%</span>
-                </div>
-                <div class="progress-bar">
-                  <div class="progress-track">
-                    <div
-                        class="progress-fill cpu"
-                        :style="{ width: record.memoryInfo.cpuRate + '%' }"
-                    ></div>
+                <div class="hp-metric">
+                  <div class="hp-metric__head">
+                    <span class="hp-metric__label">CPU 使用率</span>
+                    <span class="hp-metric__value">{{ row.memoryInfo.cpuRate.toFixed(1) }}%</span>
                   </div>
+                  <t-progress theme="line" color="#f97316" :percentage="row.memoryInfo.cpuRate" :label="false"/>
                 </div>
               </div>
 
-              <!-- HP内存信息 -->
-              <div class="hp-memory-info">
-                <div class="info-row">
-                  <span class="info-label">HP占用内存:</span>
-                  <span class="info-value">{{ (record.memoryInfo.hpTotalMem / 1024 / 1024).toFixed(2) }} MB</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">HP实际使用:</span>
-                  <span class="info-value">{{ (record.memoryInfo.hpUseMem / 1024 / 1024).toFixed(2) }} MB</span>
-                </div>
+              <div class="detail-row">
+                <span class="detail-row__label">HP 占用内存</span>
+                <span class="detail-row__value">{{ (row.memoryInfo.hpTotalMem / 1024 / 1024).toFixed(2) }} MB</span>
               </div>
-            </div>
+              <div class="detail-row">
+                <span class="detail-row__label">HP 实际使用</span>
+                <span class="detail-row__value">{{ (row.memoryInfo.hpUseMem / 1024 / 1024).toFixed(2) }} MB</span>
+              </div>
+            </section>
 
-            <!-- 管理员信息 -->
-            <div v-if="userInfo.getUserInfo().role === 'ADMIN'" class="admin-section">
-              <h3 class="section-title">归属信息</h3>
-              <div class="info-row">
-                <span class="info-label">归属用户:</span>
-                <span class="info-value">{{ record.username || '无' }}</span>
+            <section v-if="isAdmin" class="detail-section">
+              <h4 class="detail-section__title">归属信息</h4>
+              <div class="detail-row">
+                <span class="detail-row__label">归属用户</span>
+                <span class="detail-row__value">{{ row.username || '无' }}</span>
               </div>
-              <div class="info-row">
-                <span class="info-label">用户备注:</span>
-                <span class="info-value">{{ record.userDesc || '无' }}</span>
+              <div class="detail-row">
+                <span class="detail-row__label">用户备注</span>
+                <span class="detail-row__value">{{ row.userDesc || '无' }}</span>
               </div>
-            </div>
+            </section>
           </div>
 
-          <!-- 操作按钮 -->
-          <div class="action-buttons">
-            <a-popconfirm
-                title="确定要删除该设备？"
-                ok-text="删除"
-                cancel-text="取消"
-                @confirm="() => removeData(record)"
-            >
-              <a-button class="btn delete">
-                删除
-              </a-button>
-            </a-popconfirm>
-
-            <a-popconfirm
-                title="确定要强制停止程序？"
-                ok-text="停止"
-                cancel-text="取消"
-                @confirm="() => stopData(record)"
-            >
-              <a-button class="btn stop">
-                强制停止
-              </a-button>
-            </a-popconfirm>
-
+          <div class="device-detail__actions">
+            <t-popconfirm content="确定要删除该设备？" theme="danger" @confirm="removeData(row)">
+              <t-button size="small" variant="outline" theme="danger">删除</t-button>
+            </t-popconfirm>
+            <t-popconfirm content="确定要强制停止程序？" theme="warning" @confirm="stopData(row)">
+              <t-button size="small" variant="outline" theme="warning">强制停止</t-button>
+            </t-popconfirm>
           </div>
         </div>
       </template>
-    </a-table>
+    </t-table>
 
-    <div>
-      <a-modal :destroyOnClose="true"  v-model:visible="qrModalVisible" title="设备二维码">
-        <qr :text="deviceId"/>
-        <template #footer>
-          <a-button class="btn view" @click="closeQr">我已知晓</a-button>
-        </template>
-      </a-modal>
-    </div>
-    <div>
-      <a-modal  v-model:visible="addDeviceModalVisible" title="设备信息">
-        <a-form :model="formState" ref="formTable" :layout="'vertical'" >
-          <a-form-item label="设备编号" name="deviceId" :rules="[{ required: true, message: '设备编号必填'}]">
-            <a-input style="width: 70%" v-model:value="formState.deviceId" placeholder="设备ID：32位"/>
-            <span style="padding-left: 8px;user-select: none"><a @click="guid">自动生成</a></span>
-          </a-form-item>
-          <a-form-item label="设备备注" name="desc" :rules="[{ required: true, message: '设备备注必填'}]">
-            <a-input style="width: 70%" v-model:value="formState.desc" placeholder="备注如：nas中的HP"/>
-          </a-form-item>
-        </a-form>
-        <template #footer>
-          <a-button class="btn view" @click="addDeviceModalVisible=!addDeviceModalVisible">取消</a-button>
-          <a-button class="btn edit" @click="addDeviceOk">确定</a-button>
-        </template>
-      </a-modal>
-    </div>
-    <div>
-      <a-modal v-model:visible="updateDeviceModalVisible" title="设备信息">
-        <a-form :model="formState" ref="formTable" :layout="'vertical'" >
-          <a-form-item label="设备编号"  name="deviceId" :rules="[{ required: true, message: '设备编号必填'}]">
-            <a-input style="width: 70%" disabled="disabled" v-model:value="formState.deviceId" placeholder="设备ID：32位"/>
-          </a-form-item>
-          <a-form-item label="设备备注" name="desc" :rules="[{ required: true, message: '设备备注必填'}]">
-            <a-input style="width: 70%" v-model:value="formState.desc" placeholder="备注如：nas中的HP"/>
-          </a-form-item>
-        </a-form>
+    <!-- 连接码 -->
+    <t-dialog
+        v-model:visible="qrModalVisible"
+        header="设备二维码"
+        :footer="false"
+        width="560px"
+        destroy-on-close
+    >
+      <qr v-if="deviceId" :text="deviceId"/>
+      <div class="qr-footer">
+        <t-button theme="primary" block @click="closeQr">我已知晓</t-button>
+      </div>
+    </t-dialog>
 
-        <template #footer>
-          <a-button class="btn view" @click="updateDeviceModalVisible=!updateDeviceModalVisible">取消</a-button>
-          <a-button class="btn edit" @click="updateDeviceOk">确定</a-button>
-        </template>
+    <!-- 新增设备 -->
+    <t-dialog
+        v-model:visible="addDeviceModalVisible"
+        header="添加设备"
+        confirm-btn="确定"
+        cancel-btn="取消"
+        width="560px"
+        @confirm="addDeviceOk"
+    >
+      <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical">
+        <t-form-item label="设备编号" name="deviceId">
+          <t-input v-model="formState.deviceId" clearable placeholder="设备ID：32位">
+            <template #suffix>
+              <t-link theme="primary" hover="color" @click="guid">自动生成</t-link>
+            </template>
+          </t-input>
+        </t-form-item>
+        <t-form-item label="设备备注" name="desc">
+          <t-input v-model="formState.desc" clearable placeholder="备注如：nas中的HP"/>
+        </t-form-item>
+      </t-form>
+    </t-dialog>
 
-      </a-modal>
-    </div>
+    <!-- 编辑设备 -->
+    <t-dialog
+        v-model:visible="updateDeviceModalVisible"
+        header="编辑设备"
+        confirm-btn="确定"
+        cancel-btn="取消"
+        width="560px"
+        @confirm="updateDeviceOk"
+    >
+      <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical">
+        <t-form-item label="设备编号" name="deviceId">
+          <t-input v-model="formState.deviceId" disabled placeholder="设备ID：32位"/>
+        </t-form-item>
+        <t-form-item label="设备备注" name="desc">
+          <t-input v-model="formState.desc" clearable placeholder="备注如：nas中的HP"/>
+        </t-form-item>
+      </t-form>
+    </t-dialog>
   </div>
 </template>
 
 <script setup>
-import {onMounted, reactive, ref} from "vue";
-import {useRouter} from "vue-router";
+import {computed, onMounted, reactive, ref} from "vue";
 import {addDevice, getDeviceList, removeDevice, stopDevice, updateDevice} from "../../api/client/device";
 import qr from './qr.vue';
 import userInfo from "../../data/userInfo";
+import {MessagePlugin} from 'tdesign-vue-next';
+import {AddIcon, CopyIcon, RefreshIcon} from 'tdesign-icons-vue-next';
+import {copyText as copyToClipboard} from '../../utils/clipboard';
 
-const qrModalVisible = ref(false)
-const router = useRouter()
 const formTable = ref()
-const deviceId = ref()
-const deviceList = ref()
+const deviceId = ref('')
+const deviceList = ref([])
 const listLoading = ref(false)
+const qrModalVisible = ref(false)
 const addDeviceModalVisible = ref(false)
 const updateDeviceModalVisible = ref(false)
+
 const formState = reactive({
   deviceId: "",
   desc: ""
 })
+
+const formRules = {
+  deviceId: [{required: true, message: '设备编号必填', type: 'error'}],
+  desc: [{required: true, message: '设备备注必填', type: 'error'}],
+};
+
 const pagination = reactive({
   total: 0,
   current: 1,
   pageSize: 10,
+  pageSizeOptions: [10, 20, 50],
 });
 
+const isAdmin = computed(() => userInfo.getUserInfo()?.role === 'ADMIN');
+
 const columns = [
-  {title: '描述', dataIndex: 'desc', key: 'desc'},
-  {title: '在线状态', dataIndex: 'online', key: 'online'},
-  {title: '操作', dataIndex: 'action',key: 'action'},
+  {colKey: 'desc', title: '描述'},
+  {colKey: 'online', title: '在线状态', width: 130},
+  {colKey: 'action', title: '操作', width: 170},
 ];
 
-const handleTableChange = (item) => {
-  pagination.current = item.current
-  pagination.pageSize = item.pageSize
-  pagination.total = item.total
+const memRate = (row) => {
+  if (!row.memoryInfo || !row.memoryInfo.total) return 0
+  return Number(((row.memoryInfo.useMem / row.memoryInfo.total) * 100).toFixed(1))
+}
+
+// 设备 ID / 连接码是 32 位长串，界面上被省略号截断，只能靠复制拿完整值
+const copyText = async (text) => {
+  const ok = await copyToClipboard(text)
+  ok ? MessagePlugin.success('已复制到剪贴板') : MessagePlugin.error('复制失败，请手动选中复制')
+}
+
+const onPageChange = (pageInfo) => {
+  pagination.current = pageInfo.current
+  pagination.pageSize = pageInfo.pageSize
   loadData()
 }
 
 const addDeviceModal = () => {
-  formState.deviceId=""
-  formState.desc=""
+  formState.deviceId = ""
+  formState.desc = ""
   addDeviceModalVisible.value = true;
 };
 
-
-const edit=(item)=>{
-  formState.deviceId=item.deviceId
-  formState.desc=item.desc
+const edit = (item) => {
+  formState.deviceId = item.deviceId
+  formState.desc = item.desc
   updateDeviceModalVisible.value = true;
 }
 
-
-const showQr = (item)=>{
+const showQr = (item) => {
   qrModalVisible.value = true;
   deviceId.value = item.connectKey;
 }
-const closeQr = ()=>{
+
+const closeQr = () => {
   qrModalVisible.value = false;
   deviceId.value = "";
 }
 
+const addDeviceOk = async () => {
+  const result = await formTable.value?.validate()
+  if (result !== true) return
 
-const addDeviceOk = () => {
-  formTable.value.validate().then(res => {
-    addDevice({
-      ...formState
-    }).then(res => {
-      formState.deviceId = ''
-      formState.desc = ''
-      loadData();
-      addDeviceModalVisible.value = false;
-    })
+  addDevice({...formState}).then(() => {
+    formState.deviceId = ''
+    formState.desc = ''
+    loadData();
+    addDeviceModalVisible.value = false;
   })
 };
 
-const updateDeviceOk = () => {
-  formTable.value.validate().then(res => {
-    updateDevice({
-      ...formState
-    }).then(res => {
-      formState.deviceId = ''
-      formState.desc = ''
-      loadData();
-      updateDeviceModalVisible.value = false;
-    })
+const updateDeviceOk = async () => {
+  const result = await formTable.value?.validate()
+  if (result !== true) return
+
+  updateDevice({...formState}).then(() => {
+    formState.deviceId = ''
+    formState.desc = ''
+    loadData();
+    updateDeviceModalVisible.value = false;
   })
 };
+
 const stopData = (item) => {
   stopDevice({
     deviceId: item.deviceId
-  }).then(res => {
+  }).then(() => {
     loadData();
-  })
+  });
 };
 
 const loadData = () => {
   listLoading.value = true
   getDeviceList(pagination).then(res => {
     listLoading.value = false
-    if (res.data){
+    if (res.data) {
       deviceList.value = res.data.records
       pagination.total = res.data.total
     }
-  }).catch(e => {
+  }).catch(() => {
     listLoading.value = false
   })
 }
@@ -313,306 +319,110 @@ const guid = () => {
         v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   })
-
 }
-
-onMounted(() => {
-  loadData()
-})
 
 const removeData = (item) => {
   removeDevice({
     deviceId: item.deviceId
-  }).then(res => {
+  }).then(() => {
     loadData();
-  })
+  });
 };
 
-
+onMounted(() => {
+  loadData()
+})
 </script>
 
-<style lang="less" scoped>
-
-.onRead {
-  div {
-    -webkit-filter: grayscale(100%);
-    filter: progid:DXImageTransform.Microsoft.BasicImage(graysale=1);
-  }
-}
-
-.op-btn button {
-  text-align: center;
-  margin: 5px;
-}
-
-.text-tips {
-  margin-top: 10px;
-  background-color: #4b6ff6;
-  color: #ffffff;
-  padding: 2px 10px;
-  border-radius: 10px;
-}
-
-.text-detail div {
-  margin-bottom: 10px;
-}
-
-.ant-card-body {
-  overflow: hidden;
-}
-
-.full-modal {
-  .ant-modal {
-    max-width: 100%;
-    top: 0;
-    padding-bottom: 0;
-    margin: 0;
-  }
-
-  .ant-modal-content {
-    box-shadow: none;
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh);
-  }
-
-  .ant-modal-body {
-    flex: 1;
-  }
-}
-
-/* 整体容器 */
-.device-list-container {
-  padding: 20px;
-  background-color: #f8fafc;
-  min-height: 100vh;
-}
-
-.ant-collapse{
-  border: none;
-}
-
-/* 折叠面板样式 */
-.custom-collapse .ant-collapse-item {
-  margin-bottom: 16px;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: none;
-}
-
-/* 面板头部 */
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.device-info {
-  display: flex;
-  flex-direction: column;
-}
-
+<style scoped>
 .device-name {
-  font-size: 16px;
-  font-weight: 500;
-  color: #1f2937;
-  margin-bottom: 4px;
+  font-weight: 600;
 }
 
-.device-status {
-  display: flex;
-  align-items: center;
+.device-detail {
+  padding: 14px 16px;
+  background: #fbfcfe;
+  border-radius: 12px;
 }
 
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-right: 6px;
+/* 三个分区合并进一个 card，内部改用分隔线区分，不再各自套一层白底边框 */
+.detail-card {
+  background: #fff;
+  border: 1px solid var(--hp-border);
+  border-radius: 12px;
+  padding: 0 18px 16px;
 }
 
-.status-dot.online {
-  background-color: #10b981;
-  animation: pulse 2s infinite;
+.detail-section + .detail-section {
+  padding-top: 14px;
+  border-top: 1px solid #eef2f8;
 }
 
-.status-dot.offline {
-  background-color: #ef4444;
-}
-
-.status-text {
+.detail-section__title {
+  margin: 0 0 12px;
+  padding-top: 14px;
   font-size: 13px;
-  color: #6b7280;
+  font-weight: 600;
+  color: var(--hp-text);
 }
 
-.status-text.online {
-  color: #10b981;
-}
-
-.status-text.offline {
-  color: #ef4444;
-}
-
-.more-button {
-  background-color: #f3f4f6;
-  color: #6b7280;
-  border: none;
-  transition: all 0.2s ease;
-}
-
-.more-button:hover {
-  background-color: #e5e7eb;
-  color: #4b5563;
-}
-
-/* 面板内容 */
-.panel-content {
-  padding: 20px;
-  background-color: #ffffff;
-  border-top: 1px solid #e5e7eb;
-}
-
-.device-details {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-}
-
-@media (min-width: 768px) {
-  .device-details {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.section-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1f2937;
-  margin-bottom: 12px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.info-row {
+.detail-row {
   display: flex;
-  margin-bottom: 10px;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 13px;
 }
 
-.info-label {
-  width: 120px;
-  color: #6b7280;
-  font-size: 14px;
+.detail-row__label {
+  flex: none;
+  width: 88px;
+  color: var(--hp-text-3);
 }
 
-.info-value {
+.detail-row__value {
   flex: 1;
-  color: #1f2937;
-  font-size: 14px;
+  min-width: 0;
+  color: var(--hp-text);
   word-break: break-all;
 }
 
-.status.online {
-  color: #10b981;
-  font-weight: 500;
-}
-
-.status.offline {
-  color: #ef4444;
-  font-weight: 500;
-}
-
-.info-section{
-  grid-column: 1 / -1;
-}
-
-/* 性能监控部分 */
-.performance-section {
-  grid-column: 1 / -1;
-}
-
-.metric-item {
-  margin-bottom: 16px;
-}
-
-.metric-header {
+/* 设备 ID / 连接码这一行：长串单行省略，右侧留出复制按钮 */
+.detail-row__value.is-code {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 6px;
+  align-items: center;
+  gap: 6px;
+  word-break: normal;
 }
 
-.metric-label {
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.metric-value {
-  color: #1f2937;
-  font-weight: 500;
-}
-
-.progress-bar {
-  height: 8px;
-  border-radius: 4px;
-  background-color: #f3f4f6;
+/* 32 位长串原来 break-all 会折成好几行，撑得又高又乱。
+   改成单行省略号，完整值靠 title 悬浮和「复制」按钮拿到 */
+.hp-code {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
-}
-
-.progress-track {
-  height: 100%;
-  position: relative;
-}
-
-.progress-fill {
-  height: 100%;
-  position: absolute;
-  transition: width 0.5s ease;
-}
-
-.progress-fill.memory {
-  background-color: #3b82f6;
-}
-
-.progress-fill.cpu {
-  background-color: #f97316;
-}
-
-.memory-details {
-  display: flex;
-  justify-content: space-between;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
   font-size: 12px;
-  color: #6b7280;
-  margin-top: 4px;
 }
 
-.hp-memory-info {
+/* 内存 / CPU 上下排列：指标各占满一整行，进度条更长，百分比与用量数字也更好读。
+   并排时每个指标只有半行宽，进度条被压短，两个百分比容易看串行 */
+.metric-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.device-detail__actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+}
+
+.qr-footer {
   margin-top: 16px;
 }
-
-/* 管理员信息 */
-.admin-section {
-  grid-column: 1 / -1;
-}
-
-/* 操作按钮 */
-.action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-/* 动画效果 */
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-  }
-}
-
 </style>

@@ -1,10 +1,11 @@
 import {createApp} from 'vue'
 import App from './App.vue'
 import {router} from "./router/index.js";
-import Antd from 'ant-design-vue';
-import 'ant-design-vue/dist/antd.css';
+import TDesign from 'tdesign-vue-next';
+import 'tdesign-vue-next/es/style/index.css';
+import './styles/global.css';
 
-const elementApp = createApp(App);
-elementApp.use(Antd)
-elementApp.use(router)
-elementApp.mount('#app')
+const app = createApp(App);
+app.use(TDesign)
+app.use(router)
+app.mount('#app')

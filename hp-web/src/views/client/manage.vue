@@ -1,537 +1,426 @@
 <template>
-  <a-layout id="layout" class="layout-container">
-    <!-- 头部导航 -->
-    <a-layout-header class="header">
-      <!-- 头部内容保持不变 -->
-      <div class="header-content">
-        <div class="logo">
-          <a href="/" class="logo-link">
-            <img src="/logo-back.png" class="logo-img" alt="HP-Lite">
-            <span class="logo-text">HP-Lite内网穿透</span>
-          </a>
-        </div>
+  <div class="console">
+    <!-- 顶部 -->
+    <header class="console__header">
+      <div class="console__header-inner">
+        <a class="brand" href="/">
+          <img src="/logo.png" alt="HP-Lite">
+          <span class="brand__text">HP-Lite<span class="brand__sub">内网穿透</span></span>
+        </a>
 
-        <div class="user-area">
-          <a-dropdown
-              trigger="click"
-              :overlay-style="{ borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }"
-          >
-            <div class="user-info" @click.stop>
-              <a-avatar class="user-avatar">
-                <template #icon>
-                  <img src="/logo.png" >
-                </template>
-              </a-avatar>
-              <span class="user-email">{{ userInfo.email || '未登录' }}</span>
+        <div class="console__header-right">
+          <div class="user" v-if="!isMobile">
+            <t-avatar size="32px" shape="circle" image="/logo.png"/>
+            <div class="user__meta">
+              <span class="user__email">{{ userInfo.email || '未登录' }}</span>
+              <t-tag v-if="userInfo.role === 'ADMIN'" theme="primary" variant="light" size="small">管理员</t-tag>
+              <t-tag v-else size="small" variant="light">子用户</t-tag>
             </div>
-            <template #overlay>
-              <a-menu @click="handleMenuClick" class="user-menu">
-<!--                <a-menu-item key="profile" class="menu-item">-->
-<!--                  <a-icon type="user" class="menu-icon" />-->
-<!--                  <span>个人资料</span>-->
-<!--                </a-menu-item>-->
-<!--                <a-menu-item key="setting" class="menu-item">-->
-<!--                  <a-icon type="setting" class="menu-icon" />-->
-<!--                  <span>系统设置</span>-->
-<!--                </a-menu-item>-->
-<!--                <a-menu-divider />-->
-                <a-menu-item key="logout" class="menu-item logout-item">
-                  <span>退出登录</span>
-                </a-menu-item>
-              </a-menu>
-            </template>
-          </a-dropdown>
-
-          <div class="user-mini" @click="handleLoginOut">
-            <a-button type="text" class="mini-logout">
-              <span>退出登录</span>
-            </a-button>
           </div>
+
+          <t-dropdown
+              trigger="click"
+              placement="bottom-right"
+              :options="userOptions"
+              @click="onUserAction"
+          >
+            <t-button variant="text" shape="square">
+              <component :is="isMobile ? PoweroffIcon : ArrowDownIcon"/>
+            </t-button>
+          </t-dropdown>
         </div>
       </div>
-    </a-layout-header>
+    </header>
 
-    <!-- 主体内容区域 - 关键优化区域 -->
-    <a-layout class="main-container">
-      <!-- 侧边栏保持固定 -->
-      <a-layout-sider
-          class="sidebar"
-          :width="160"
-          :collapsed-width="64"
-          breakpoint="md"
-          collapsible
-          :collapsed="isCollapsed"
-          @collapse="collapsedTrigger"
-          @expand="collapsedTrigger"
-          :style="{
-          backgroundColor: '#4b6ff6',
-          transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
-        }"
-      >
-        <!-- 侧边栏菜单保持不变 -->
-        <a-menu
-            mode="inline"
-            :theme="theme"
-            :selected-keys="[selectedKey]"
-            @select="handleMenuSelect"
-            class="sidebar-menu"
+    <div class="console__body">
+      <!-- 侧边栏 -->
+      <aside class="console__aside" :class="{ 'is-collapsed': isCollapsed }">
+        <t-menu
+            :value="selectedKey"
+            theme="light"
+            :collapsed="isCollapsed"
+            :width="['100%', '100%']"
+            :expanded="expanded"
+            @change="onMenuChange"
+            @expand="onMenuExpand"
         >
-          <a-menu-item key="/client/user" v-if="userInfo&&userInfo.role==='ADMIN'" class="sidebar-item">
-            <template #icon><svg t="1751867825889" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="6970" width="24" height="24"><path d="M592.896 589.141333c96.938667-34.816 166.570667-131.072 166.570667-244.053333 0-142.677333-110.933333-258.048-247.466667-258.048-136.533333 0-247.466667 115.712-247.466667 258.048 0 112.981333 69.632 208.896 166.570667 244.053333-162.816 40.96-284.672 202.069333-284.672 383.658667L877.226667 972.8C877.226667 791.210667 755.712 630.101333 592.896 589.141333L592.896 589.141333zM592.896 589.141333" fill="#ffffff" p-id="6971"></path></svg></template>
-            <span>系统用户</span>
-          </a-menu-item>
-          <a-menu-item key="/client/domain" class="sidebar-item">
-            <template #icon><svg t="1751868116673" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="12795" width="24" height="24"><path d="M178.581333 682.666667c62.848 126.442667 193.322667 213.333333 344.085334 213.333333 150.762667 0 281.237333-86.890667 344.085333-213.333333h93.226667C891.733333 857.514667 721.664 981.333333 522.666667 981.333333 323.690667 981.333333 153.6 857.493333 85.333333 682.666667h93.248zM130.730667 394.666667l29.482666 104.32 31.978667-104.32h64.298667l30.848 103.722666 28.714666-103.722666h97.685334l29.568 104.384 32-104.384h64.277333l30.848 103.722666 28.736-103.722666h111.146667l29.546666 104.384 32-104.384h64.298667l30.848 103.722666 28.714667-103.722666h78.805333l-73.514667 234.666666h-68.416l-30.037333-100.629333-32.405333 100.629333h-66.922667l-49.514667-156.949333-49.28 156.949333h-68.416l-30.016-100.629333-32.426666 100.629333h-66.901334l-42.837333-135.594666-42.496 135.594666h-68.416l-30.037333-100.629333L190.506667 629.333333H123.562667l-74.112-234.666666h81.28zM522.666667 42.666667C721.664 42.666667 891.733333 166.506667 960 341.333333H866.773333C803.925333 214.912 673.450667 128 522.666667 128c-150.784 0-281.258667 86.890667-344.085334 213.333333H85.333333C153.6 166.506667 323.669333 42.666667 522.666667 42.666667z" fill="#ffffff" p-id="12796"></path></svg></template>
-            <span>域名管理</span>
-          </a-menu-item>
-          <a-menu-item key="/client/device" class="sidebar-item">
-            <template #icon><svg t="1751867998833" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="9921" width="24" height="24"><path d="M96 896a32 32 0 0 1-32-32V592a32 32 0 0 1 32-32h832a32 32 0 0 1 32 32v272a32 32 0 0 1-32 32z m48.064-176.064a47.936 47.936 0 0 0 48 48h160a48 48 0 0 0 0-96h-160a47.936 47.936 0 0 0-48.064 48z m-48.064-256a32 32 0 0 1-32-32V160a32 32 0 0 1 32-32h832a32 32 0 0 1 32 32v271.936a32 32 0 0 1-32 32z m48.064-175.872a48.064 48.064 0 0 0 48 48h160a48 48 0 0 0 0-96h-160a48 48 0 0 0-48.064 47.936z" fill="#ffffff" p-id="9922"></path></svg></template>
-            <span>穿透设备</span>
-          </a-menu-item>
-          <a-menu-item key="/client/config" class="sidebar-item">
-            <template #icon><svg t="1751868156496" class="icon" viewBox="0 0 1034 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="13941" width="24" height="24"><path d="M734.208 196.608c97.28 0 186.368 33.792 258.048 89.088V178.176c0-38.912-37.888-68.608-83.968-68.608H83.968c-47.104 0-83.968 29.696-83.968 68.608v353.28h324.608c38.912-190.464 207.872-334.848 409.6-334.848zM390.144 851.968H75.776c-20.48 0-37.888 14.336-37.888 30.72s17.408 30.72 37.888 30.72h366.592c-18.432-18.432-36.864-39.936-52.224-61.44zM317.44 593.92h-317.44v34.816c0 38.912 37.888 69.632 83.968 69.632h240.64c-5.12-26.624-8.192-55.296-8.192-83.968 0-6.144 1.024-13.312 1.024-20.48z" fill="#ffffff" p-id="13942"></path><path d="M980.992 614.4c0-34.816 21.504-64.512 53.248-76.8-7.168-28.672-18.432-56.32-33.792-80.896-30.72 13.312-66.56 8.192-91.136-16.384-24.576-24.576-30.72-61.44-16.384-91.136-24.576-14.336-52.224-26.624-80.896-33.792-12.288 30.72-41.984 53.248-76.8 53.248-34.816 0-64.512-21.504-76.8-53.248-28.672 7.168-56.32 18.432-80.896 33.792 13.312 30.72 8.192 66.56-16.384 91.136-24.576 24.576-61.44 30.72-91.136 16.384-15.36 24.576-26.624 52.224-33.792 80.896 30.72 12.288 53.248 41.984 53.248 76.8 0 34.816-21.504 64.512-53.248 76.8 7.168 28.672 18.432 56.32 33.792 80.896 30.72-13.312 66.56-8.192 91.136 16.384 24.576 24.576 30.72 61.44 16.384 91.136 24.576 14.336 52.224 26.624 80.896 33.792 12.288-30.72 41.984-53.248 76.8-53.248 34.816 0 64.512 21.504 76.8 53.248 28.672-7.168 56.32-18.432 80.896-33.792-13.312-30.72-8.192-66.56 16.384-91.136 24.576-24.576 61.44-30.72 91.136-16.384 15.36-24.576 26.624-52.224 33.792-80.896-30.72-12.288-53.248-41.984-53.248-76.8zM734.208 759.808C654.336 759.808 588.8 694.272 588.8 614.4c0-79.872 65.536-145.408 145.408-145.408 79.872 0 145.408 65.536 145.408 145.408 0 80.896-64.512 145.408-145.408 145.408z" fill="#ffffff" p-id="13943"></path><path d="M734.208 614.4m-74.752 0a74.752 74.752 0 1 0 149.504 0 74.752 74.752 0 1 0-149.504 0Z" fill="#ffffff" p-id="13944"></path></svg></template>
-            <span>穿透配置</span>
-          </a-menu-item>
+          <t-menu-item v-if="userInfo && userInfo.role === 'ADMIN'" value="/client/user">
+            <template #icon><user-icon/></template>
+            系统用户
+          </t-menu-item>
 
+          <t-menu-item value="/client/domain">
+            <template #icon><link-icon/></template>
+            域名管理
+          </t-menu-item>
 
+          <t-menu-item value="/client/device">
+            <template #icon><desktop-icon/></template>
+            穿透设备
+          </t-menu-item>
 
+          <t-menu-item value="/client/config">
+            <template #icon><setting-icon/></template>
+            穿透配置
+          </t-menu-item>
 
-          <!-- 二级菜单 -->
-          <a-sub-menu key="safe"  class="sidebar-item">
-            <template #icon><svg t="1751891575635" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="6191" width="24" height="24"><path d="M1002.55552 200.832c-21.888-126.08-52.16-156.096-179.904-178.432C741.30752 8.128 626.42752 0.064 507.70752 0.064c-117.76 0-226.688 7.68-306.688 21.568C74.93952 43.584 44.98752 73.792 22.65152 201.536c-29.632 169.152-30.016 453.824-1.024 621.632 21.888 126.08 52.096 156.032 179.904 178.432 81.536 14.272 196.544 22.464 315.712 22.464 117.44 0 226.176-7.616 306.112-21.44 126.08-21.888 156.096-52.16 178.368-179.968 29.568-169.216 30.016-453.888 0.896-621.696z m-31.936 616.32c-20.032 114.56-40 134.72-152.832 154.368-78.144 13.504-184.896 20.992-300.608 20.992-117.312 0-230.4-8-310.272-21.952-114.56-20.096-134.784-40.128-154.304-152.768-28.544-164.864-28.16-444.608 0.96-610.816 20.032-114.496 40-134.656 152.768-154.24C284.60352 39.104 391.61152 31.616 507.57952 31.616c117.056 0 229.888 8 309.504 21.952 114.496 20.096 134.656 40.064 154.304 152.832 28.608 164.864 28.224 444.608-0.896 610.944z" fill="#ffffff" p-id="6192"></path><path d="M513.01952 192h-2.368v0.32L229.37152 266.88l16.448 297.856c0 1.984 0 39.616 12.032 62.208 60.544 113.728 203.968 182.848 249.92 203.328a30.592 30.592 0 0 0 2.88 1.152V832c0.32 0 0.704-0.128 1.088-0.256l1.28 0.256h0.064v-0.704c1.152-0.512 2.176-0.96 2.24-1.088 45.952-20.48 189.376-89.536 249.92-203.328 12.032-22.656 13.248-60.224 13.312-62.208l16.512-297.856-281.92-74.88zM327.09952 330.368c0-8.128 6.592-14.656 14.656-14.656h139.584c8.128 0 14.656 6.592 14.656 14.656v66.112a14.656 14.656 0 0 1-14.656 14.656H341.75552a14.656 14.656 0 0 1-14.656-14.656V330.368z m0 124.928c0-8.128 6.592-14.656 14.656-14.656h44.096c8.128 0 14.656 6.592 14.656 14.656v66.112a14.656 14.656 0 0 1-14.656 14.656h-44.096a14.656 14.656 0 0 1-14.656-14.656V455.296z m169.024 190.976a14.656 14.656 0 0 1-14.656 14.656H341.88352a14.656 14.656 0 0 1-14.656-14.656V580.16c0-8.128 6.592-14.656 14.656-14.656h139.584c8.128 0 14.656 6.592 14.656 14.656v66.112z m198.336 0a14.656 14.656 0 0 1-14.656 14.656H540.21952a14.656 14.656 0 0 1-14.656-14.656V580.16c0-8.128 6.592-14.656 14.656-14.656h139.584c8.128 0 14.656 6.592 14.656 14.656v66.112z m0-124.864a14.656 14.656 0 0 1-14.656 14.656h-44.096a14.592 14.592 0 0 1-14.656-14.656V455.296c0-8.128 6.592-14.656 14.656-14.656h44.096c8.128 0 14.656 6.592 14.656 14.656v66.112z m-168.96-191.04c0-8.128 6.592-14.656 14.656-14.656h139.584c8.128 0 14.656 6.592 14.656 14.656v66.112a14.656 14.656 0 0 1-14.656 14.656H540.15552a14.656 14.656 0 0 1-14.656-14.656V330.368z m51.392 110.272c8.128 0 14.656 6.592 14.656 14.656v66.112a14.592 14.592 0 0 1-14.656 14.656H444.66752a14.592 14.592 0 0 1-14.656-14.656V455.296c0-8.128 6.592-14.656 14.656-14.656h132.224z" fill="#ffffff" p-id="6193"></path></svg></template>
-            <template #title>
-              穿透安全
-            </template>
-            <a-menu-item key="/client/safe"  class="sidebar-item">
-              <template #icon><svg t="1770530269535" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="6376" width="24" height="24"><path d="M982.976 6.016c-0.064-0.832-226.176-1.536-455.68-1.536-236.544 0-476.672 0.704-476.992 2.56C9.152 289.408 98.496 793.28 514.112 1020.544 935.168 798.464 1006.4 289.664 982.976 6.016zM514.56 942.4c-332.736-203.264-422.4-607.104-403.2-868.864 70.144-0.64 207.104-1.216 415.936-1.216 170.624 0 313.664 0.32 390.784 0.768C921.152 248.704 892.16 718.848 514.56 942.4z" fill="#ffffff" p-id="6377"></path><path d="M642.368 299.584C627.2 283.456 609.216 271.104 588.16 262.656S544.128 250.048 519.04 250.048c-26.624 0-51.2 4.608-73.728 13.824S403.328 286.016 386.944 302.656c-16.384 16.64-29.184 36.608-38.4 59.904C339.392 385.856 334.72 411.264 334.72 438.912c0 26.112 4.224 50.688 12.672 73.728 8.448 23.04 20.48 43.008 36.096 59.904C399.104 589.44 418.176 602.88 440.768 612.864c22.528 9.984 47.872 14.976 76.032 14.976 33.792 0 63.488-5.504 89.088-16.512 25.6-11.072 49.152-30.4 70.656-57.984L631.168 518.08C616.896 536 600.704 549.504 582.784 558.72c-17.92 9.216-39.936 13.824-66.048 13.824-16.384 0-31.488-3.072-45.312-9.216C457.6 557.248 445.568 548.928 435.392 538.432c-10.24-10.496-18.624-22.784-24.96-36.864-6.4-14.08-10.112-28.8-11.136-44.16l290.304 0 0-19.2c0-29.696-4.096-56.192-12.288-79.488C669.12 335.424 657.408 315.712 642.368 299.584zM399.232 406.656c4.096-30.72 16.384-55.296 36.864-73.728s47.36-27.648 80.64-27.648c33.28 0 59.392 9.216 78.336 27.648S624 376 625.088 406.656L399.232 406.656z" fill="#ffffff" p-id="6378"></path></svg></template>
-              <span>防护规则</span>
-            </a-menu-item>
-            <a-menu-item key="/client/waf"  class="sidebar-item">
-              <template #icon><svg t="1770529945292" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1769" width="24" height="24"><path d="M510.332434 1020.202667c-93.646103 0-446.338667-174.943503-446.338667-446.338667V98.130744C97.958014 103.380537 133.537582 106.271111 170.264878 106.271111c139.278918 0 262.532153-40.383022 340.067556-102.487859C587.867836 65.888089 711.121071 106.271111 850.399989 106.271111c36.727296 0 72.306864-2.890574 106.271111-8.140367V573.864c3.549455 271.395164-352.692564 446.338667-446.338666 446.338667zM892.908434 166.866899c-20.850392 1.870372-42.040852 3.166879-63.762667 3.166879-127.142757 0-240.916609-33.666688-318.813333-86.738481C432.435709 136.36709 318.661858 170.033778 191.5191 170.033778c-21.721815 0-42.912275-1.296508-63.762666-3.166879V547.296222C127.756434 796.076893 430.055236 935.185778 510.332434 935.185778c80.277197 0 385.615354-139.108884 382.576-387.889556V166.866899zM340.298656 425.084444h42.508444v-21.254222a127.525333 127.525333 0 1 1 255.050667 0v21.254222h42.508445v255.050667H340.298656V425.084444z m233.796444-21.254222a63.762667 63.762667 0 1 0-127.525333 0v21.254222h127.525333v-21.254222z" p-id="1770" fill="#ffffff"></path></svg></template>
-              <span>穿透限制</span>
-            </a-menu-item>
-          </a-sub-menu>
+          <t-submenu value="safe" title="穿透安全">
+            <template #icon><lock-on-icon/></template>
+            <t-menu-item value="/client/safe">
+              <template #icon><secured-icon/></template>
+              防护规则
+            </t-menu-item>
+            <t-menu-item value="/client/waf">
+              <template #icon><filter-icon/></template>
+              穿透限制
+            </t-menu-item>
+          </t-submenu>
 
+          <t-submenu value="monitor" title="穿透监控">
+            <template #icon><chart-bubble-icon/></template>
+            <t-menu-item value="/client/monitor">
+              <template #icon><chart-line-icon/></template>
+              流量统计
+            </t-menu-item>
+          </t-submenu>
 
+          <t-submenu value="ext" title="扩展功能">
+            <template #icon><extension-icon/></template>
+            <t-menu-item value="/client/forward">
+              <template #icon><arrow-right-icon/></template>
+              正向代理
+            </t-menu-item>
+            <t-menu-item value="/client/reverse">
+              <template #icon><arrow-left-icon/></template>
+              反向代理
+            </t-menu-item>
+          </t-submenu>
 
-          <a-sub-menu key="monitor"  class="sidebar-item">
-            <template #icon><svg t="1770530195526" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5035" width="24" height="24"><path d="M736.232934 118.192202h-448.922521L62.848129 506.970675 287.309389 895.749148h448.922521l224.46126-388.778473L736.232934 118.192202zM714.634073 858.33945H308.90825l-202.862399-351.368775L308.909274 155.602924h405.725823l202.862399 351.368775L714.634073 858.33945z" fill="#ffffff" p-id="5036"></path><path d="M709.363111 314.340986c-52.828387-52.828387-123.066921-81.922089-197.777785-81.922089s-144.949398 29.093702-197.777784 81.922089-81.922089 123.066921-81.922089 197.777785 29.093702 144.949398 81.922089 197.777785 123.066921 81.922089 197.777784 81.922088 144.949398-29.093702 197.777785-81.922088 81.922089-123.066921 81.922089-197.777785-29.093702-144.949398-81.922089-197.777785z m-177.300078-40.089206c56.045435 4.73035 108.110004 28.818276 148.340506 69.048778s64.317404 92.294047 69.047754 148.340506h-71.869582a165.986146 165.986146 0 0 0-14.009823-49.309293c9.49756-10.841922 15.273297-25.022733 15.273297-40.534596 0-33.96842-27.634665-61.603084-61.603084-61.603085-16.463052 0-31.426112 6.50372-42.489193 17.062025a165.891948 165.891948 0 0 0-42.690899-11.142944v-71.861391z m0 258.344697h104.164973c-8.722479 53.27173-50.891196 95.436351-104.164973 104.15883V532.596477z m109.132865-130.545379c0 11.924168-9.666501 21.59067-21.59067 21.59067s-21.59067-9.666501-21.59067-21.59067c0-11.924168 9.666501-21.59067 21.59067-21.59067s21.59067 9.666501 21.59067 21.59067z m-85.038796-8.108148a61.750524 61.750524 0 0 0-0.518086 7.854225c0 33.96842 27.634665 61.603084 61.603085 61.603084 3.574384 0 7.073-0.323548 10.482538-0.910234a125.282608 125.282608 0 0 1 8.495176 29.151039H532.063033V387.482234a125.251892 125.251892 0 0 1 24.094069 6.460716z m-65.049482 97.698114H386.942646c8.722479-53.27173 50.89222-95.435327 104.164974-104.15883v104.15883z m-148.340506-148.340506c40.230502-40.230502 92.294047-64.318428 148.340506-69.048778v71.861391c-75.889356 9.306094-136.221799 69.638536-145.527893 145.527893H273.718336c4.73035-56.045435 28.818276-108.10898 69.048778-148.340506z m148.340506 406.68418c-56.045435-4.73035-108.110004-28.817252-148.340506-69.047755s-64.318428-92.294047-69.048778-148.340506h71.860367c9.306094 75.888333 69.638536 136.221799 145.527893 145.527893v71.860368zM386.942646 532.596477h104.164974v104.15883c-53.272753-8.722479-95.442494-50.887101-104.164974-104.15883z m293.460893 148.340506c-40.230502 40.230502-92.294047 64.317404-148.340506 69.047755v-71.861392c75.889356-9.306094 136.221799-69.638536 145.527893-145.527893h71.860367c-4.73035 56.047483-28.817252 108.111028-69.047754 148.34153z" fill="#ffffff" p-id="5037"></path></svg></template>
-            <template #title>
-              穿透监控
-            </template>
-<!--            <a-menu-item key="/client/forward2"  class="sidebar-item">-->
-<!--              <template #icon><svg t="1770530451712" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="9685" width="24" height="24"><path d="M86.016 85.3504v124.3136h238.3872V85.3504H86.016z m304.384 0v124.3136h238.4384V85.3504H390.4z m309.1968 0v124.3136h238.3872V85.3504h-238.3872zM86.016 271.872v62.1568h113.8176V271.872H86.016z m177.0496 0v62.1568H490.496V271.872H263.0656z m284.3648 0v62.1568h227.584V271.872h-227.584z m276.8384 0v62.1568h113.7152V271.872H824.32zM131.2768 394.24c-39.7312-0.3072-48.6912 42.24-45.2608 73.728 0.5632 87.2448-1.2288 174.592 0.9216 261.7856 5.4272 36.1472 44.032 39.8336 73.2672 37.5808h732.5184c39.7312 0.4096 48.6912-42.1376 45.2608-73.6256-0.5632-87.2448 1.2288-174.592-0.9216-261.7344-5.4272-36.1984-43.9808-40.0384-73.2672-37.7344H131.2768z m301.6192 93.7472c23.9616-7.424 68.5568 15.9744 35.584 26.4192-35.6352-17.5616-90.624-6.5024-98.304 38.0416-12.6976 41.3184 10.5472 97.4336 60.7232 90.7776 33.7408 8.4992 34.7136-15.36 32.0512-39.936 6.5536-21.7088-18.2784-11.9808-31.3344-14.0288-13.2608-2.048-6.1952-29.5424 11.1616-19.5072 13.6192 1.536 33.5872-3.2256 43.2128 2.4064v81.2544c-45.1072 13.2096-110.4896 17.2032-133.632-33.536-20.992-46.9504-5.7856-117.76 51.5072-128.6144 9.5232-2.304 19.3024-3.2768 29.0304-3.2768z m-267.3664 1.8432c14.6944-0.1536 31.4368-3.9936 36.0448 14.2336 27.136 41.7792 53.1456 85.6576 81.0496 126.1568-3.2768-46.7456-1.536-93.5936-1.9968-140.3904 18.8416-4.2496 26.4704 2.6624 22.016 21.7088v148.3264c-14.6944 0.1536-31.4368 3.9936-36.1472-14.2336-27.4944-41.728-53.7088-85.8112-82.0224-126.0544 3.2256 46.6944 1.5872 93.4912 1.9968 140.288-20.4288 5.376-24.064-5.9904-20.992-24.1152v-145.92z m364.4416 0h95.232c5.9392 20.48-7.0656 22.016-24.064 19.5584h-48.128v59.4944h67.1744c5.9904 20.48-7.168 21.8624-24.064 19.456-13.568 1.536-33.536-3.2256-43.1104 2.4064v69.12c-18.7392 3.84-27.8016-2.048-23.04-21.7088V489.8304z m107.2128 0c17.8176-3.3792 29.44 1.3312 29.696 20.9408 10.6496 41.9328 24.576 83.0976 31.4368 125.9008 6.7584-50.176 24.2688-97.9968 37.0176-146.8416 16.2816-1.9968 30.72-1.536 30.208 18.5344 11.4176 42.8544 25.5488 84.992 34.816 128.3072 7.168-49.7664 21.9648-97.9456 33.0752-146.8416 17.408-1.9968 31.6416-1.5872 20.0192 18.6368l-40.96 151.3984c-17.7664 3.2768-29.5424-1.28-30.0544-20.8896-11.6224-41.3696-24.064-82.4832-35.1232-124.0064-9.7792 49.1008-26.0096 96.5632-39.0144 144.896-17.7152 3.6864-28.3648-1.9456-28.928-20.8896l-42.1888-149.1456zM86.016 812.9536v124.3648h238.3872v-124.3648H86.016z m304.384 0v124.3648h238.4384v-124.3648H390.4z m309.1968 0v124.3648h238.3872v-124.3648h-238.3872z" fill="#ffffff" p-id="9686"></path></svg></template>-->
-<!--              <span>防护统计</span>-->
-<!--            </a-menu-item>-->
-            <a-menu-item key="/client/monitor"  class="sidebar-item">
-              <template #icon><svg t="1770530341865" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7538" width="24" height="24"><path d="M849.171206 979.275379 173.640736 979.275379c-36.063357 0-65.403592-29.337165-65.403592-65.397453L108.237143 547.996842c0-10.172687 8.246825-18.419512 18.419512-18.419512s18.419512 8.246825 18.419512 18.419512l0 365.881085c0 15.747659 12.81384 28.558429 28.564569 28.558429l675.53047 0c15.750729 0 28.564569-12.811794 28.564569-28.558429L877.735775 547.996842c0-10.172687 8.246825-18.419512 18.419512-18.419512s18.419512 8.246825 18.419512 18.419512l0 365.881085C914.574798 949.938214 885.234563 979.275379 849.171206 979.275379z" fill="#ffffff" p-id="7539"></path><path d="M692.023096 838.644455c-44.073798 0.001023-100.224656-5.222955-187.727569-19.959587-185.859012-31.30396-308.096007 9.005095-309.307601 9.41544-9.636474 3.263323-20.091594-1.901303-23.354917-11.536754s1.902326-20.091594 11.536754-23.354917c1.357927-0.459464 33.900088-11.338233 90.656743-18.075681 51.832506-6.152117 134.951575-9.893324 236.58737 7.225565 166.789701 28.088732 212.431204 20.898982 288.044322 8.990768 10.31288-1.62501 20.976754-3.304256 32.618908-5.001921 10.07138-1.471514 19.418258 5.501294 20.884656 15.568581 1.468444 10.067286-5.502317 19.417235-15.568581 20.884656-11.435447 1.667989-21.992897 3.330862-32.204469 4.938476C766.404154 833.689606 734.938512 838.644455 692.023096 838.644455z" fill="#ffffff" p-id="7540"></path><path d="M601.014336 545.364899c-74.456782 0-135.032416-60.575634-135.032416-135.032416 0-40.545438 21.487384-74.136487 41.627073-102.43909l82.148975-115.436102c3.53757-4.970198 9.298783-7.857968 15.409968-7.735172 6.099928 0.13303 11.739369 3.278673 15.056927 8.400321l71.021543 109.621677c2.174526 3.356444 4.372587 6.685259 6.565533 10.003841 2.838651 4.296863 5.774517 8.741082 8.613168 13.180184 6.824429 10.680247 14.580067 23.552415 20.37505 38.068014 6.224772 15.59007 9.250688 30.747281 9.250688 46.336328C736.051869 484.788242 675.474189 545.364899 601.014336 545.364899zM604.051509 235.908918l-66.426899 93.343945c-32.113395 45.127803-34.803667 65.513086-34.803667 81.078597 0 54.144154 44.049239 98.193393 98.193393 98.193393 54.147224 0 98.198509-44.049239 98.198509-98.193393 0-22.712281-9.116635-41.543162-23.827685-64.563458-2.687202-4.203742-5.418406-8.337899-8.309246-12.71458-2.252297-3.41068-4.511757-6.830569-6.745634-10.278087L604.051509 235.908918z" fill="#ffffff" p-id="7541"></path><path d="M354.479407 252.763794c-45.267996 0-82.096786-36.827767-82.096786-82.096786 0-23.432689 11.669784-43.062771 24.282033-60.783365l26.455535-37.180807c6.053879-8.501628 12.097526-16.995069 18.142196-25.490557l0.25685-0.361227c3.53757-4.971222 9.30083-7.877411 15.407921-7.736195 6.099928 0.132006 11.739369 3.27765 15.056927 8.398274l38.782282 59.858296c1.188058 1.834788 2.38328 3.645017 3.574409 5.449106 1.599428 2.423189 3.193739 4.837168 4.742001 7.261381 9.083889 14.208607 17.493419 30.176276 17.493419 50.586119C436.577217 215.936027 399.748427 252.763794 354.479407 252.763794zM355.811752 90.301655c-0.893346 1.254573-1.786693 2.508123-2.679016 3.762697l-26.451442 37.176714c-10.779507 15.146978-17.458627 27.025517-17.458627 39.426965 0 24.955368 20.302395 45.257763 45.257763 45.257763 24.955368 0 45.258787-20.302395 45.258787-45.257763 0-10.369162-4.475941-19.453051-11.69639-30.748305-1.452071-2.273786-2.944052-4.5312-4.441149-6.798846-1.254573-1.899256-2.51324-3.804652-3.755534-5.726421L355.811752 90.301655z" fill="#ffffff" p-id="7542"></path></svg></template>
-              <span>流量统计</span>
-            </a-menu-item>
-          </a-sub-menu>
+          <t-menu-item value="/client/teach">
+            <template #icon><chat-icon/></template>
+            穿透交流
+          </t-menu-item>
+        </t-menu>
 
+        <div class="console__aside-toggle" @click="toggleCollapse">
+          <component :is="isCollapsed ? ArrowRightIcon : ArrowLeftIcon"/>
+          <span v-if="!isCollapsed">收起菜单</span>
+        </div>
+      </aside>
 
-
-
-
-          <!-- 二级菜单 -->
-          <a-sub-menu key="ext"  class="sidebar-item">
-            <template #icon><svg t="1755676553119" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="14683" width="24" height="24"><path d="M417.322667 629.333333l85.333333 85.333334H672v213.333333h-213.333333v-166.826667l-67.861334-67.861333L128 693.333333v-64h289.322667z m190.677333 149.333334h-85.333333v85.333333h85.333333v-85.333333z m341.333333-362.666667v213.333333h-213.333333V554.666667H128v-64h608v-74.666667h213.333333z m-64 64h-85.333333v85.333333h85.333333v-85.333333z m-213.333333-362.666667v213.333334h-172.8l-81.877333 81.92H128v-64l262.805333-0.021334 67.861334-67.861333V117.333333h213.333333z m-64 64h-85.333333v85.333334h85.333333v-85.333334z" fill="#ffffff" p-id="14684"></path></svg></template>
-            <template #title>
-              扩展功能
-            </template>
-            <a-menu-item key="/client/forward"  class="sidebar-item">
-              <template #icon><svg t="1755675859209" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8377" width="24" height="24"><path d="M512 320v160h314.496l-103.744-103.744 45.248-45.248L948.992 512 768 692.992l-45.248-45.248 99.52-99.52H512V704H128V320h384zM448 384H192v256h256V384z m409.536 127.04v1.92L858.496 512l-0.96-0.96z" fill="#ffffff" p-id="8378"></path></svg></template>
-              <span>正向代理</span>
-            </a-menu-item>
-            <a-menu-item key="/client/reverse"  class="sidebar-item">
-              <template #icon><svg t="1755675892072" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="9668" width="24" height="24"><path d="M512 320v160H197.504l103.744-103.744L256 331.008 75.008 512 256 692.992l45.248-45.248-99.52-99.52H512V704h384V320H512z m64 64h256v256H576V384zM166.464 511.04v1.92L165.504 512l0.96-0.96z" fill="#ffffff" p-id="9669"></path></svg></template>
-              <span>反向代理</span>
-            </a-menu-item>
-          </a-sub-menu>
-          
-          <a-menu-item key="/client/teach" class="sidebar-item">
-            <template #icon><svg t="1751868316938" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="22356" width="24" height="24"><path d="M896 128l0 832-672 0c-53.024 0-96-42.976-96-96s42.976-96 96-96l608 0 0-768-640 0c-70.4 0-128 57.6-128 128l0 768c0 70.4 57.6 128 128 128l768 0 0-896-64 0z" fill="#ffffff" p-id="22357"></path><path d="M224.064 832l0 0c-0.032 0-0.032 0-0.064 0-17.664 0-32 14.336-32 32s14.336 32 32 32c0.032 0 0.032 0 0.064 0l0 0 607.904 0 0-64-607.904 0z" fill="#ffffff" p-id="22358"></path></svg></template>
-            <span>穿透交流</span>
-          </a-menu-item>
-        </a-menu>
-      </a-layout-sider>
-
-      <!-- 主内容区域 - 核心优化点 -->
-      <div class="content-wrapper">
-        <a-layout-content class="main-content">
-          <div class="content-container">
-            <router-view />
-          </div>
-        </a-layout-content>
-      </div>
-    </a-layout>
-  </a-layout>
+      <!-- 主内容 -->
+      <main class="console__main">
+        <div class="console__content">
+          <router-view/>
+        </div>
+      </main>
+    </div>
+  </div>
 </template>
 
-<script>
-// 脚本部分保持不变
-import userInfo from "../../data/userInfo";
-import { router } from "../../router";
-import { notification } from "ant-design-vue";
-import { onMounted, reactive, toRefs, watch } from "vue";
+<script setup>
+import {onMounted, onUnmounted, ref, watch} from "vue";
+import {router} from "../../router";
+import {NotifyPlugin} from "tdesign-vue-next";
+import userInfoStore from "../../data/userInfo";
+import {
+  ArrowDownIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ChartBubbleIcon,
+  ChartLineIcon,
+  ChatIcon,
+  DesktopIcon,
+  ExtensionIcon,
+  FilterIcon,
+  LinkIcon,
+  LockOnIcon,
+  PoweroffIcon,
+  SecuredIcon,
+  SettingIcon,
+  UserIcon
+} from 'tdesign-icons-vue-next';
 
-export default {
-  setup() {
-    const state = reactive({
-      userInfo: {},
-      theme: 'dark',
-      selectedKey: '',
-      isCollapsed: false,
-      isMobile: false
+const userInfo = ref({});
+const selectedKey = ref('');
+const isCollapsed = ref(false);
+const isMobile = ref(false);
+const expanded = ref(['safe', 'monitor', 'ext']);
+
+// 子菜单所属分组，用于路由变化时自动展开
+const groupOf = {
+  '/client/safe': 'safe',
+  '/client/waf': 'safe',
+  '/client/monitor': 'monitor',
+  '/client/forward': 'ext',
+  '/client/reverse': 'ext',
+};
+
+const userOptions = [
+  {content: '退出登录', value: 'logout', theme: 'error'},
+];
+
+onMounted(() => {
+  const userData = userInfoStore.getUserInfo();
+  if (userData && userData.expTime > Date.now()) {
+    userInfo.value = userData;
+  } else {
+    NotifyPlugin.error({
+      title: "校验异常",
+      content: "未获取到登录信息，请重新登录",
     });
+    router.push("/home/login");
+  }
 
-    onMounted(() => {
-      const userData = userInfo.getUserInfo();
-      if (userData && userData.expTime > Date.now()) {
-        state.userInfo = userData;
-      } else {
-        notification.error({
-          message: "校验异常",
-          description: "未获取到登录信息，请重新登录",
-          duration: 3
-        });
-        router.push("/home/login");
-      }
+  selectedKey.value = router.currentRoute.value.path;
+  syncExpanded(selectedKey.value);
+  window.addEventListener('resize', handleResize);
+  handleResize();
+});
 
-      state.selectedKey = router.currentRoute.value.path;
-      window.addEventListener('resize', handleResize);
-      handleResize();
-    });
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+});
 
-    const handleResize = () => {
-      state.isMobile = window.innerWidth < 768;
-    };
+const handleResize = () => {
+  isMobile.value = window.innerWidth < 768;
+  if (isMobile.value) isCollapsed.value = true;
+};
 
-    const handleLoginOut = () => {
-      userInfo.removeUserInfo();
-      notification.success({
-        message: "退出成功",
-        description: "您已安全退出系统",
-        duration: 2
-      });
-      router.push("/");
-    };
-
-    const handleMenuClick = ({ key }) => {
-      if (key === 'logout') {
-        handleLoginOut();
-      }
-    };
-
-    const handleMenuSelect = ({ key }) => {
-      state.selectedKey = key;
-      router.push(key);
-    };
-
-    const collapsedTrigger = () => {
-      state.isCollapsed = !state.isCollapsed;
-    };
-
-    watch(
-        () => router.currentRoute.value.path,
-        (newPath) => {
-          state.selectedKey = newPath;
-        }
-    );
-
-    return {
-      ...toRefs(state),
-      handleLoginOut,
-      handleMenuClick,
-      handleMenuSelect,
-      collapsedTrigger
-    };
+const syncExpanded = (path) => {
+  const group = groupOf[path];
+  if (group && !expanded.value.includes(group)) {
+    expanded.value = [...expanded.value, group];
   }
 };
+
+const handleLoginOut = () => {
+  userInfoStore.removeUserInfo();
+  NotifyPlugin.success({
+    title: "退出成功",
+    content: "您已安全退出系统",
+  });
+  router.push("/");
+};
+
+const onUserAction = (item) => {
+  if (item.value === 'logout') {
+    handleLoginOut();
+  }
+};
+
+const onMenuChange = (value) => {
+  selectedKey.value = value;
+  router.push(value);
+};
+
+const onMenuExpand = (value) => {
+  expanded.value = value;
+};
+
+const toggleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value;
+};
+
+watch(
+    () => router.currentRoute.value.path,
+    (newPath) => {
+      selectedKey.value = newPath;
+      syncExpanded(newPath);
+    }
+);
 </script>
 
 <style scoped>
-/* 关键样式优化 */
-.layout-container {
-  min-height: 100vh;
+.console {
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* 防止整体页面滚动 */
+  min-height: 100vh;
+  background: var(--hp-bg);
 }
 
-.header {
-  background: linear-gradient(135deg, #4b6ff6 0%, #1890ff 100%);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  height: 64px;
-  padding: 0;
-  position: relative;
-  z-index: 100; /* 确保头部在最上层 */
-}
-
-.main-container {
-  display: flex;
-  flex: 1;
-  overflow: hidden; /* 关键：隐藏容器溢出内容 */
-}
-
-.sidebar {
-  /* 固定侧边栏高度，使其不随内容滚动 */
-  height: calc(100vh - 64px);
+/* ---------- 头部 ---------- */
+.console__header {
   position: sticky;
-  top: 64px;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
-  z-index: 10;
-  overflow-y: auto; /* 侧边栏内容过多时自身滚动 */
+  top: 0;
+  z-index: 60;
+  height: 60px;
+  flex: none;
+  background: rgba(255, 255, 255, .9);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--hp-border);
 }
 
-/* 内容容器 - 核心滚动样式 */
-.content-wrapper {
-  flex: 1;
-  overflow: hidden; /* 限制内容区域 */
-}
-
-.main-content {
-  padding: 12px;
-  height: calc(100vh - 64px); /* 高度 = 视口高度 - 头部高度 */
-  overflow-y: auto; /* 内容超出时滚动 */
-  box-sizing: border-box; /* 确保padding不影响整体高度计算 */
-}
-
-.content-container {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  padding: 24px;
-  min-height: 100%; /* 确保容器至少填满内容区域 */
-}
-
-/* 其他样式保持不变 */
-.header-content {
+.console__header-inner {
+  height: 100%;
+  padding: 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 100%;
-  padding: 0 24px;
 }
 
-.logo {
+.brand {
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
-.logo-link {
+.brand img {
+  width: 34px;
+  height: 34px;
+}
+
+.brand__text {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--hp-text);
+  letter-spacing: .2px;
+}
+
+.brand__sub {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--hp-text-3);
+}
+
+.console__header-right {
   display: flex;
   align-items: center;
-  color: #fff;
-  text-decoration: none;
-  transition: all 0.3s;
+  gap: 6px;
 }
 
-.logo-link:hover {
-  opacity: 0.9;
-}
-
-.logo-img {
-  width: 36px;
-  height: 36px;
-  margin-right: 12px;
-  border-radius: 6px;
-  padding: 3px;
-}
-
-.logo-text {
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.user-area {
+.user {
   display: flex;
   align-items: center;
+  gap: 10px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  background: #f6f8fc;
 }
 
-.user-info {
+.user__meta {
   display: flex;
   align-items: center;
-  color: #fff;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 20px;
-  transition: background-color 0.2s;
+  gap: 8px;
 }
 
-.user-info:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  margin-right: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-}
-
-.user-email {
-  font-size: 14px;
-  max-width: 180px;
-  white-space: nowrap;
+.user__email {
+  font-size: 13px;
+  color: var(--hp-text);
+  max-width: 190px;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.user-arrow {
-  font-size: 12px;
-  margin-left: 4px;
-  transition: transform 0.2s;
+/* ---------- 主体 ---------- */
+.console__body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
 }
 
-.user-info:hover .user-arrow {
-  transform: translateY(1px);
+.console__aside {
+  flex: none;
+  width: 232px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-right: 1px solid var(--hp-border);
+  height: calc(100vh - 60px);
+  position: sticky;
+  top: 60px;
+  transition: width .25s cubic-bezier(.4, 0, .2, 1);
+  overflow: hidden;
 }
 
-.user-menu {
-  border-radius: 8px;
+.console__aside.is-collapsed {
+  width: 64px;
 }
 
-.menu-item {
+.console__aside :deep(.t-menu) {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-top: 12px;
+  border-right: none;
+}
+
+.console__aside :deep(.t-menu__item) {
+  margin: 3px 10px;
+  border-radius: 10px;
+  height: 40px;
+  transition: background .2s ease, color .2s ease;
+}
+
+.console__aside :deep(.t-menu__item:hover) {
+  background: #f3f6fd;
+}
+
+.console__aside :deep(.t-menu__item.t-is-active) {
+  background: var(--td-brand-color-1);
+  color: var(--td-brand-color);
+  font-weight: 600;
+}
+
+.console__aside :deep(.t-menu__sub) {
+  margin: 3px 10px;
+}
+
+.console__aside :deep(.t-menu__sub .t-menu__item) {
+  margin: 3px 0;
+}
+
+.console__aside-toggle {
+  flex: none;
+  height: 46px;
   display: flex;
   align-items: center;
-  padding: 8px 16px !important;
-  transition: all 0.2s;
+  justify-content: center;
+  gap: 6px;
+  border-top: 1px solid var(--hp-border);
+  color: var(--hp-text-3);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color .2s ease, background .2s ease;
 }
 
-.menu-item:hover {
-  background-color: #f5f7fa !important;
+.console__aside-toggle:hover {
+  color: var(--td-brand-color);
+  background: #f8fafd;
 }
 
-.menu-icon {
-  margin-right: 8px;
-  font-size: 16px;
+/* ---------- 内容 ---------- */
+.console__main {
+  flex: 1;
+  min-width: 0;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  padding: 18px;
 }
 
-.logout-item {
-  color: #f5222d !important;
+.console__content {
+  background: #fff;
+  border: 1px solid var(--hp-border);
+  border-radius: var(--hp-radius);
+  box-shadow: var(--hp-shadow-sm);
+  padding: 22px;
+  min-height: 100%;
 }
 
-.logout-item:hover {
-  background-color: #fff5f5 !important;
-}
-
-.user-mini {
-  display: none;
-}
-
-.mini-logout {
-  color: #fff !important;
-  padding: 4px 8px !important;
-}
-
-.sidebar-menu {
-  border-right: none !important;
-  background-color: transparent !important;
-  padding-top: 16px !important;
-}
-
-.sidebar-item {
-  margin: 4px 0 !important;
-  border-radius: 6px !important;
-  color: rgba(255, 255, 255, 0.9) !important;
-  padding: 12px 24px !important;
-  transition: all 0.2s !important;
-}
-
-.sidebar-item:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  color: #fff !important;
-}
-
-:deep(.ant-menu-item-selected) {
-  background-color: rgba(255, 255, 255, 0.2) !important;
-  color: #fff !important;
-  font-weight: 500 !important;
-}
-
-:deep(.ant-menu-item-selected::after) {
-  border-right: 3px solid #fff !important;
-  border-radius: 0 3px 3px 0 !important;
-}
-
-:deep(.ant-layout-sider-zero-width-trigger) {
-  background-color: #4b6ff6 !important;
-  top: 16px !important;
-  right: -32px !important;
-  width: 32px !important;
-  height: 32px !important;
-  border-radius: 0 8px 8px 0 !important;
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1) !important;
-  transition: all 0.2s !important;
-}
-
-:deep(.ant-layout-sider-zero-width-trigger:hover) {
-  background-color: #3a5ede !important;
-}
-
-/* 响应式调整 */
 @media (max-width: 768px) {
-  .header-content {
-    padding: 0 16px;
+  .console__main {
+    padding: 10px;
   }
 
-  .logo-text {
-    font-size: 16px;
+  .console__content {
+    padding: 14px;
   }
 
-  .user-info {
+  .brand__sub {
     display: none;
   }
-
-  .user-mini {
-    display: block;
-  }
-
-  .main-content {
-    padding: 6px;
-    height: calc(100vh - 64px);
-  }
-
-  .content-container {
-    padding: 16px;
-  }
 }
-
-@media (max-width: 480px) {
-  .logo-img {
-    margin-right: 0;
-  }
-}
-
-/* 滚动条美化 */
-:deep(.ant-layout-content::-webkit-scrollbar) {
-  width: 6px;
-  height: 6px;
-}
-
-:deep(.ant-layout-content::-webkit-scrollbar-track) {
-  background: #f5f5f5;
-  border-radius: 3px;
-}
-
-:deep(.ant-layout-content::-webkit-scrollbar-thumb) {
-  background: #ccc;
-  border-radius: 3px;
-}
-
-:deep(.ant-layout-content::-webkit-scrollbar-thumb:hover) {
-  background: #aaa;
-}
-
-:deep(.ant-layout-sider-trigger){
-  background-color: #5577f8;
-}
-
-:deep(.ant-menu-dark .ant-menu-inline.ant-menu-sub){
-  background-color: #3a5ede !important;
-
-}
-
 </style>

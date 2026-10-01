@@ -1,72 +1,97 @@
 <template>
-  <div>
-    <a-button  style="margin-bottom: 10px" class="btn edit" @click="addModal">添加用户</a-button>
-    <a-button class="btn view" style="margin-bottom: 10px;margin-left: 5px" @click="loadData">刷新列表</a-button>
+  <div class="hp-page">
+    <div class="hp-toolbar">
+      <t-button theme="primary" @click="addModal">
+        <template #icon><add-icon/></template>
+        添加用户
+      </t-button>
+      <t-button variant="outline" theme="primary" @click="loadData">
+        <template #icon><refresh-icon/></template>
+        刷新列表
+      </t-button>
+    </div>
 
-    <a-table :loading="dataLoading" :columns="columns" rowKey="id" :data-source="listData"
-             :locale="{emptyText: '暂无数据,添加一个试试看看'}"
-             :pagination="pagination"
-             @change="handleTableChange"
-             :scroll="{ x: 'max-content' }">
-
-      <template #bodyCell="{ column ,record}">
-
-        <template v-if="column.key === 'createTime'">
-          {{new Date(record.createTime).toLocaleString()}}
-        </template>
-
-        <template v-if="column.key === 'action'">
-          <a-button  class="btn edit" style="margin-bottom: 5px;margin-left: 5px" @click="edit(record)">编辑</a-button>
-          <a-button  class="btn delete" style="margin-bottom: 5px;margin-left: 5px" @click="removeData(record)">删除</a-button>
-        </template>
+    <t-table
+        class="hp-table"
+        row-key="id"
+        :data="listData"
+        :columns="columns"
+        :loading="dataLoading"
+        :pagination="pagination"
+        empty="暂无数据，添加一个试试看看"
+        table-layout="auto"
+        stripe
+        hover
+        @page-change="onPageChange"
+    >
+      <template #createTime="{ row }">
+        {{ new Date(row.createTime).toLocaleString() }}
       </template>
-    </a-table>
-  </div>
 
-
-  <div>
-    <a-modal  v-model:visible="addVisible" title="添加"
-             >
-      <a-form :model="formState" ref="formTable" :layout="'vertical'" >
-        <a-form-item label="用户名 " name="username"  :rules="[{ required: true, message: '必填用户名'}]">
-          <a-input v-model:value="formState.username" allow-clear placeholder="用户名"/>
-        </a-form-item>
-        <a-form-item label="密码" name="password"  :rules="[{ required: true, message: '必填密码'},{ min: 6, message: '密码长度不能少于6位', trigger: 'blur' },]">
-          <a-input allow-clear v-model:value="formState.password" placeholder="密码"/>
-        </a-form-item>
-        <a-form-item label="备注" name="desc"  :rules="[{ required: true, message: '必填备注'}]">
-          <a-input allow-clear v-model:value="formState.desc" placeholder="备注"/>
-        </a-form-item>
-      </a-form>
-      <template #footer>
-        <a-button class="btn view" @click="addVisible=!addVisible">取消</a-button>
-        <a-button class="btn edit" @click="addOk">确定</a-button>
+      <template #action="{ row }">
+        <div class="hp-actions">
+          <t-button size="small" variant="outline" theme="primary" @click="edit(row)">编辑</t-button>
+          <t-popconfirm content="确定要删除该用户？" theme="danger" @confirm="removeData(row)">
+            <t-button size="small" variant="outline" theme="danger">删除</t-button>
+          </t-popconfirm>
+        </div>
       </template>
-    </a-modal>
-  </div>
+    </t-table>
 
+    <t-dialog
+        v-model:visible="addVisible"
+        :header="formState.id ? '编辑用户' : '添加用户'"
+        confirm-btn="确定"
+        cancel-btn="取消"
+        width="560px"
+        @confirm="addOk"
+    >
+      <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical">
+        <t-form-item label="用户名" name="username">
+          <t-input v-model="formState.username" clearable placeholder="用户名"/>
+        </t-form-item>
+        <t-form-item label="密码" name="password">
+          <t-input v-model="formState.password" clearable placeholder="密码"/>
+        </t-form-item>
+        <t-form-item label="备注" name="desc">
+          <t-input v-model="formState.desc" clearable placeholder="备注"/>
+        </t-form-item>
+      </t-form>
+    </t-dialog>
+  </div>
 </template>
 
 <script setup>
 import {getUser, removeUser, saveUser} from "../../api/client/client_user";
 import {onMounted, reactive, ref} from "vue";
-import {notification} from "ant-design-vue";
-
+import {MessagePlugin} from "tdesign-vue-next";
+import {AddIcon, RefreshIcon} from 'tdesign-icons-vue-next';
 
 const formTable = ref();
-const listData = ref();
+const listData = ref([]);
 const dataLoading = ref(false);
 const addVisible = ref(false);
 const formState = reactive({
   username: "",
   password: "",
-  desc:"",
-  id:""
-})
+  desc: "",
+  id: undefined
+});
+
+const formRules = {
+  username: [{required: true, message: '必填用户名', type: 'error'}],
+  password: [
+    {required: true, message: '必填密码', type: 'error'},
+    {min: 6, message: '密码长度不能少于6位', type: 'error', trigger: 'blur'},
+  ],
+  desc: [{required: true, message: '必填备注', type: 'error'}],
+};
+
 const pagination = reactive({
   total: 0,
   current: 1,
   pageSize: 10,
+  pageSizeOptions: [10, 20, 50],
 });
 
 const loadData = () => {
@@ -78,6 +103,8 @@ const loadData = () => {
     dataLoading.value = false
     listData.value = res.data.records
     pagination.total = res.data.total
+  }).catch(() => {
+    dataLoading.value = false
   })
 }
 
@@ -85,9 +112,7 @@ const removeData = (item) => {
   removeUser({
     id: item.id
   }).then(res => {
-    notification.open({
-      message: res.msg,
-    })
+    MessagePlugin.success(res.msg)
     loadData()
   })
 }
@@ -97,22 +122,21 @@ const edit = (item) => {
   formState.password = item.password
   formState.desc = item.desc
   formState.id = item.id
-  addVisible.value=true
+  addVisible.value = true
 }
 
 const columns = [
-  {title: '编号', dataIndex: 'id', key: 'id'},
-  {title: '用户名', dataIndex: 'username', key: 'username'},
-  {title: '密码', dataIndex: 'password', key: 'password'},
-  {title: '备注', dataIndex: 'desc', key: 'desc'},
-  {title: '创建时间', dataIndex: 'createTime', key: 'createTime'},
-  {title: '操作', key: 'action'},
+  {colKey: 'id', title: '编号', width: 90},
+  {colKey: 'username', title: '用户名'},
+  {colKey: 'password', title: '密码'},
+  {colKey: 'desc', title: '备注'},
+  {colKey: 'createTime', title: '创建时间', width: 200},
+  {colKey: 'action', title: '操作', width: 150},
 ];
 
-const handleTableChange = (item) => {
-  pagination.current = item.current
-  pagination.pageSize = item.pageSize
-  pagination.total = item.total
+const onPageChange = (pageInfo) => {
+  pagination.current = pageInfo.current
+  pagination.pageSize = pageInfo.pageSize
   loadData()
 }
 
@@ -124,25 +148,18 @@ const addModal = () => {
   addVisible.value = true
 }
 
-const addOk = () => {
-  formTable.value.validate().then(res => {
+const addOk = async () => {
+  const result = await formTable.value?.validate()
+  if (result !== true) return
 
-    saveUser({...formState}).then(res => {
-      notification.open({
-        message: res.msg,
-      })
-      loadData()
-      addVisible.value = false
-    })
-  });
+  saveUser({...formState}).then(res => {
+    MessagePlugin.success(res.msg)
+    loadData()
+    addVisible.value = false
+  })
 }
 
 onMounted(() => {
   loadData()
 })
-
 </script>
-
-<style scoped>
-
-</style>

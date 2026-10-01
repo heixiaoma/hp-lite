@@ -1,133 +1,163 @@
 <template>
-  <div>
-    <a-button class="btn edit" style="margin-bottom: 10px" @click="addModal">添加域名</a-button>
-    <a-button class="btn view" style="margin-bottom: 10px;margin-left: 5px" @click="loadData">刷新列表</a-button>
-    <a-input v-model:value="pagination.keyword" placeholder="关键字查询" allow-clear style="width: 150px;margin-bottom: 10px;margin-left: 10px"/>
-    <a-button class="btn view" style="margin-bottom: 10px;margin-left: 10px" type="primary" @click="loadData">查询</a-button>
-    <a-table :loading="dataLoading" :columns="columns" rowKey="id" :data-source="listData"
-             :locale="{emptyText: '暂无数据,添加一个试试看看'}"
-             :pagination="pagination"
-             @change="handleTableChange"
-             :scroll="{ x: 'max-content'}">
+  <div class="hp-page">
+    <div class="hp-toolbar">
+      <t-button theme="primary" @click="addModal">
+        <template #icon><add-icon/></template>
+        添加域名
+      </t-button>
+      <t-button variant="outline" theme="primary" @click="loadData">
+        <template #icon><refresh-icon/></template>
+        刷新列表
+      </t-button>
+      <div class="hp-toolbar__grow"></div>
+      <t-input
+          v-model="pagination.keyword"
+          class="hp-search-input"
+          clearable
+          placeholder="关键字查询"
+          @enter="loadData"
+      >
+        <template #prefix-icon><search-icon/></template>
+      </t-input>
+      <t-button theme="primary" @click="loadData">查询</t-button>
+    </div>
 
-      <template #bodyCell="{ column ,record}">
-        <template v-if="column.key === 'certificateKey'">
-          <a-popconfirm
-              v-if="record.certificateKey"
-              okText="好的"
-              :showCancel="false"
-          >
-            <template #icon></template>
-            <template #title>
-              <div style="max-width: 80vw;white-space: pre-line;max-height: 50vh;overflow: scroll">
-                {{record.certificateKey}}
-              </div>
-            </template>
-
-            <a href="#">密钥</a>
-          </a-popconfirm>
-        </template>
-
-        <template v-if="column.key === 'certificateContent'"  >
-          <a-popconfirm
-              v-if="record.certificateContent"
-             okText="好的"
-              :showCancel="false"
-          >
-            <template #icon></template>
-            <template #title>
-              <div style="max-width: 80vw;white-space: pre-line;max-height: 50vh;overflow: scroll">
-                {{record.certificateContent}}
-              </div>
-            </template>
-            <a href="#">证书</a>
-          </a-popconfirm>
-        </template>
-
-
-        <template v-if="column.key === 'createTime'">
-          {{new Date(record.createTime).toLocaleString()}}
-        </template>
-
-        <template v-if="column.key === 'user'">
-          <div v-if="!record.userDesc&&!record.username">
-            自用域名
-          </div>
-          <div v-else>
-            <div>归属用户：{{record.username}}</div>
-            <div>归属用户备注：{{record.userDesc}}</div>
-          </div>
-        </template>
-
-        <template v-if="column.key === 'action'">
-          <a-button class="btn view" style="margin-bottom: 5px;margin-left: 5px" @click="getSSl(record)">获取SSL证书</a-button>
-          <a-button class="btn edit" style="margin-bottom: 5px;margin-left: 5px" @click="edit(record)">编辑</a-button>
-          <a-button class="btn delete" style="margin-bottom: 5px;margin-left: 5px" @click="removeData(record)">删除</a-button>
-        </template>
+    <t-table
+        class="hp-table"
+        row-key="id"
+        :data="listData"
+        :columns="columns"
+        :loading="dataLoading"
+        :pagination="pagination"
+        empty="暂无数据，添加一个试试看看"
+        table-layout="auto"
+        stripe
+        hover
+        @page-change="onPageChange"
+    >
+      <template #certificateKey="{ row }">
+        <t-link v-if="row.certificateKey" theme="primary" hover="color" @click="showText('证书密钥', row.certificateKey)">
+          密钥
+        </t-link>
+        <span v-else class="hp-muted">-</span>
       </template>
-    </a-table>
-  </div>
 
-
-  <div>
-    <a-modal  v-model:visible="addVisible" title="信息">
-      <a-form :model="formState" ref="formTable" :layout="'vertical'" >
-        <a-form-item label="域名" name="domain"  :rules="[{ required: true, message: '必选域名'}]" >
-          <a-input allow-clear :disabled="!isAdd" v-model:value="formState.domain" placeholder="域名"/>
-        </a-form-item>
-        <a-form-item label="备注" name="desc"  :rules="[{ required: true, message: '必选备注'}]">
-          <a-input allow-clear v-model:value="formState.desc" placeholder="备注"/>
-        </a-form-item>
-        <a-form-item label="证书" name="certificateKey"
-                     :rules="[{ required: false, message: '必须填写证书.key文件'}]">
-          <a-textarea allow-clear :rows="6" v-model:value="formState.certificateKey"
-                       placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;***大概是这样的证书私钥***&#10;-----END RSA PRIVATE KEY-----"/>
-        </a-form-item>
-        <a-form-item  label="证书内容" name="certificateContent"
-                      :rules="[{ required: false, message: '映射描述必填'}]">
-          <a-textarea allow-clear :rows="6" v-model:value="formState.certificateContent"
-                      placeholder="-----BEGIN CERTIFICATE-----&#10;***大概是这样的证书内容***&#10;-----BEGIN CERTIFICATE-----"/>
-        </a-form-item>
-      </a-form>
-
-      <template #footer>
-        <a-button class="btn view" @click="addVisible=!addVisible">取消</a-button>
-        <a-button class="btn edit" @click="addOk">确定</a-button>
+      <template #certificateContent="{ row }">
+        <t-link v-if="row.certificateContent" theme="primary" hover="color" @click="showText('证书内容', row.certificateContent)">
+          证书
+        </t-link>
+        <span v-else class="hp-muted">-</span>
       </template>
-    </a-modal>
+
+      <template #status="{ row }">
+        <t-tag v-if="row.status" :theme="row.status === 'SUCCESS' ? 'success' : 'warning'" variant="light">
+          {{ row.status }}
+        </t-tag>
+        <span v-else class="hp-muted">-</span>
+      </template>
+
+      <template #user="{ row }">
+        <div v-if="!row.userDesc && !row.username">
+          <t-tag variant="light" theme="primary">自用域名</t-tag>
+        </div>
+        <div v-else>
+          <div>归属用户：{{ row.username }}</div>
+          <div class="hp-sub-line">归属用户备注：{{ row.userDesc }}</div>
+        </div>
+      </template>
+
+      <template #action="{ row }">
+        <div class="hp-actions">
+          <t-button size="small" variant="outline" theme="success" @click="getSSl(row)">获取SSL证书</t-button>
+          <t-button size="small" variant="outline" theme="primary" @click="edit(row)">编辑</t-button>
+          <t-popconfirm content="确定要删除该域名？" theme="danger" @confirm="removeData(row)">
+            <t-button size="small" variant="outline" theme="danger">删除</t-button>
+          </t-popconfirm>
+        </div>
+      </template>
+    </t-table>
+
+    <!-- 新增 / 编辑 -->
+    <t-dialog
+        v-model:visible="addVisible"
+        :header="formState.id ? '编辑域名' : '添加域名'"
+        confirm-btn="确定"
+        cancel-btn="取消"
+        width="640px"
+        @confirm="addOk"
+    >
+      <div class="hp-dialog-body">
+        <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical">
+          <t-form-item label="域名" name="domain">
+            <t-input v-model="formState.domain" :disabled="!isAdd" clearable placeholder="域名"/>
+          </t-form-item>
+          <t-form-item label="备注" name="desc">
+            <t-input v-model="formState.desc" clearable placeholder="备注"/>
+          </t-form-item>
+          <t-form-item label="证书" name="certificateKey">
+            <t-textarea
+                v-model="formState.certificateKey"
+                :autosize="{ minRows: 5, maxRows: 8 }"
+                placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;***大概是这样的证书私钥***&#10;-----END RSA PRIVATE KEY-----"
+            />
+          </t-form-item>
+          <t-form-item label="证书内容" name="certificateContent">
+            <t-textarea
+                v-model="formState.certificateContent"
+                :autosize="{ minRows: 5, maxRows: 8 }"
+                placeholder="-----BEGIN CERTIFICATE-----&#10;***大概是这样的证书内容***&#10;-----BEGIN CERTIFICATE-----"
+            />
+          </t-form-item>
+        </t-form>
+      </div>
+    </t-dialog>
+
+    <!-- 证书内容查看 -->
+    <t-dialog v-model:visible="textVisible" :header="textTitle" :footer="false" width="720px">
+      <pre class="cert-view">{{ textContent }}</pre>
+    </t-dialog>
   </div>
-
-
-
 </template>
 
 <script setup>
-import {getDomain, removeDomain, addDomain,genSSL} from "../../api/client/domain.js";
+import {addDomain, genSSL, getDomain, removeDomain} from "../../api/client/domain.js";
 import {onMounted, reactive, ref} from "vue";
-import {notification} from "ant-design-vue";
-
+import {MessagePlugin} from "tdesign-vue-next";
+import {AddIcon, RefreshIcon, SearchIcon} from 'tdesign-icons-vue-next';
 
 const formTable = ref();
-const listData = ref();
+const listData = ref([]);
 const dataLoading = ref(false);
 const addVisible = ref(false);
 const isAdd = ref(false);
 
+const textVisible = ref(false);
+const textTitle = ref('');
+const textContent = ref('');
+
 const formState = reactive({
   domain: "",
   desc: "",
-  id:""
+  id: undefined,
+  certificateKey: '',
+  certificateContent: '',
 })
+
+const formRules = {
+  domain: [{required: true, message: '必选域名', type: 'error'}],
+  desc: [{required: true, message: '必选备注', type: 'error'}],
+};
+
 const pagination = reactive({
   total: 0,
   current: 1,
   pageSize: 10,
-  keyword:''
+  pageSizeOptions: [10, 20, 50],
+  keyword: ''
 });
 
 const loadData = () => {
   dataLoading.value = true
-  console.log(pagination)
   getDomain({
     current: pagination.current,
     pageSize: pagination.pageSize,
@@ -136,6 +166,8 @@ const loadData = () => {
     dataLoading.value = false
     listData.value = res.data.records
     pagination.total = res.data.total
+  }).catch(() => {
+    dataLoading.value = false
   })
 }
 
@@ -143,57 +175,56 @@ const removeData = (item) => {
   removeDomain({
     id: item.id
   }).then(res => {
-    notification.open({
-      message: res.msg,
-    })
+    MessagePlugin.success(res.msg)
     loadData()
   })
 }
 
-
-
 const edit = (item) => {
-  isAdd.value=false
+  isAdd.value = false
   formState.desc = item.desc
   formState.id = item.id
   formState.domain = item.domain
-  formState.certificateKey = item.certificateKey.trim()
-  formState.certificateContent = item.certificateContent.trim()
+  formState.certificateKey = (item.certificateKey || '').trim()
+  formState.certificateContent = (item.certificateContent || '').trim()
   addVisible.value = true
 }
+
 const getSSl = (item) => {
   genSSL({
     id: item.id
-  }).then(res => {
-    notification.open({
-      message: "任务已经提交，请稍等几分钟刷新列表",
-    })
+  }).then(() => {
+    MessagePlugin.success("任务已经提交，请稍等几分钟刷新列表")
     loadData()
   })
 }
 
+const showText = (title, content) => {
+  textTitle.value = title
+  textContent.value = content
+  textVisible.value = true
+}
+
 const columns = [
-  {title: '编号', dataIndex: 'id', key: 'id'},
-  {title: '域名', dataIndex: 'domain', key: 'domain'},
-  {title: '备注', dataIndex: 'desc', key: 'desc'},
-  {title: '证书密钥', dataIndex: 'certificateKey', key: 'certificateKey', },
-  {title: '证书内容', dataIndex: 'certificateContent', key: 'certificateContent' ,},
-  {title: '状态', dataIndex: 'status', key: 'status'},
-  {title: '提示', dataIndex: 'tips', key: 'tips'},
-  {title: '归属', dataIndex: 'user', key: 'user'},
-  {title: '操作', key: 'action'},
+  {colKey: 'id', title: '编号', width: 90},
+  {colKey: 'domain', title: '域名'},
+  {colKey: 'desc', title: '备注'},
+  {colKey: 'certificateKey', title: '证书密钥', width: 100, align: 'center'},
+  {colKey: 'certificateContent', title: '证书内容', width: 100, align: 'center'},
+  {colKey: 'status', title: '状态', width: 120},
+  {colKey: 'tips', title: '提示'},
+  {colKey: 'user', title: '归属'},
+  {colKey: 'action', title: '操作', width: 250},
 ];
 
-
-const handleTableChange = (item) => {
-  pagination.current = item.current
-  pagination.pageSize = item.pageSize
-  pagination.total = item.total
+const onPageChange = (pageInfo) => {
+  pagination.current = pageInfo.current
+  pagination.pageSize = pageInfo.pageSize
   loadData()
 }
 
 const addModal = () => {
-  isAdd.value=true
+  isAdd.value = true
   formState.domain = ""
   formState.desc = ""
   formState.certificateKey = ''
@@ -202,26 +233,34 @@ const addModal = () => {
   addVisible.value = true
 }
 
-const addOk = () => {
-  formTable.value.validate().then(res => {
-    addDomain({...formState}).then(res => {
-      notification.open({
-        message: res.msg,
-      })
-      loadData()
-      addVisible.value = false
-    })
-  });
+const addOk = async () => {
+  const result = await formTable.value?.validate()
+  if (result !== true) return
+
+  addDomain({...formState}).then(res => {
+    MessagePlugin.success(res.msg)
+    loadData()
+    addVisible.value = false
+  })
 }
 
 onMounted(() => {
   loadData()
 })
-
 </script>
 
 <style scoped>
-div::-webkit-scrollbar {
-  display: none;
+.cert-view {
+  margin: 0;
+  padding: 14px;
+  background: #f8fafc;
+  border: 1px solid var(--hp-border);
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 52vh;
+  overflow: auto;
 }
 </style>

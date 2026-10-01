@@ -1,266 +1,209 @@
 <template>
-  <div>
-    <a-button class="btn edit" style="margin-bottom: 10px;" @click="addConfigModal">添加穿透</a-button>
-    <a-button class="btn view" style="margin-bottom: 10px;margin-left: 10px" @click="loadData">刷新列表</a-button>
-      <a-input v-model:value="pagination.keyword" allow-clear placeholder="关键字查询" style="width: 150px;margin-bottom: 10px;margin-left: 10px"/>
-      <a-button class="btn view" style="margin-bottom: 10px;margin-left: 10px" type="primary" @click="loadData">查询</a-button>
-    <a-table :loading="configLoading" :columns="columns" rowKey="id" :data-source="currentConfigList"
-             :locale="{emptyText: '暂无配置,添加一个试试看看'}"
-             :pagination="pagination"
-             @change="handleTableChange"
-             :scroll="{ x: 'max-content'}">
-      <template #bodyCell="{ column ,record}">
-
-        <template v-if="column.key === 'server'">
-          <div v-for="(item,index) in openAddress(record)">
-            <a-tag style="margin-bottom: 2px" color="pink">{{item}}</a-tag>
-          </div>
-        </template>
-
-        <template v-if="column.key==='status'">
-          <a-switch :checked="!record.status||record.status==0"  @click="changeData(record)"/>
-        </template>
-        <template v-if="column.key==='tunType'">
-          <div v-if="record.tunType&&record.tunType==='TCP'">
-            TCP多路复用
-          </div>
-          <div v-else-if="record.tunType&&record.tunType==='QUIC'">
-            QUIC多路复用
-          </div>
-          <div v-else>
-            QUIC多路复用
-          </div>
-        </template>
-
-        <template v-if="column.key === 'deviceKey'">
-          <div>
-            设备状态：{{ userKeyByName(record.deviceKey) }}
-          </div>
-          <div v-if="userInfo.getUserInfo().role==='ADMIN'">
-            <div v-if="userKeyByUserInfo(record.deviceKey).username"> 归属用户：
-              {{ userKeyByUserInfo(record.deviceKey).username }}
-            </div>
-            <div v-if="userKeyByUserInfo(record.deviceKey).userDesc">
-              归属用户备注：{{ userKeyByUserInfo(record.deviceKey).userDesc }}
-            </div>
-          </div>
-        </template>
-        <template v-if="column.key === 'action'">
-          <a-button class="btn delete" style="margin-bottom: 5px;margin-left: 5px" @click="removeConfigData(record)">删除
-          </a-button>
-          <a-button class="btn edit" style="margin-bottom: 5px;margin-left: 5px" @click="editConfigData(record)">编辑
-          </a-button>
-          <a-button class="btn view" style="margin-bottom: 5px;margin-left: 5px" @click="refConfigData(record)">重连配置
-          </a-button>
-        </template>
-      </template>
-      <template #expandedRowRender="{ record }">
-        <div class="text-detail">
-          <div>备注：{{ record.remarks }}</div>
-          <div v-if="record.statusMsg">
-            最近一条穿透服务日志：<span class="text-tips">{{ record.statusMsg }}</span>
-          </div>
-        </div>
-      </template>
-    </a-table>
-
-
-    <div>
-      <a-modal v-model:visible="addConfigVisible" title="添加内网穿透配置">
-        <div class="config-info">
-        <a-form :model="formState" layout="vertical" ref="formTable">
-          <a-form-item label="穿透设备" name="deviceKey" :rules="[{ required: true, message: '穿透设备必填'}]">
-            <a-select
-                v-model:value="formState.deviceKey"
-                :options="currentUserKeyList"
-            ></a-select>
-          </a-form-item>
-
-          <a-form-item label="穿透备注" name="remarks" :rules="[{ required: true, message: '穿透备注必填'}]">
-            <a-input v-model:value="formState.remarks" allow-clear placeholder="备注如：个人博客"/>
-          </a-form-item>
-
-          <a-divider>端口映射配置</a-divider>
-
-          <a-form-item label="外网端口" name="remotePort" :rules="[{ required: true, message: '外网端口必填'}]">
-            <a-input v-model:value.number="formState.remotePort" allow-clear type="number" placeholder="8084"/>
-          </a-form-item>
-
-          <a-form-item label="内网地址" name="localAddress" :rules="[{ required: true, message: '内网地址必填'}]">
-
-            <a-collapse>
-              <a-collapse-panel  header="配置说明">
-                <a-collapse accordion>
-                  <a-collapse-panel key="1" header="HTTP/HTTPS协议">
-                    <a-alert style="margin: 10px 5px" type="success" >
-                      <template #message>
-                        <div>
-                          <a-tag color="pink">http://127.0.0.1</a-tag>
-                          <a-tag color="red">https://127.0.0.1</a-tag>
-                          <a-tag color="orange">http://127.0.0.1:8080</a-tag>
-                          <a-tag color="green">https://192.168.55:8080</a-tag>
-                          <a-tag color="cyan">http://192.168.15:8080</a-tag>
-                          <p>http/https协议支持默认端口方式或者手动指定端口、当选择http协议时可以自由选择是否绑定域名</p>
-                        </div>
-                      </template>
-                    </a-alert>
-                  </a-collapse-panel>
-                  <a-collapse-panel key="2" header="TCP协议">
-                    <a-alert style="margin: 10px 5px" type="success" >
-                      <template #message>
-                        <a-tag color="pink">tcp://127.0.0.1:1080</a-tag>
-                        <a-tag color="red">tcp://192.168.10.1:1080</a-tag>
-                        <p>TCP级别协议、当选择tcp协议可以设置代理协议，通常情况下是不用设置，如果有获取真实IP或者对该协议熟悉的人可以选择设置</p>
-                      </template>
-                    </a-alert>
-                  </a-collapse-panel>
-
-                  <a-collapse-panel key="3" header="UDP协议">
-                    <a-alert style="margin: 10px 5px" type="success" >
-                      <template #message>
-                        <a-tag color="pink">udp://127.0.0.1:1080</a-tag>
-                        <a-tag color="red">udp://192.168.10.1:1080</a-tag>
-                      </template>
-                    </a-alert>
-                  </a-collapse-panel>
-
-
-                  <a-collapse-panel key="4" header="SOCKS5协议">
-                    <a-alert style="margin: 10px 5px" type="success" >
-                      <template #message>
-                        <a-tag color="pink">socks5://127.0.0.1</a-tag>
-                        <a-tag color="red">socks5://用户名:密码@127.0.0.1</a-tag>
-                        <p>socks5协议、会把外网的数据转移到内网通过socks5方式代理、最后实现使用内网的IP进行上网、可以选择设置密码和不设置密码</p>
-                      </template>
-                    </a-alert>
-                  </a-collapse-panel>
-                  <a-collapse-panel key="5" header="UNIX协议">
-                    <a-alert style="margin: 10px 5px" type="success" >
-                      <template #message>
-                        <a-tag color="pink">unix:///tmp/socks.sock</a-tag>
-                        <a-tag color="red">unix:///tmp/****.sock</a-tag>
-                        <p>unix协议是直接连接到文件上、请确保sock文件路径正确</p>
-                      </template>
-                    </a-alert>
-                  </a-collapse-panel>
-                  <a-collapse-panel key="6" header="TCP+UDP协议">
-                    <a-alert style="margin: 10px 5px" type="success" >
-                      <template #message>
-                        <a-tag color="pink">tcp_udp://127.0.0.1:8080</a-tag>
-                        <a-tag color="red">tcp_udp://192.168.10.1:8080</a-tag>
-                        <p>tcp+udp双协议同时监听</p>
-                      </template>
-                    </a-alert>
-                  </a-collapse-panel>
-                </a-collapse>
-              </a-collapse-panel>
-            </a-collapse>
-
-
-            <a-input style="margin-top: 5px" allow-clear v-model:value="formState.localAddress" placeholder="http://127.0.0.1:8084"/>
-
-          </a-form-item>
-
-
-          <a-form-item label="代理协议" name="proxyVersion" v-if="showInput.proxyVersion"
-                       :rules="[{message: '用于获取真实IP，需要内网配合完成'}]">
-            <a-select
-                v-model:value="formState.proxyVersion"
-            >
-              <a-select-option value="NONE">不设置(小白用户请不要设置-用于TCP获取真实IP)</a-select-option>
-              <a-select-option value="V1">TCP#V1版本</a-select-option>
-              <a-select-option value="V2">TCP#V2版本</a-select-option>
-            </a-select>
-          </a-form-item>
-          <a-form-item label="&nbsp;绑定访问域名&nbsp;&nbsp;" name="domain" v-if="showInput.domain">
-            <a-select
-                v-model:value="formState.domain"
-                placeholder="选择一个域名"
-                :options="domainOptions"
-            ></a-select>
-          </a-form-item>
-
-
-          <a-form-item label="防火墙模式"  name="safeType" :rules="[{required: false, message: 'Please input your username!' }]" v-if="showInput.domain&&formState.domain">
-            <a-select
-                v-model:value="formState.safeType"
-            >
-              <a-select-option :value="0">无防护 (域名+外网端口都可访问)</a-select-option>
-              <a-select-option :value="1">全防护（域名防护+外网端口不可访问）</a-select-option>
-              <a-select-option :value="2">半防护（域名防护+外网端口可访问但无防护）</a-select-option>
-            </a-select>
-          </a-form-item>
-
-          <a-form-item label="防火墙规则" name="safeId" :rules="[{required: showInput.domain&&formState.domain&&formState.safeType!==0,message: '防火墙规则比选，没有就去创建一个' }]" v-if="showInput.domain&&formState.domain&&formState.safeType!==0">
-            <a-select
-                v-model:value="formState.safeId"
-                placeholder="选择一个规则"
-                :options="safeOptions"
-            >
-            </a-select>
-          </a-form-item>
-
-
-          <a-divider>其他选项配置</a-divider>
-
-          <a-form-item label="配置有效" name="status"
-                       :rules="[{ required: true, message: '当前配置是否有效'}]">
-            <a-select
-                v-model:value="formState.status"
-            >
-              <a-select-option :value="0">有效</a-select-option>
-              <a-select-option :value="1">无效</a-select-option>
-            </a-select>
-          </a-form-item>
-
-          <a-form-item label="隧道模式" name="tunType"
-                       :rules="[{ required: true, message: '选择隧道模式'}]">
-            <a-select
-                v-model:value="formState.tunType"
-            >
-              <a-select-option value="TCP">TCP多路复用模式</a-select-option>
-              <a-select-option value="QUIC">QUIC多路复用模式</a-select-option>
-            </a-select>
-          </a-form-item>
-        </a-form>
-        </div>
-        <template #footer>
-          <a-button class="btn view" @click="addConfigVisible=!addConfigVisible">取消</a-button>
-          <a-button class="btn edit" @click="addConfigOk">确定</a-button>
-        </template>
-
-      </a-modal>
+  <div class="hp-page">
+    <div class="hp-toolbar">
+      <t-button theme="primary" @click="addConfigModal">
+        <template #icon><add-icon/></template>
+        添加穿透
+      </t-button>
+      <t-button variant="outline" theme="primary" @click="loadData">
+        <template #icon><refresh-icon/></template>
+        刷新列表
+      </t-button>
+      <div class="hp-toolbar__grow"></div>
+      <t-input
+          v-model="pagination.keyword"
+          class="hp-search-input"
+          clearable
+          placeholder="关键字查询"
+          @enter="loadData"
+      >
+        <template #prefix-icon><search-icon/></template>
+      </t-input>
+      <t-button theme="primary" @click="loadData">查询</t-button>
     </div>
 
+    <t-table
+        class="hp-table"
+        row-key="id"
+        :data="currentConfigList || []"
+        :columns="columns"
+        :loading="configLoading"
+        :pagination="pagination"
+        empty="暂无配置，添加一个试试看看"
+        table-layout="auto"
+        stripe
+        hover
+        @page-change="onPageChange"
+    >
+      <template #server="{ row }">
+        <div class="hp-tag-cell">
+          <t-tag v-for="item in openAddress(row)" :key="item" theme="primary" variant="light">{{ item }}</t-tag>
+        </div>
+      </template>
+
+      <template #status="{ row }">
+        <t-switch :value="!row.status || row.status === 0" @change="() => changeData(row)"/>
+      </template>
+
+      <template #tunType="{ row }">
+        <t-tag variant="light" :theme="row.tunType === 'TCP' ? 'primary' : 'success'">
+          {{ row.tunType === 'TCP' ? 'TCP 多路复用' : 'QUIC 多路复用' }}
+        </t-tag>
+      </template>
+
+      <template #deviceKey="{ row }">
+        <div>{{ userKeyByName(row.deviceKey) }}</div>
+        <div v-if="isAdmin && userKeyByUserInfo(row.deviceKey).username" class="hp-sub-line">
+          归属用户：{{ userKeyByUserInfo(row.deviceKey).username }}
+        </div>
+        <div v-if="isAdmin && userKeyByUserInfo(row.deviceKey).userDesc" class="hp-sub-line">
+          归属用户备注：{{ userKeyByUserInfo(row.deviceKey).userDesc }}
+        </div>
+      </template>
+
+      <template #action="{ row }">
+        <div class="hp-actions">
+          <t-button size="small" variant="outline" theme="primary" @click="editConfigData(row)">编辑</t-button>
+          <t-button size="small" variant="outline" theme="warning" @click="refConfigData(row)">重连配置</t-button>
+          <t-popconfirm content="确定要删除该穿透配置？" theme="danger" @confirm="removeConfigData(row)">
+            <t-button size="small" variant="outline" theme="danger">删除</t-button>
+          </t-popconfirm>
+        </div>
+      </template>
+
+      <template #expandedRow="{ row }">
+        <div class="config-detail">
+          <div>备注：{{ row.remarks }}</div>
+          <div v-if="row.statusMsg">
+            最近一条穿透服务日志：
+            <t-tag theme="primary" variant="light">{{ row.statusMsg }}</t-tag>
+          </div>
+        </div>
+      </template>
+    </t-table>
+
+    <t-dialog
+        v-model:visible="addConfigVisible"
+        :header="formState.id ? '编辑内网穿透配置' : '添加内网穿透配置'"
+        confirm-btn="确定"
+        cancel-btn="取消"
+        width="720px"
+        @confirm="addConfigOk"
+    >
+      <div class="hp-dialog-body">
+        <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical">
+          <t-form-item label="穿透设备" name="deviceKey">
+            <t-select v-model="formState.deviceKey" :options="currentUserKeyList" placeholder="请选择穿透设备"/>
+          </t-form-item>
+
+          <t-form-item label="穿透备注" name="remarks">
+            <t-input v-model="formState.remarks" clearable placeholder="备注如：个人博客"/>
+          </t-form-item>
+
+          <t-divider>端口映射配置</t-divider>
+
+          <div class="form-grid">
+            <t-form-item label="外网端口" name="remotePort">
+              <t-input-number
+                  v-model="formState.remotePort"
+                  theme="normal"
+                  placeholder="8084"
+                  style="width: 100%"
+              />
+            </t-form-item>
+          </div>
+
+          <!-- 说明入口收成输入框内的前缀图标：不额外占一行的高度，
+               确实不知道怎么填才点图标，展开后是各协议的完整填写示例 -->
+          <t-form-item label="内网地址" name="localAddress">
+            <t-input v-model="formState.localAddress" clearable placeholder="http://127.0.0.1:8084">
+              <template #prefixIcon>
+                <t-popup
+                    placement="bottom-left"
+                    trigger="click"
+                    destroy-on-close
+                    :overlay-inner-style="{ width: '520px', maxHeight: '380px', overflow: 'auto', padding: '14px 16px' }"
+                >
+                  <t-icon name="help-circle" class="hp-help-icon"/>
+                  <template #content>
+                    <div class="doc-list">
+                      <div v-for="doc in protocolDocs" :key="doc.value" class="doc-item">
+                        <div class="doc-item__title">{{ doc.header }}</div>
+                        <div class="hp-tag-cell">
+                          <t-tag
+                              v-for="tag in doc.tags"
+                              :key="tag"
+                              class="doc-tag"
+                              theme="primary"
+                              variant="light-outline"
+                              size="small"
+                          >{{ tag }}</t-tag>
+                        </div>
+                        <p v-if="doc.desc" class="doc-item__desc">{{ doc.desc }}</p>
+                      </div>
+                    </div>
+                  </template>
+                </t-popup>
+              </template>
+            </t-input>
+          </t-form-item>
+
+          <t-form-item v-if="showInput.proxyVersion" label="代理协议" name="proxyVersion">
+            <t-select v-model="formState.proxyVersion" :options="proxyOptions"/>
+          </t-form-item>
+
+          <t-form-item v-if="showInput.domain" label="绑定访问域名" name="domain">
+            <t-select v-model="formState.domain" :options="domainOptions" placeholder="选择一个域名" clearable/>
+          </t-form-item>
+
+          <t-form-item
+              v-if="showInput.domain && formState.domain"
+              label="防火墙模式"
+              name="safeType"
+          >
+            <t-select v-model="formState.safeType" :options="safeTypeOptions"/>
+          </t-form-item>
+
+          <t-form-item
+              v-if="showInput.domain && formState.domain && formState.safeType !== 0"
+              label="防火墙规则"
+              name="safeId"
+          >
+            <t-select v-model="formState.safeId" :options="safeOptions" placeholder="选择一个规则"/>
+          </t-form-item>
+
+          <t-divider>其他选项配置</t-divider>
+
+          <div class="form-grid">
+            <t-form-item label="配置有效" name="status">
+              <t-select v-model="formState.status" :options="statusOptions"/>
+            </t-form-item>
+
+            <t-form-item label="隧道模式" name="tunType">
+              <t-select v-model="formState.tunType" :options="tunTypeOptions"/>
+            </t-form-item>
+          </div>
+        </t-form>
+      </div>
+    </t-dialog>
   </div>
 </template>
 
 <script setup>
-import {onMounted, reactive, ref, watch} from "vue";
-import {removeConfig, getConfigList, getDeviceKey, addConfig, refConfig, changeStatus} from "../../api/client/config";
+import {computed, onMounted, reactive, ref, watch} from "vue";
+import {addConfig, changeStatus, getConfigList, getDeviceKey, refConfig, removeConfig} from "../../api/client/config";
 import {useRoute} from 'vue-router'
 import userInfo from "../../data/userInfo";
 import {queryDomain} from "../../api/client/domain.js";
 import {querySafe} from "../../api/client/safe.js";
+import {AddIcon, RefreshIcon, SearchIcon} from 'tdesign-icons-vue-next';
+
+const route = useRoute()
 
 const domainOptions = ref([]);
 const safeOptions = ref([]);
-
-const route = useRoute()
-const pagination = reactive({
-  total: 0,
-  current: 1,
-  pageSize: 10,
-  keyword:'',
-});
-
-const handleTableChange = (item) => {
-  pagination.current = item.current
-  pagination.pageSize = item.pageSize
-  pagination.total = item.total
-  loadData()
-}
-
+const currentConfigList = ref([]);
+const currentUserKeyList = ref([]);
 
 const formTable = ref()
 const addConfigVisible = ref(false)
@@ -276,74 +219,189 @@ const formState = reactive({
   proxyVersion: "NONE",
   status: 0,
   safeType: 0,
-  safeId: 0,
-  tunType:"TCP",
+  // 用 undefined 而不是 0：safeOptions 里没有 value=0 的项，
+  // 初始为 0 时 t-select 匹配不到 label，就会把数字 0 直接显示出来
+  safeId: undefined,
+  tunType: "TCP",
 })
 
+const formRules = {
+  deviceKey: [{required: true, message: '穿透设备必填', type: 'error'}],
+  remarks: [{required: true, message: '穿透备注必填', type: 'error'}],
+  remotePort: [{required: true, message: '外网端口必填', type: 'error'}],
+  localAddress: [{required: true, message: '内网地址必填', type: 'error'}],
+  status: [{required: true, message: '当前配置是否有效', type: 'error'}],
+  tunType: [{required: true, message: '选择隧道模式', type: 'error'}],
+  safeId: [{
+    validator: (val) => {
+      if (!showInput.domain || !formState.domain || formState.safeType === 0) return true
+      return val !== undefined && val !== null && val !== ''
+    },
+    message: '防火墙规则必选，没有就去创建一个',
+    trigger: 'change'
+  }],
+};
 
-const currentConfigList = ref()
+const pagination = reactive({
+  total: 0,
+  current: 1,
+  pageSize: 10,
+  pageSizeOptions: [10, 20, 50],
+  keyword: '',
+});
 
-const currentUserKeyList = ref()
+const isAdmin = computed(() => userInfo.getUserInfo()?.role === 'ADMIN');
 
-const changeData = (item)=>{
+const protocolDocs = [
+  {
+    value: 'http',
+    header: 'HTTP/HTTPS 协议',
+    tags: ['http://127.0.0.1', 'https://127.0.0.1', 'http://127.0.0.1:8080', 'https://192.168.55:8080', 'http://192.168.15:8080'],
+    desc: 'http/https协议支持默认端口方式或者手动指定端口、当选择http协议时可以自由选择是否绑定域名'
+  },
+  {
+    value: 'tcp',
+    header: 'TCP 协议',
+    tags: ['tcp://127.0.0.1:1080', 'tcp://192.168.10.1:1080'],
+    desc: 'TCP级别协议、当选择tcp协议可以设置代理协议，通常情况下是不用设置，如果有获取真实IP或者对该协议熟悉的人可以选择设置'
+  },
+  {
+    value: 'udp',
+    header: 'UDP 协议',
+    tags: ['udp://127.0.0.1:1080', 'udp://192.168.10.1:1080'],
+    desc: ''
+  },
+  {
+    value: 'socks5',
+    header: 'SOCKS5 协议',
+    tags: ['socks5://127.0.0.1', 'socks5://用户名:密码@127.0.0.1'],
+    desc: 'socks5协议、会把外网的数据转移到内网通过socks5方式代理、最后实现使用内网的IP进行上网、可以选择设置密码和不设置密码'
+  },
+  {
+    value: 'unix',
+    header: 'UNIX 协议',
+    tags: ['unix:///tmp/socks.sock', 'unix:///tmp/****.sock'],
+    desc: 'unix协议是直接连接到文件上、请确保sock文件路径正确'
+  },
+  {
+    value: 'tcp_udp',
+    header: 'TCP+UDP 协议',
+    tags: ['tcp_udp://127.0.0.1:8080', 'tcp_udp://192.168.10.1:8080'],
+    desc: 'tcp+udp双协议同时监听'
+  },
+];
+
+const proxyOptions = [
+  {label: '不设置(小白用户请不要设置-用于TCP获取真实IP)', value: 'NONE'},
+  {label: 'TCP#V1版本', value: 'V1'},
+  {label: 'TCP#V2版本', value: 'V2'},
+];
+
+const safeTypeOptions = [
+  {label: '无防护 (域名+外网端口都可访问)', value: 0},
+  {label: '全防护（域名防护+外网端口不可访问）', value: 1},
+  {label: '半防护（域名防护+外网端口可访问但无防护）', value: 2},
+];
+
+const statusOptions = [
+  {label: '有效', value: 0},
+  {label: '无效', value: 1},
+];
+
+const tunTypeOptions = [
+  {label: 'TCP多路复用模式', value: 'TCP'},
+  {label: 'QUIC多路复用模式', value: 'QUIC'},
+];
+
+const columns = [
+  {colKey: 'id', title: '配置ID', width: 90},
+  {colKey: 'remarks', title: '备注'},
+  {colKey: 'tunType', title: '隧道模式', width: 140},
+  {colKey: 'localAddress', title: '内网服务'},
+  {colKey: 'server', title: '外网服务'},
+  {colKey: 'status', title: '配置有效', width: 90, align: 'center'},
+  {colKey: 'deviceKey', title: '部署设备'},
+  {colKey: 'action', title: '操作', width: 250},
+];
+
+const showInput = reactive({
+  proxyVersion: false,
+  domain: false,
+})
+
+watch(() => formState.localAddress, (newVal) => {
+  const val = newVal || ''
+  showInput.proxyVersion = val.startsWith("tcp")
+  showInput.domain = val.startsWith("http")
+})
+
+// 切回「无防护」时清掉规则：否则残留的 safeId 会被提交，
+// 下次打开也会因为匹配不到选项而显示成数字
+watch(() => formState.safeType, (val) => {
+  if (!val) formState.safeId = undefined
+})
+
+const onPageChange = (pageInfo) => {
+  pagination.current = pageInfo.current
+  pagination.pageSize = pageInfo.pageSize
+  loadData()
+}
+
+const changeData = (item) => {
   configLoading.value = true
   changeStatus({
     configId: item.id
   }).then(res => {
     configLoading.value = false
-    if (res.code===200) {
-      if (!item.status||item.status==0){
-        item.status=1
-      }else {
-        item.status=0
-      }
+    if (res.code === 200) {
+      item.status = (!item.status || item.status === 0) ? 1 : 0
     }
+  }).catch(() => {
+    configLoading.value = false
   })
-
 }
 
-const loadDomains=()=>{
+/**
+ * 统一取出列表数组。
+ * http 拦截器返回的已经是 JSON body（res.data 就是接口返回的 data 字段），
+ * 原先这里写的是 res.data.data，取到的是 undefined，
+ * 导致域名 / 防护规则下拉选项一直是空的 —— select 匹配不到 label
+ * 就只能把数字显示出来。这里对两种返回形态都兼容。
+ */
+const toList = (res) => {
+  const d = res?.data
+  if (Array.isArray(d)) return d
+  if (Array.isArray(d?.data)) return d.data
+  if (Array.isArray(d?.records)) return d.records
+  return []
+}
+
+const loadDomains = () => {
   queryDomain({}).then(res => {
-      const result = res.data.data;
-      console.log(result)
-    domainOptions.value=[]
-      result.forEach(r => {
-        domainOptions.value.push({
-          value: r.domain,
-          label: r.domain,
-        });
-      });
+    domainOptions.value = toList(res).map(r => ({value: r.domain, label: r.domain}))
   })
 }
-const loadSafes=()=>{
+
+const loadSafes = () => {
   querySafe({}).then(res => {
-      const result = res.data.data;
-      console.log(result)
-      safeOptions.value=[]
-      result.forEach(r => {
-        safeOptions.value.push({
-          value: r.id,
-          label: r.ruleName,
-        });
-      });
+    safeOptions.value = toList(res).map(r => ({value: r.id, label: r.ruleName}))
   })
 }
 
 const loadDeviceKey = () => {
   getDeviceKey().then(res => {
-    let data = []
-    for (let k of res.data) {
-      data.push({"label": k.desc, "value": k.key, userDesc: k.userDesc, username: k.username})
-    }
-    currentUserKeyList.value = data
+    currentUserKeyList.value = toList(res).map(k => ({
+      label: k.desc,
+      value: k.key,
+      userDesc: k.userDesc,
+      username: k.username
+    }))
   })
 }
 
 const userKeyByName = (deviceKey) => {
   try {
-    return currentUserKeyList.value.filter(r => {
-      return r.value === deviceKey
-    })[0].label
+    return currentUserKeyList.value.filter(r => r.value === deviceKey)[0].label
   } catch (e) {
     return "设备获取错误"
   }
@@ -351,14 +409,11 @@ const userKeyByName = (deviceKey) => {
 
 const userKeyByUserInfo = (deviceKey) => {
   try {
-    return currentUserKeyList.value.filter(r => {
-      return r.value === deviceKey
-    })[0]
+    return currentUserKeyList.value.filter(r => r.value === deviceKey)[0]
   } catch (e) {
-    return ""
+    return {}
   }
 }
-
 
 const loadData = () => {
   loadDomains()
@@ -369,16 +424,10 @@ const loadData = () => {
     configLoading.value = false
     currentConfigList.value = res.data.records
     pagination.total = res.data.total
-  }).catch(e => {
+  }).catch(() => {
     configLoading.value = false
   })
 }
-
-onMounted(() => {
-  loadDeviceKey();
-  loadData()
-})
-
 
 const removeConfigData = (item) => {
   removeConfig({
@@ -397,17 +446,15 @@ const editConfigData = (item) => {
   formState.remotePort = item.remotePort
   formState.localAddress = item.localAddress
   formState.domain = item.domain
-  formState.proxyVersion = item.proxyVersion
-  if (!item.tunType){
-    item.tunType="QUIC"
-  }
-  formState.tunType = item.tunType
+  formState.proxyVersion = item.proxyVersion || 'NONE'
+  formState.tunType = item.tunType || "QUIC"
   formState.status = item.status
-  formState.safeId = item.safeId
+  // 后端用 0 表示「未选规则」，转成 undefined，否则 select 会显示 0
+  formState.safeId = item.safeId || undefined
   formState.safeType = item.safeType
   addConfigVisible.value = true;
-  console.log(formState)
 }
+
 const refConfigData = (item) => {
   configLoading.value = true
   refConfig({
@@ -417,9 +464,10 @@ const refConfigData = (item) => {
     if (res.data) {
       loadData()
     }
+  }).catch(() => {
+    configLoading.value = false
   })
 }
-
 
 const addConfigModal = () => {
   formState.id = undefined
@@ -429,77 +477,48 @@ const addConfigModal = () => {
   formState.localAddress = ''
   formState.domain = undefined
   formState.proxyVersion = "NONE"
-  formState.tunType='TCP'
+  formState.tunType = 'TCP'
   formState.status = 0
   formState.safeType = 0
-  formState.safeId = 0
+  formState.safeId = undefined
   addConfigVisible.value = true;
 };
-const addConfigOk = () => {
-  formTable.value.validate().then(res => {
-    console.log("添加配置表单", formState)
-    addConfig(
-        {
-          packageId: route.query.packageId,
-          ...formState
-        }
-    ).then(res => {
-      loadData()
-      addConfigVisible.value = false;
-    })
+
+const addConfigOk = async () => {
+  const result = await formTable.value?.validate()
+  if (result !== true) return
+
+  addConfig({
+    packageId: route.query.packageId,
+    ...formState,
+    // undefined 在 JSON 序列化时会被整个丢掉，后端仍需要一个数字
+    safeId: formState.safeId ?? 0,
+  }).then(() => {
+    loadData()
+    addConfigVisible.value = false;
   })
 };
 
-
-const columns = [
-  {title: '配置ID', dataIndex: 'id', key: 'id'},
-  {title: '备注', dataIndex: 'remarks', key: 'remarks'},
-  {title: '隧道模式', dataIndex: 'tunType', key: 'tunType'},
-  {title: '内网服务', dataIndex: 'localAddress', key: 'localAddress'},
-  {title: '外网服务', dataIndex: 'server', key: 'server'},
-  {title: '配置有效', dataIndex: 'status', key: 'status'},
-  {title: '部署设备', dataIndex: 'deviceKey', key: 'deviceKey'},
-  {title: '操作', key: 'action'},
-];
-
-const showInput=reactive({
-  proxyVersion:false,
-  domain:false,
-})
-
-watch(() => formState.localAddress, (newVal) => {
-  if (newVal.startsWith("tcp")){
-    showInput.proxyVersion=true
-  }else {
-    showInput.proxyVersion=false
-  }
-  if (newVal.startsWith("http")){
-    showInput.domain=true
-  }else {
-    showInput.domain=false
-  }
-})
-
 const openAddress = (item) => {
-  const address=[]
+  const address = []
 
-  if (item.localAddress.startsWith("tcp")||item.localAddress.startsWith("unix")||item.localAddress.startsWith("tcp_udp")){
-    address.push("tcp://"+item.serverIp+":"+item.remotePort)
+  if (item.localAddress.startsWith("tcp") || item.localAddress.startsWith("unix") || item.localAddress.startsWith("tcp_udp")) {
+    address.push("tcp://" + item.serverIp + ":" + item.remotePort)
   }
 
-  if (item.localAddress.startsWith("udp")||item.localAddress.startsWith("tcp_udp")){
-    address.push("udp://"+item.serverIp+":"+item.remotePort)
+  if (item.localAddress.startsWith("udp") || item.localAddress.startsWith("tcp_udp")) {
+    address.push("udp://" + item.serverIp + ":" + item.remotePort)
   }
-  if (item.localAddress.startsWith("socks5")){
-    address.push("socks5://"+item.serverIp+":"+item.remotePort)
+  if (item.localAddress.startsWith("socks5")) {
+    address.push("socks5://" + item.serverIp + ":" + item.remotePort)
   }
 
-  if (item.localAddress.startsWith("http")){
-    address.push("http://"+item.serverIp+":"+item.remotePort)
-    if (item.domain){
-    address.push("http://"+item.domain)
-    address.push("https://"+item.domain)
-      switch (item.safeType){
+  if (item.localAddress.startsWith("http")) {
+    address.push("http://" + item.serverIp + ":" + item.remotePort)
+    if (item.domain) {
+      address.push("http://" + item.domain)
+      address.push("https://" + item.domain)
+      switch (item.safeType) {
         case 0:
           address.push("无防护")
           break;
@@ -516,78 +535,78 @@ const openAddress = (item) => {
   return address
 }
 
-
-
+onMounted(() => {
+  loadDeviceKey();
+  loadData()
+})
 </script>
 
-<style lang="less">
-
-.op-btn button {
-  text-align: center;
-  margin: 5px;
+<style scoped>
+.config-detail {
+  padding: 14px 18px;
+  background: #fbfcfe;
+  border-radius: 12px;
+  line-height: 1.9;
 }
 
-.text-tips {
-  margin-top: 10px;
-  background-color: #4b6ff6;
-  color: #ffffff;
-  padding: 2px 10px;
-  border-radius: 10px;
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0 20px;
 }
 
-.text-detail div {
-  margin-bottom: 10px;
+/* TDesign 会把「最后一个」form-item 的 margin-bottom 归零，
+   而外网端口被 .form-grid 包了一层、配置说明是自定义块，都打断了这个判定，
+   实测相邻两块间距是 0（贴死）。这里按 24px 的节奏补回来。
+   排在末尾的分组（其他选项配置）不需要底部间距，用 :not(:last-child) 跳过 */
+.hp-dialog-body .form-grid:not(:last-child) {
+  margin-bottom: 24px;
 }
 
-.ant-card-body {
-  overflow: hidden;
+/* 说明入口现在是输入框内的前缀图标：平时很淡不抢视线，hover 变品牌色提示「可以点」。
+   注意 global.css 里有 `.t-input__prefix-icon .t-icon` 给它定了颜色，
+   这里要借 .t-input 抬高一级特异性才盖得住 */
+.t-input .hp-help-icon {
+  color: var(--hp-text-3);
+  font-size: 16px;
+  cursor: pointer;
+  transition: color .18s ease;
 }
 
-.full-modal {
-  .ant-modal {
-    max-width: 100%;
-    top: 0;
-    padding-bottom: 0;
-    margin: 0;
-  }
-
-  .ant-modal-content {
-    box-shadow: none;
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh);
-  }
-
-  .ant-modal-body {
-    flex: 1;
-  }
+.t-input .hp-help-icon:hover {
+  color: #2f5bef;
 }
 
-.config-info{
-  max-height: 60vh;
-  overflow-y: scroll;
-
-}
-/* 滚动条整体样式 */
-.config-info::-webkit-scrollbar {
-  width: 0px; /* 滚动条宽度 */
-  height: 0px;
+/* 图标和输入文字之间留一点呼吸空间 */
+:deep(.t-input__prefix-icon) {
+  margin-right: 8px;
 }
 
-/* 滚动条轨道 */
-.config-info::-webkit-scrollbar-track {
-  background: #f1f1f1; /* 轨道背景色 */
-  border-radius: 1px;
+/* 协议之间用虚线分隔，比每个协议套一个绿色警示框轻得多 */
+.doc-item + .doc-item {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #e8edf6;
 }
 
-/* 滚动条滑块 */
-.config-info::-webkit-scrollbar-thumb {
-  background: #888; /* 滑块颜色 */
-  border-radius: 1px; /* 滑块圆角 */
+.doc-item__title {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hp-text);
 }
 
-/* 滑块悬停效果 */
-.config-info::-webkit-scrollbar-thumb:hover {
-  background: #555; /* 悬停时滑块颜色 */
+.doc-item__desc {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.75;
+  /* 用次级文字色而非 --hp-text-3：12px 配 #94a3b8 对比度不足，读起来费劲 */
+  color: var(--hp-text-2);
+}
+
+/* 示例地址统一用等宽字体 + 单一描边色，替换原来的多彩实心标签 */
+.doc-tag {
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+  font-size: 12px;
 }
 </style>

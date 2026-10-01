@@ -1,40 +1,45 @@
 <script setup>
-import {onMounted, reactive, ref, watch, computed, nextTick} from "vue";
+import {computed, nextTick, onMounted, reactive, ref, watch} from "vue";
 import axios from "axios";
 import Giscus from '@giscus/vue';
 import {getGithubToken} from "../../api/client/giscus.js";
+import {AddIcon, ChatIcon} from 'tdesign-icons-vue-next';
 
-const formTable =ref()
-const spinning =ref(true)
-const numberData =ref(null)
+const formTable = ref()
+const spinning = ref(true)
+const numberData = ref(null)
 const visible = ref(false)
 const createVisible = ref(false)
 const addVisible = ref(false)
+
 // 配置信息 - 建议在生产环境使用环境变量
 const config = reactive({
   owner: "heixiaoma",
   repo: "hp-lite",
-  repoId:'R_kgDOPIQq1w',
-  categoryId:'DIC_kwDOPIQq184CuaDS',
+  repoId: 'R_kgDOPIQq1w',
+  categoryId: 'DIC_kwDOPIQq184CuaDS',
   token: '',
   graphqlUrl: "https://api.github.com/graphql"
 });
 
 const formState = reactive({
-  title:''
+  title: ''
 })
 
+const formRules = {
+  title: [{required: true, message: '请填写话题内容', type: 'error'}],
+};
 
-const jumpAuth=()=>{
-  location.href="https://giscus.app/api/oauth/authorize?redirect_uri="+location.href
+const jumpAuth = () => {
+  location.href = "https://giscus.app/api/oauth/authorize?redirect_uri=" + location.href
 }
 
+const addOk = async () => {
+  const result = await formTable.value?.validate()
+  if (result !== true) return
 
-const addOk=()=>{
-  formTable.value.validate().then(res => {
-    createVisible.value=true;
-    addVisible.value=false
-  })
+  createVisible.value = true;
+  addVisible.value = false
 }
 
 // 状态管理
@@ -129,7 +134,6 @@ const resetDiscussions = () => {
 
 // 加载讨论组数据
 const loadDiscussions = async () => {
-  console.log("---")
   // 防止重复加载和无更多数据时继续加载
   if (state.status.loading || !state.pagination.hasNextPage) return;
 
@@ -147,7 +151,7 @@ const loadDiscussions = async () => {
 
     const response = await axios.post(
         config.graphqlUrl,
-        { query: getDiscussionsQuery, variables },
+        {query: getDiscussionsQuery, variables},
         {
           headers: {
             "Authorization": `Bearer ${config.token}`,
@@ -214,6 +218,17 @@ const changeStateFilter = (newState) => {
   }
 };
 
+const filterOptions = [
+  {label: '全部', value: 'ALL'},
+  {label: '打开', value: 'OPEN'},
+  {label: '已关闭', value: 'CLOSED'},
+];
+
+const onFilterChange = (value) => {
+  const next = Array.isArray(value) ? value[value.length - 1] : value;
+  if (next) changeStateFilter(next);
+};
+
 // 格式化日期
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString();
@@ -229,25 +244,16 @@ watch(
     }
 );
 
-// 监听筛选条件变化
-watch(
-    () => state.filters.state,
-    () => {
-      // 状态变化时已在changeStateFilter中处理
-    }
-);
-
-
-const loadToken=()=>{
- var item = localStorage.getItem("giscus-session");
- if (item){
-   getGithubToken({session:JSON.parse(item)}).then(res=>{
-     if (res.code===200){
-       config.token = JSON.parse(res.data).token
-       loadDiscussions()
-     }
-   })
- }
+const loadToken = () => {
+  const item = localStorage.getItem("giscus-session");
+  if (item) {
+    getGithubToken({session: JSON.parse(item)}).then(res => {
+      if (res.code === 200) {
+        config.token = JSON.parse(res.data).token
+        loadDiscussions()
+      }
+    })
+  }
 }
 
 // 初始加载
@@ -256,418 +262,366 @@ onMounted(() => {
     console.log(JSON.stringify(event.data));
   });
 
-  nextTick(()=>{
+  nextTick(() => {
     setTimeout(function () {
       loadToken()
-      spinning.value=false;
-    },1000)
-  })
-
-
-
+      spinning.value = false;
+    }, 1000)
+  });
 });
-const showDis=(item)=>{
-  numberData.value=item.number
-  visible.value=true
-  console.log(item)
-}
 
+const showDis = (item) => {
+  numberData.value = item.number
+  visible.value = true
+}
 </script>
 
 <template>
-
-
-  <div>
-    <a-spin :spinning="spinning">
-    <div style="display:none">
-      <Giscus/>
-    </div>
-    <div v-if="!config.token">
-      <a-result status="warning" title="未检查到Github授权,授权后进行讨论">
-        <template #extra>
-          <a-button key="console" class="btn view"  @click="jumpAuth">去授权</a-button>
-        </template>
-      </a-result>
-    </div>
-
-
-  <div class="discussions-container" v-else>
-    <div class="header-section">
-      <h2>讨论组列表  <span style="font-size: 12px">请文明交流,乱来者拉黑</span> </h2>
-      <div class="filter-controls">
-        <button class="btn edit"
-            @click="addVisible=true"
-        >
-          创建话题
-        </button>
-
-        <span class="filter-label">状态筛选:</span>
-        <button
-            @click="changeStateFilter('ALL')"
-            :class="{ active: state.filters.state === 'ALL' }"
-        >
-          全部
-        </button>
-        <button
-            @click="changeStateFilter('OPEN')"
-            :class="{ active: state.filters.state === 'OPEN' }"
-        >
-          打开
-        </button>
-        <button
-            @click="changeStateFilter('CLOSED')"
-            :class="{ active: state.filters.state === 'CLOSED' }"
-        >
-          已关闭
-        </button>
+  <div class="teach">
+    <t-loading :loading="spinning" size="large" text="加载中">
+      <!-- giscus 授权入口（隐藏） -->
+      <div style="display:none">
+        <Giscus/>
       </div>
-    </div>
 
-    <!-- 错误信息 -->
-    <div v-if="state.status.error" class="error-message">
-      ⚠️ {{ state.status.error }}
-      <button class="retry-button" @click="reloadDiscussions">重试</button>
-    </div>
+      <!-- 未授权 -->
+      <div v-if="!config.token" class="auth-empty">
+        <div class="auth-empty__icon">
+          <chat-icon size="28px"/>
+        </div>
+        <h3 class="auth-empty__title">未检查到 Github 授权</h3>
+        <p class="auth-empty__desc">授权后即可参与穿透交流区的讨论</p>
+        <t-button theme="primary" @click="jumpAuth">去授权</t-button>
+      </div>
 
-    <!-- 加载状态 -->
-    <div v-if="state.status.loading" class="loading-indicator">
-      <div class="spinner"></div>
-      <p>加载中...</p>
-    </div>
+      <div v-else class="discussions">
+        <div class="discussions__head">
+          <div>
+            <h2 class="discussions__title">讨论组列表</h2>
+            <span class="discussions__tip">请文明交流，乱来者拉黑</span>
+          </div>
 
-    <!-- 空状态 -->
-    <div v-if="!state.status.loading && !state.status.error && discussions.length === 0 && !state.status.isInitialLoad" class="empty-state">
-      <p>没有找到符合条件的讨论</p>
-      <button @click="reloadDiscussions">刷新</button>
-    </div>
+          <div class="discussions__filter">
+            <t-button theme="primary" @click="addVisible = true">
+              <template #icon><add-icon/></template>
+              创建话题
+            </t-button>
+            <t-check-tag-group
+                :value="[state.filters.state]"
+                :options="filterOptions"
+                :multiple="false"
+                @change="onFilterChange"
+            />
+          </div>
+        </div>
 
-    <!-- 讨论组列表 -->
-    <div class="discussions-list" v-else-if="discussions.length > 0">
-      <div
-          class="discussion-item"
-          v-for="discussion in discussions"
-          :key="discussion.id"
-          @click="showDis(discussion)"
-      >
-        <div class="discussion-header">
-          <h3>
-            <div style="display: flex;justify-content: space-between">
-              <div style="color: #1d39c4">#{{ discussion.number }} {{ discussion.title }}</div>
-              <a :href="discussion.url" target="_blank" rel="noopener noreferrer"  @click.stop >
-                <svg t="1760494514232" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4538" width="32" height="32"><path d="M498.894518 100.608396c-211.824383 0-409.482115 189.041494-409.482115 422.192601 0 186.567139 127.312594 344.783581 295.065226 400.602887 21.13025 3.916193 32.039717-9.17701 32.039717-20.307512 0-10.101055 1.176802-43.343157 1.019213-78.596056-117.448946 25.564235-141.394311-49.835012-141.394311-49.835012-19.225877-48.805566-46.503127-61.793368-46.503127-61.793368-38.293141-26.233478 3.13848-25.611308 3.13848-25.611308 42.361807 2.933819 64.779376 43.443441 64.779376 43.443441 37.669948 64.574714 98.842169 45.865607 122.912377 35.094286 3.815909-27.262924 14.764262-45.918819 26.823925-56.431244-93.796246-10.665921-192.323237-46.90017-192.323237-208.673623 0-46.071292 16.498766-83.747379 43.449581-113.332185-4.379751-10.665921-18.805298-53.544497 4.076852-111.732757 0 0 35.46063-11.336186 116.16265 43.296085 33.653471-9.330506 69.783343-14.022365 105.654318-14.174837 35.869952 0.153496 72.046896 4.844332 105.753579 14.174837 80.606853-54.631248 116.00813-43.296085 116.00813-43.296085 22.935362 58.18826 8.559956 101.120049 4.180206 111.732757 27.052123 29.584806 43.443441 67.260893 43.443441 113.332185 0 162.137751-98.798167 197.850114-192.799074 208.262254 15.151072 13.088086 28.65155 38.804794 28.65155 78.17957 0 56.484456-0.459464 101.94381-0.459464 115.854635 0 11.235902 7.573489 24.381293 29.014824 20.2543C825.753867 867.330798 933.822165 709.10924 933.822165 522.700713c0-233.155201-224.12657-422.192601-434.927647-422.192601L498.894518 100.608396z" fill="#3F3F3F" p-id="4539"></path></svg>
+        <!-- 错误信息 -->
+        <t-alert v-if="state.status.error" theme="error" class="discussions__alert">
+          <template #message>
+            <div class="error-row">
+              <span>⚠️ {{ state.status.error }}</span>
+              <t-button size="small" theme="danger" variant="outline" @click="reloadDiscussions">重试</t-button>
+            </div>
+          </template>
+        </t-alert>
+
+        <!-- 加载状态 -->
+        <div v-if="state.status.loading" class="state-box">
+          <t-loading size="large" text="加载中..."/>
+        </div>
+
+        <!-- 空状态 -->
+        <div v-else-if="discussions.length === 0 && !state.status.isInitialLoad" class="state-box">
+          <t-empty description="没有找到符合条件的讨论"/>
+          <t-button variant="outline" theme="primary" @click="reloadDiscussions">刷新</t-button>
+        </div>
+
+        <!-- 讨论组列表 -->
+        <div v-else-if="discussions.length > 0" class="discussion-list">
+          <article
+              class="discussion-item"
+              v-for="discussion in discussions"
+              :key="discussion.id"
+              @click="showDis(discussion)"
+          >
+            <div class="discussion-item__head">
+              <div class="discussion-item__title">#{{ discussion.number }} {{ discussion.title }}</div>
+              <a :href="discussion.url" target="_blank" rel="noopener noreferrer" @click.stop class="discussion-item__link">
+                在 Github 打开
               </a>
             </div>
-          </h3>
-          <div class="labels">
-            <span
-                class="label"
-                v-for="label in discussion.labels.nodes"
-                :key="label.name"
-                :style="{
-                backgroundColor: `#${label.color}`,
-                color: getContrastColor(label.color)
-              }"
-            >
-              {{ label.name }}
-            </span>
-          </div>
+
+            <div v-if="discussion.labels.nodes.length" class="discussion-item__labels">
+              <span
+                  class="label"
+                  v-for="label in discussion.labels.nodes"
+                  :key="label.name"
+                  :style="{
+                    backgroundColor: `#${label.color}`,
+                    color: getContrastColor(label.color)
+                  }"
+              >{{ label.name }}</span>
+            </div>
+
+            <div class="discussion-item__meta">
+              <span class="author">
+                <img :src="discussion.author.avatarUrl" :alt="discussion.author.login" class="avatar">
+                {{ discussion.author.login }}
+              </span>
+              <span>创建于 {{ formatDate(discussion.createdAt) }}</span>
+              <span>{{ discussion.comments.totalCount }} 条评论</span>
+            </div>
+
+            <p class="discussion-item__excerpt">
+              {{ discussion.bodyText.length > 150 ? discussion.bodyText.slice(0, 150) + '...' : discussion.bodyText }}
+            </p>
+          </article>
         </div>
 
-        <div class="discussion-meta">
-          <div class="author">
-            <img
-                :src="discussion.author.avatarUrl"
-                :alt="discussion.author.login"
-                class="avatar"
-            >
-            <span>{{ discussion.author.login }}</span>
-          </div>
-          <span class="date">创建于 {{ formatDate(discussion.createdAt) }}</span>
-          <span class="comments">{{ discussion.comments.totalCount }} 条评论</span>
+        <!-- 分页控制 -->
+        <div v-if="!state.status.isInitialLoad" class="discussions__foot">
+          <t-button variant="outline" :disabled="state.status.loading" @click="reloadDiscussions">刷新</t-button>
+          <t-button
+              theme="primary"
+              variant="outline"
+              :disabled="!state.pagination.hasNextPage || state.status.loading"
+              @click="loadNextPage"
+          >加载更多
+          </t-button>
+          <span class="page-info">
+            第 {{ state.pagination.currentPage }} 页（共 {{ state.pagination.totalCount }} 个讨论）
+          </span>
         </div>
 
-        <div class="discussion-excerpt">
-          {{ discussion.bodyText.length > 150 ? discussion.bodyText.slice(0, 150) + '...' : discussion.bodyText }}
-        </div>
+        <!-- 话题详情 -->
+        <t-drawer
+            v-model:visible="visible"
+            header="交流区"
+            size="100%"
+            destroy-on-close
+            @close="reloadDiscussions"
+        >
+          <Giscus
+              :repo="config.owner + '/' + config.repo"
+              :repo-id="config.repoId"
+              category="General"
+              :category-id="config.categoryId"
+              mapping="number"
+              :term="numberData"
+              strict="1"
+              reactions-enabled="0"
+              emit-metadata="0"
+              input-position="bottom"
+              theme="preferred_color_scheme"
+              lang="zh-CN"
+          />
+        </t-drawer>
+
+        <!-- 创建话题 -->
+        <t-drawer
+            v-model:visible="createVisible"
+            header="请在下面评论一句"
+            size="100%"
+            destroy-on-close
+            @close="reloadDiscussions"
+        >
+          <Giscus
+              :repo="config.owner + '/' + config.repo"
+              :repo-id="config.repoId"
+              category="General"
+              :category-id="config.categoryId"
+              mapping="specific"
+              :term="formState.title"
+              strict="1"
+              reactions-enabled="0"
+              emit-metadata="0"
+              input-position="bottom"
+              theme="preferred_color_scheme"
+              lang="zh-CN"
+          />
+        </t-drawer>
+
+        <t-dialog
+            v-model:visible="addVisible"
+            header="创建话题"
+            confirm-btn="确定"
+            cancel-btn="取消"
+            width="560px"
+            @confirm="addOk"
+        >
+          <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical">
+            <t-form-item label="话题内容" name="title">
+              <t-textarea
+                  v-model="formState.title"
+                  :autosize="{ minRows: 4, maxRows: 8 }"
+                  placeholder="请描述的问题或者话题内容"
+              />
+            </t-form-item>
+          </t-form>
+        </t-dialog>
       </div>
-    </div>
-
-    <!-- 分页控制 -->
-    <div class="pagination-controls" v-if="!state.status.isInitialLoad">
-      <button
-          @click="reloadDiscussions"
-          :disabled="state.status.loading"
-          class="refresh-btn"
-      >
-        刷新
-      </button>
-      <button
-          @click="loadNextPage"
-          :disabled="!state.pagination.hasNextPage || state.status.loading"
-          class="load-more-btn"
-      >
-        加载更多
-      </button>
-      <span class="page-info">
-        第 {{ state.pagination.currentPage }} 页 (共 {{ state.pagination.totalCount }} 个讨论)
-      </span>
-    </div>
-
-
-
-    <a-drawer
-        width="100vw"
-        @close="reloadDiscussions"
-        v-model:visible="visible"
-        class="custom-class"
-        title="交流区"
-    >
-      <Giscus
-          :repo="config.owner+'/'+config.repo"
-          :repo-id="config.repoId"
-          category="General"
-          :category-id="config.categoryId"
-          mapping="number"
-          :term="numberData"
-          strict="1"
-          reactions-enabled="0"
-          emit-metadata="0"
-          input-position="bottom"
-          theme="preferred_color_scheme"
-          lang="zh-CN"
-      />
-    </a-drawer>
-
-
-    <a-drawer
-        width="100vw"
-        @close="reloadDiscussions"
-        v-model:visible="createVisible"
-        class="custom-class"
-        title="请在下面评论一句"
-    >
-      <Giscus
-          :repo="config.owner+'/'+config.repo"
-          :repo-id="config.repoId"
-          category="General"
-          :category-id="config.categoryId"
-          mapping="specific"
-          :term="formState.title"
-          strict="1"
-          reactions-enabled="0"
-          emit-metadata="0"
-          input-position="bottom"
-          theme="preferred_color_scheme"
-          lang="zh-CN"
-      />
-    </a-drawer>
-
-    <div>
-      <a-modal  v-model:visible="addVisible" title="添加"
-      >
-        <a-form :model="formState" ref="formTable" :layout="'vertical'" >
-          <a-form-item label="话题内容 " name="title"  :rules="[{ required: true, message: 'title'}]">
-            <a-textarea v-model:value="formState.title" placeholder="请描述的问题或者话题内容"/>
-          </a-form-item>
-        </a-form>
-        <template #footer>
-          <a-button class="btn view" @click="addVisible=!addVisible">取消</a-button>
-          <a-button class="btn edit" @click="addOk">确定</a-button>
-        </template>
-      </a-modal>
-    </div>
-
-
-  </div>
-    </a-spin>
+    </t-loading>
   </div>
 </template>
 
 <style scoped>
-
-.discussions-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 20px;
+.teach {
+  min-height: 40vh;
 }
 
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.filter-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.filter-label {
-  color: #6a737d;
-  font-size: 14px;
-}
-
-.filter-controls button {
-  padding: 4px 10px;
-  font-size: 13px;
-}
-
-.filter-controls button.active {
-  background-color: #0366d6;
-  color: white;
-  border-color: #0366d6;
-}
-
-.error-message {
-  color: #dc3545;
-  background-color: #f8d7da;
-  padding: 12px 15px;
-  border-radius: 6px;
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.retry-button {
-  padding: 4px 10px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.retry-button:hover {
-  background-color: #c82333;
-}
-
-.loading-indicator {
+/* 未授权 */
+.auth-empty {
   text-align: center;
-  padding: 40px 20px;
-  color: #666;
+  padding: 70px 20px;
+  background: #fafbfe;
+  border: 1px dashed var(--hp-border);
+  border-radius: var(--hp-radius);
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  margin: 0 auto 15px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #0366d6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: #6a737d;
-  border: 1px dashed #e1e4e8;
-  border-radius: 6px;
-  margin-bottom: 20px;
-}
-
-.empty-state button {
-  margin-top: 15px;
-}
-
-.discussions-list {
+.auth-empty__icon {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 16px;
+  border-radius: 18px;
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-bottom: 30px;
+  align-items: center;
+  justify-content: center;
+  background: var(--td-brand-color-1);
+  color: var(--td-brand-color);
 }
 
-.discussion-item {
-  overflow: auto;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  padding: 15px;
-  transition: box-shadow 0.2s, border-color 0.2s;
-  cursor: pointer;
-}
-
-.discussion-item:hover {
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  border-color: #d1d5da;
-}
-
-.discussion-header {
-  margin-bottom: 10px;
-}
-
-.discussion-header h3 {
-  margin: 0 0 10px 0;
+.auth-empty__title {
+  margin: 0 0 8px;
   font-size: 18px;
 }
 
-.discussion-header a {
-  color: #0366d6;
-  text-decoration: none;
-  transition: color 0.2s;
+.auth-empty__desc {
+  margin: 0 0 20px;
+  color: var(--hp-text-2);
+  font-size: 14px;
 }
 
-.discussion-header a:hover {
-  text-decoration: underline;
-  color: #005cc5;
-}
-
-.state-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  margin-bottom: 8px;
-}
-
-.state-badge.open {
-  background-color: #dcffe4;
-  color: #137333;
-}
-
-.state-badge.closed {
-  background-color: #ffebe9;
-  color: #d73a49;
-}
-
-.labels {
+/* 列表头部 */
+.discussions__head {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.discussions__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.discussions__tip {
+  font-size: 12px;
+  color: var(--hp-text-3);
+}
+
+.discussions__filter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.discussions__alert {
+  margin-bottom: 16px;
+}
+
+.error-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.state-box {
+  text-align: center;
+  padding: 46px 20px;
+  color: var(--hp-text-2);
+}
+
+.state-box :deep(.t-button) {
+  margin-top: 14px;
+}
+
+.discussion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.discussion-item {
+  border: 1px solid var(--hp-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: box-shadow .22s ease, border-color .22s ease, transform .22s ease;
+  background: #fff;
+}
+
+.discussion-item:hover {
+  border-color: #c7d6ff;
+  box-shadow: var(--hp-shadow);
+  transform: translateY(-2px);
+}
+
+.discussion-item__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.discussion-item__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--td-brand-color);
+}
+
+.discussion-item__link {
+  flex: none;
+  font-size: 13px;
+  color: var(--hp-text-3);
+}
+
+.discussion-item__link:hover {
+  color: var(--td-brand-color);
+}
+
+.discussion-item__labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
 }
 
 .label {
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 2px 9px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
 }
 
-.discussion-meta {
+.discussion-item__meta {
   display: flex;
   align-items: center;
-  gap: 15px;
-  color: #6a737d;
-  font-size: 14px;
-  margin-bottom: 10px;
   flex-wrap: wrap;
+  gap: 16px;
+  color: var(--hp-text-3);
+  font-size: 13px;
 }
 
 .author {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 
 .avatar {
@@ -676,64 +630,26 @@ const showDis=(item)=>{
   border-radius: 50%;
 }
 
-.discussion-excerpt {
-  color: #24292e;
+.discussion-item__excerpt {
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid #f1f3f8;
+  color: var(--hp-text-2);
   font-size: 14px;
-  line-height: 1.5;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #f1f1f1;
+  line-height: 1.7;
 }
 
-.pagination-controls {
+.discussions__foot {
   display: flex;
   align-items: center;
-  gap: 15px;
-  justify-content: center;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #e1e4e8;
-}
-
-button {
-  padding: 6px 12px;
-  border: 1px solid #e1e4e8;
-  border-radius: 4px;
-  background-color: #fff;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-button:hover:not(:disabled) {
-  background-color: #f6f8fa;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hp-border);
 }
 
 .page-info {
-  color: #6a737d;
-  font-size: 14px;
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .header-section {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .discussion-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
-  }
-
-  .pagination-controls {
-    flex-wrap: wrap;
-  }
+  color: var(--hp-text-3);
+  font-size: 13px;
 }
 </style>

@@ -1,0 +1,436 @@
+/* ==========================================================================
+   HP-Lite 全局设计系统 —— 基于 TDesign Vue Next
+   ========================================================================== */
+
+/* 品牌色板（覆盖 TDesign 默认蓝色，更现代通透） */
+:root {
+  --td-brand-color-1: #f0f4ff;
+  --td-brand-color-2: #dbe4ff;
+  --td-brand-color-3: #b6c8ff;
+  --td-brand-color-4: #8aa8ff;
+  --td-brand-color-5: #6189fb;
+  --td-brand-color-6: #3f6cf6;
+  --td-brand-color-7: #2f5bef;
+  --td-brand-color-8: #2447c7;
+  --td-brand-color-9: #1b3699;
+  --td-brand-color-10: #132470;
+
+  /* 自有设计变量 */
+  --hp-bg: #f4f6fb;
+  --hp-card: #ffffff;
+  --hp-border: #e9edf5;
+  --hp-text: #1b2437;
+  --hp-text-2: #64748b;
+  --hp-text-3: #94a3b8;
+  --hp-radius: 16px;
+  --hp-radius-sm: 10px;
+  --hp-grad: linear-gradient(135deg, #4b6ff6 0%, #2f8bfb 100%);
+  --hp-shadow-sm: 0 1px 2px rgba(16, 24, 40, .04);
+  --hp-shadow: 0 2px 6px rgba(16, 24, 40, .05), 0 12px 32px rgba(16, 24, 40, .06);
+  --hp-shadow-lg: 0 8px 24px rgba(16, 24, 40, .1), 0 24px 60px rgba(16, 24, 40, .08);
+
+  /* 覆盖 TDesign 圆角 token（默认仅 3px，偏「老后台」观感）。
+     一次改动让按钮 / 输入框 / 标签 / 分页 / 弹窗统一变圆润 */
+  --td-radius-small: 6px;
+  --td-radius-default: 8px;
+  --td-radius-medium: 8px;
+  --td-radius-large: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--hp-bg);
+  color: var(--hp-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+  'Hiragino Sans GB', 'Microsoft YaHei', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 细滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d5dbe8;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b9c2d4;
+}
+
+/* ==========================================================================
+   通用页面骨架
+   ========================================================================== */
+
+.hp-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hp-card {
+  background: var(--hp-card);
+  border: 1px solid var(--hp-border);
+  border-radius: var(--hp-radius);
+  box-shadow: var(--hp-shadow-sm);
+  padding: 20px 22px;
+}
+
+.hp-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.hp-toolbar__grow {
+  flex: 1 1 auto;
+}
+
+.hp-search-input {
+  width: 220px;
+}
+
+.hp-page-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.hp-page-desc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--hp-text-3);
+}
+
+/* ==========================================================================
+   图标可见性
+   TDesign 把输入框前缀图标默认设为 placeholder 灰 rgba(0,0,0,.4)，
+   实测亮度仅 153（40% 黑），视觉上近乎"看不见"，这里统一提亮
+   ========================================================================== */
+
+.t-input__prefix-icon,
+.t-input__prefix-icon .t-icon,
+.t-input__prefix .t-icon {
+  color: var(--hp-text-2);
+}
+
+.t-input__suffix-icon,
+.t-input__suffix .t-icon {
+  color: var(--hp-text-3);
+}
+
+/* 搜索框内的图标稍微弱一点，但必须看得见 */
+.hp-search-input .t-input__prefix-icon,
+.hp-search-input .t-input__prefix-icon .t-icon {
+  color: var(--hp-text-2);
+}
+
+/* ==========================================================================
+   按钮
+   实测默认值：圆角 3px、主按钮纯色 rgb(47,91,239)、描边按钮用饱和蓝实边，
+   一排操作按钮全是蓝框，视觉噪音很大。这里统一成更现代的处理
+   ========================================================================== */
+
+.t-button {
+  font-weight: 500;
+  transition: background-color .18s ease, border-color .18s ease,
+  color .18s ease, box-shadow .18s ease;
+}
+
+/* 主操作（添加 / 查询 / 确定）：品牌渐变 + 柔和投影 */
+.t-button--variant-base.t-button--theme-primary {
+  background: var(--hp-grad) !important;
+  border-color: transparent !important;
+  box-shadow: 0 1px 2px rgba(63, 108, 246, .22), 0 4px 12px rgba(63, 108, 246, .2);
+}
+
+.t-button--variant-base.t-button--theme-primary:hover {
+  background: linear-gradient(135deg, #4061ef 0%, #2a80f5 100%) !important;
+  box-shadow: 0 2px 4px rgba(63, 108, 246, .26), 0 6px 18px rgba(63, 108, 246, .3);
+}
+
+.t-button--variant-base.t-button--theme-primary:active {
+  box-shadow: 0 1px 2px rgba(63, 108, 246, .3);
+}
+
+/* 次要操作（刷新 / 取消）：淡边框，hover 才浮出淡蓝底 */
+.t-button--variant-outline.t-button--theme-primary {
+  background: #fff !important;
+  border-color: rgba(63, 108, 246, .3) !important;
+  color: #2f5bef !important;
+}
+
+.t-button--variant-outline.t-button--theme-primary:hover {
+  background: rgba(63, 108, 246, .06) !important;
+  border-color: rgba(63, 108, 246, .55) !important;
+}
+
+/* 弹窗「取消」按钮 */
+.t-dialog__cancel.t-button--theme-default {
+  background: #fff !important;
+  border-color: var(--hp-border) !important;
+  color: var(--hp-text-2) !important;
+}
+
+.t-dialog__cancel.t-button--theme-default:hover {
+  border-color: #cbd5e1 !important;
+  color: var(--hp-text) !important;
+}
+
+/* ---- 行内小按钮（表格操作列）----
+   注意：TDesign 的 size="small" 生成的是 .t-size-s，不是 --size-small。
+   这里把描边按钮改成「轻量文字按钮」：平时只有彩色文字，hover 才浮出淡色底 */
+.t-button.t-size-s {
+  border-radius: 6px;
+}
+
+.t-button.t-size-s.t-button--variant-outline {
+  padding-left: 8px;
+  padding-right: 8px;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.t-button.t-size-s.t-button--variant-outline.t-button--theme-primary {
+  color: #2f5bef !important;
+}
+
+.t-button.t-size-s.t-button--variant-outline.t-button--theme-primary:hover {
+  background: rgba(63, 108, 246, .09) !important;
+  border-color: rgba(63, 108, 246, .22) !important;
+}
+
+.t-button.t-size-s.t-button--variant-outline.t-button--theme-danger {
+  color: #e34d59 !important;
+}
+
+.t-button.t-size-s.t-button--variant-outline.t-button--theme-danger:hover {
+  background: rgba(227, 77, 89, .09) !important;
+  border-color: rgba(227, 77, 89, .22) !important;
+}
+
+.t-button.t-size-s.t-button--variant-outline.t-button--theme-warning {
+  color: #d97706 !important;
+}
+
+.t-button.t-size-s.t-button--variant-outline.t-button--theme-warning:hover {
+  background: rgba(217, 119, 6, .09) !important;
+  border-color: rgba(217, 119, 6, .22) !important;
+}
+
+.t-button.t-size-s.t-button--variant-outline.t-button--theme-success {
+  color: #059669 !important;
+}
+
+.t-button.t-size-s.t-button--variant-outline.t-button--theme-success:hover {
+  background: rgba(5, 150, 105, .09) !important;
+  border-color: rgba(5, 150, 105, .22) !important;
+}
+
+/* 标签高度只有 20px，8px 圆角会变成胶囊形，收到 6px 更精致 */
+.t-tag {
+  border-radius: 6px;
+}
+
+/* ==========================================================================
+   表格
+   ========================================================================== */
+
+/* 外框。原写法 `.hp-table .t-table` 是后代选择器，但 hp-table 与 t-table
+   其实是同一个元素（class 直接挂在 <t-table> 上），所以那条规则从未生效 */
+.hp-table .t-table__content {
+  border: 1px solid var(--hp-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.hp-table .t-table__header th {
+  background: #f7f9fd;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--hp-border);
+}
+
+/* TDesign 默认单元格没有横向分隔线，行与行之间缺少结构 */
+.hp-table .t-table__body td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f4f9;
+}
+
+.hp-table .t-table__body tr:last-child > td {
+  border-bottom: none;
+}
+
+/* 斑马纹：TDesign 默认 rgb(243,243,243) 偏重，淡成几乎只是「一点点底色」 */
+.hp-table .t-table__body tr:nth-child(odd) > td {
+  background: #fafbfd;
+}
+
+/* hover 必须同时写 nth-child 变体，否则压不过上面那条（两者特异性相同） */
+.hp-table .t-table__body tr:hover > td,
+.hp-table .t-table__body tr:nth-child(odd):hover > td {
+  background: #f4f8ff !important;
+}
+
+.hp-table .t-table__empty {
+  padding: 44px 0;
+  color: var(--hp-text-3);
+}
+
+/* 空态行不该跟着斑马纹 / hover 变色 */
+.hp-table .t-table__body tr.t-table__empty-row:hover > td {
+  background: #fff !important;
+}
+
+.hp-table .t-table__pagination {
+  padding-top: 14px;
+}
+
+/* 单元格内标签 */
+.hp-tag-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.hp-mono {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12.5px;
+}
+
+.hp-muted {
+  color: var(--hp-text-3);
+}
+
+.hp-sub-line {
+  font-size: 12px;
+  color: var(--hp-text-3);
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   弹窗 / 抽屉
+   ========================================================================== */
+
+.hp-dialog-body {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.t-dialog__header {
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   行内操作按钮组
+   ========================================================================== */
+
+.hp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ==========================================================================
+   状态圆点（设备在线状态）
+   ========================================================================== */
+
+.hp-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.hp-status__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.hp-status--online {
+  color: #10b981;
+}
+
+.hp-status--online .hp-status__dot {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, .16);
+}
+
+.hp-status--offline {
+  color: var(--hp-text-3);
+}
+
+.hp-status--offline .hp-status__dot {
+  background: #cbd5e1;
+}
+
+/* ==========================================================================
+   指标条（内存 / CPU）
+   ========================================================================== */
+
+.hp-metric {
+  background: #f8fafc;
+  border: 1px solid #eef2f8;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.hp-metric + .hp-metric {
+  margin-top: 12px;
+}
+
+.hp-metric__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.hp-metric__label {
+  color: var(--hp-text-2);
+}
+
+.hp-metric__value {
+  font-weight: 600;
+}
+
+.hp-metric__foot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--hp-text-3);
+  margin-top: 6px;
+}
