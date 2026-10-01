@@ -1,5 +1,5 @@
 import axios from 'axios'
-import {notification} from 'ant-design-vue';
+import {NotifyPlugin} from 'tdesign-vue-next';
 import userInfo from './userInfo.js'
 
 
@@ -47,9 +47,9 @@ service.interceptors.response.use(
         const res = response.data
         // if the custom code is not 20000, it is judged as an error.
         if (res.code !== 200) {
-            notification.open({
-                message: "请求异常",
-                description: res.msg || 'Error'
+            NotifyPlugin.error({
+                title: "请求异常",
+                content: res.msg || 'Error'
             })
             // 50008: Illegal token; 50012: Other clients logged in; 50014: Token expired;
             if (res.code === -2 || res.code === -3 || res.code === -4 || res.code === -5) {
@@ -57,9 +57,9 @@ service.interceptors.response.use(
                 userInfo.removeUserInfo()
 
                 // to re-login
-                notification.open({
-                    message: "重新登录",
-                    description: "登录过期，重新登录试试吧",
+                NotifyPlugin.warning({
+                    title: "重新登录",
+                    content: "登录过期，重新登录试试吧",
                 })
                 location.href = "/"
             }
@@ -70,9 +70,9 @@ service.interceptors.response.use(
     },
     error => {
         console.log('err' + error) // for debug
-        notification.open({
-            message: "请求失败",
-            description: error.message,
+        NotifyPlugin.error({
+            title: "请求失败",
+            content: error.message,
         })
 
         return Promise.reject(error)
