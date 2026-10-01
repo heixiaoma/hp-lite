@@ -3,6 +3,17 @@
     <!-- 顶部 -->
     <header class="console__header">
       <div class="console__header-inner">
+        <!-- 手机上侧栏改成抽屉，这里放打开按钮 -->
+        <button
+            v-if="isMobile"
+            type="button"
+            class="console__menu-btn"
+            aria-label="打开菜单"
+            @click="drawerOpen = true"
+        >
+          <menu-icon/>
+        </button>
+
         <a class="brand" href="/">
           <img src="/logo.png" alt="HP-Lite">
           <span class="brand__text">HP-Lite<span class="brand__sub">内网穿透</span></span>
@@ -33,8 +44,19 @@
     </header>
 
     <div class="console__body">
+      <!-- 遮罩：只在手机抽屉展开时出现，点它关闭 -->
+      <div
+          v-if="isMobile"
+          class="console__mask"
+          :class="{ 'is-open': drawerOpen }"
+          @click="drawerOpen = false"
+      />
+
       <!-- 侧边栏 -->
-      <aside class="console__aside" :class="{ 'is-collapsed': isCollapsed }">
+      <aside
+          class="console__aside"
+          :class="{ 'is-collapsed': isCollapsed, 'is-open': drawerOpen }"
+      >
         <t-menu
             :value="selectedKey"
             theme="light"
@@ -44,6 +66,12 @@
             @change="onMenuChange"
             @expand="onMenuExpand"
         >
+          <!-- 实时流量大屏：一级菜单首项，只有管理员能看到（与「系统用户」同一套判断） -->
+          <t-menu-item v-if="userInfo && userInfo.role === 'ADMIN'" value="/client/dashboard">
+            <template #icon><dashboard-icon/></template>
+            流量天眼
+          </t-menu-item>
+
           <t-menu-item v-if="userInfo && userInfo.role === 'ADMIN'" value="/client/user">
             <template #icon><user-icon/></template>
             系统用户
@@ -102,7 +130,8 @@
           </t-menu-item>
         </t-menu>
 
-        <div class="console__aside-toggle" @click="toggleCollapse">
+        <!-- 收起按钮是桌面端的概念：手机上侧栏整个是抽屉，收起没有意义 -->
+        <div v-if="!isMobile" class="console__aside-toggle" @click="toggleCollapse">
           <component :is="isCollapsed ? ArrowRightIcon : ArrowLeftIcon"/>
           <span v-if="!isCollapsed">收起菜单</span>
         </div>
@@ -130,11 +159,13 @@ import {
   ChartBubbleIcon,
   ChartLineIcon,
   ChatIcon,
+  DashboardIcon,
   DesktopIcon,
   ExtensionIcon,
   FilterIcon,
   LinkIcon,
   LockOnIcon,
+  MenuIcon,
   PoweroffIcon,
   SecuredIcon,
   SettingIcon,
@@ -145,6 +176,7 @@ const userInfo = ref({});
 const selectedKey = ref('');
 const isCollapsed = ref(false);
 const isMobile = ref(false);
+const drawerOpen = ref(false);
 const expanded = ref(['safe', 'monitor', 'ext']);
 
 // 子菜单所属分组，用于路由变化时自动展开
@@ -152,6 +184,7 @@ const groupOf = {
   '/client/safe': 'safe',
   '/client/waf': 'safe',
   '/client/monitor': 'monitor',
+  '/client/dashboard': 'monitor',
   '/client/forward': 'ext',
   '/client/reverse': 'ext',
 };
@@ -182,9 +215,12 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
 });
 
+/* 手机上不再「收起成 64px 图标栏」——那 64px 会一直占着横向空间。
+   改成抽屉：默认完全移出屏幕，点汉堡按钮才滑出来 */
 const handleResize = () => {
-  isMobile.value = window.innerWidth < 768;
-  if (isMobile.value) isCollapsed.value = true;
+  const mobile = window.innerWidth < 768;
+  isMobile.value = mobile;
+  if (!mobile) drawerOpen.value = false;
 };
 
 const syncExpanded = (path) => {
@@ -211,6 +247,8 @@ const onUserAction = (item) => {
 
 const onMenuChange = (value) => {
   selectedKey.value = value;
+  // 手机上选完菜单要把抽屉收掉，否则会一直盖着内容
+  drawerOpen.value = false;
   router.push(value);
 };
 
@@ -410,6 +448,40 @@ watch(
   min-height: 100%;
 }
 
+.console__menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--hp-border);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--hp-text);
+  cursor: pointer;
+}
+
+.console__menu-btn:active {
+  background: #f3f6fd;
+}
+
+.console__mask {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(16, 24, 40, .42);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .25s ease, visibility .25s ease;
+}
+
+.console__mask.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
 @media (max-width: 768px) {
   .console__main {
     padding: 10px;
@@ -421,6 +493,26 @@ watch(
 
   .brand__sub {
     display: none;
+  }
+
+  /* 抽屉：默认 translateX(-100%) 移出屏幕，is-open 时滑入。
+     is-collapsed 也要覆盖，否则手机上的宽度会被桌面端的 64px 规则抢走 */
+  .console__aside,
+  .console__aside.is-collapsed {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    bottom: 0;
+    z-index: 80;
+    width: 232px;
+    height: auto;
+    transform: translateX(-100%);
+    transition: transform .25s cubic-bezier(.4, 0, .2, 1);
+    box-shadow: 0 10px 30px rgba(16, 24, 40, .14);
+  }
+
+  .console__aside.is-open {
+    transform: none;
   }
 }
 </style>

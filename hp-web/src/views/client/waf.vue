@@ -15,7 +15,7 @@
         class="hp-table"
         row-key="id"
         :data="listData || []"
-        :columns="columns"
+        :columns="viewColumns"
         :loading="dataLoading"
         :pagination="pagination"
         empty="暂无数据，添加一个试试看看"
@@ -183,6 +183,7 @@ import {onMounted, reactive, ref} from "vue";
 import {MessagePlugin} from "tdesign-vue-next";
 import {AddIcon, RefreshIcon, RemoveIcon} from 'tdesign-icons-vue-next';
 import {getConfigByKeyword, refConfig} from "../../api/client/config.js";
+import {useResponsiveColumns} from '../../utils/responsive';
 
 const listData = ref([]);
 const formTable = ref();
@@ -281,18 +282,20 @@ const edit = (itemOld) => {
   handleSearch(item.configId)
 }
 
+/* 窄屏只留「认得出是哪条规则 + 能操作」，速率/并发/归属这些次要列让位 */
 const columns = [
-  {colKey: 'id', title: '编号', width: 90},
-  {colKey: 'configId', title: '配置ID', width: 90},
+  {colKey: 'id', title: '编号', width: 90, mobile: false},
+  {colKey: 'configId', title: '配置ID', width: 90, mobile: false},
   {colKey: 'configDesc', title: '配置描述'},
   {colKey: 'allowedIps', title: '允许IP', width: 200},
   {colKey: 'blockedIps', title: '禁止IP', width: 200},
-  {colKey: 'inLimit', title: '上传速率(byte)', width: 140},
-  {colKey: 'outLimit', title: '下载速率(byte)', width: 140},
-  {colKey: 'rateLimit', title: '并发连接限制', width: 130},
-  {colKey: 'user', title: '归属', width: 200},
+  {colKey: 'inLimit', title: '上传速率(byte)', width: 140, mobile: false},
+  {colKey: 'outLimit', title: '下载速率(byte)', width: 140, mobile: false},
+  {colKey: 'rateLimit', title: '并发连接限制', width: 130, mobile: false},
+  {colKey: 'user', title: '归属', width: 200, mobile: false},
   {colKey: 'action', title: '操作', width: 230},
 ];
+const viewColumns = useResponsiveColumns(columns);
 
 const onPageChange = (pageInfo) => {
   pagination.current = pageInfo.current
@@ -390,6 +393,13 @@ onMounted(() => {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0 16px;
   margin-top: 24px;
+}
+
+/* 弹窗在手机上只有 ~366px，三列会把每个输入框压到 110px，数字根本输不进去 */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* label 在 top 模式下的 min-height 是 32px，比文字本身（22px 行高）高出一截，

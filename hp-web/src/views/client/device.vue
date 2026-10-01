@@ -194,7 +194,7 @@ import qr from './qr.vue';
 import userInfo from "../../data/userInfo";
 import {MessagePlugin} from 'tdesign-vue-next';
 import {AddIcon, CopyIcon, RefreshIcon} from 'tdesign-icons-vue-next';
-import {copyText as copyToClipboard} from '../../utils/clipboard';
+import {copyText} from '../../utils/clipboard';
 
 const formTable = ref()
 const deviceId = ref('')
@@ -234,11 +234,9 @@ const memRate = (row) => {
   return Number(((row.memoryInfo.useMem / row.memoryInfo.total) * 100).toFixed(1))
 }
 
-// 设备 ID / 连接码是 32 位长串，界面上被省略号截断，只能靠复制拿完整值
-const copyText = async (text) => {
-  const ok = await copyToClipboard(text)
-  ok ? MessagePlugin.success('已复制到剪贴板') : MessagePlugin.error('复制失败，请手动选中复制')
-}
+/* 设备 ID / 连接码是 32 位长串，界面上被省略号截断，只能靠复制拿完整值。
+   提示和「复制失败时弹手动复制框」都封装在 utils/clipboard 里了 */
+
 
 const onPageChange = (pageInfo) => {
   pagination.current = pageInfo.current

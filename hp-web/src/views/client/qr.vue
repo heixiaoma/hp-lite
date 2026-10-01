@@ -79,7 +79,6 @@
 <script setup>
 import {onMounted, ref} from 'vue';
 import QRCode from 'qrcode';
-import {MessagePlugin} from 'tdesign-vue-next';
 import {CopyIcon} from 'tdesign-icons-vue-next';
 import {copyText} from '../../utils/clipboard';
 
@@ -98,10 +97,7 @@ const props = defineProps({
 const canvasRef = ref(null);
 const tab = ref('key');
 
-const copy = async () => {
-  const ok = await copyText(props.text)
-  ok ? MessagePlugin.success('连接码已复制') : MessagePlugin.error('复制失败，请手动选中复制')
-}
+const copy = () => copyText(props.text, '连接码')
 
 onMounted(() => {
   if (!canvasRef.value || !props.text) return;

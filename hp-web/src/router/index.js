@@ -16,6 +16,7 @@ const client_waf = () => import('../views/client/waf.vue');
 const client_safe = () => import('../views/client/safe.vue');
 const client_reverse = () => import('../views/client/reverse.vue');
 const client_forward = () => import('../views/client/forward.vue');
+const client_dashboard = () => import('../views/client/dashboard.vue');
 
 const routes = [
     {path: '/', component: home},
@@ -37,6 +38,7 @@ const routes = [
             {path: 'domain', component: client_domain, name: "domain"},
             {path: 'reverse', component: client_reverse, name: "reverse"},
             {path: 'forward', component: client_forward, name: "forward"},
+            {path: 'dashboard', component: client_dashboard, name: "dashboard"},
         ],
     },
 ]

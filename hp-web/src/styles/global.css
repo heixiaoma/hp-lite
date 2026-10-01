@@ -268,7 +268,11 @@ a {
 .hp-table .t-table__content {
   border: 1px solid var(--hp-border);
   border-radius: 12px;
-  overflow: hidden;
+  /* 这里必须是 auto 而不是 hidden：各列固定宽加起来超过容器时（窄屏必然发生），
+     hidden 会把右边的内容直接裁掉，而且横向滚不过去 —— 操作列整列消失，等于没法操作 */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .hp-table .t-table__header th {
@@ -433,4 +437,65 @@ a {
   font-size: 12px;
   color: var(--hp-text-3);
   margin-top: 6px;
+}
+
+/* ==========================================================================
+   窄屏适配
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* 单元格留白收窄，一屏能多看到一点内容 */
+  .hp-table .t-table__header th,
+  .hp-table .t-table__body td {
+    padding: 10px 12px;
+  }
+
+  /* 域名、内网地址这类长串不换行会把列撑宽，窄屏允许任意位置断行 */
+  .hp-table .t-table__body td {
+    overflow-wrap: anywhere;
+  }
+
+  /* 分页在窄屏换行居中，否则会被挤出容器 */
+  .hp-table .t-table__pagination .t-pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* 搜索框固定 220px，窄屏下和按钮挤在一行会溢出 */
+  .hp-search-input {
+    width: 100%;
+  }
+
+  .hp-toolbar {
+    gap: 8px;
+  }
+
+  /* 弹窗宽度是写死的 560px，手机上必须让 max-width 兜住，
+     否则表单右半边在屏幕外，确认按钮都点不到 */
+  .t-dialog {
+    max-width: calc(100vw - 24px);
+  }
+
+  /* 弹窗里 TDesign 的 label 默认横着占 100px，手机上吃掉三分之一宽度，
+     实测输入框只剩 118px。让 label 换行到控件上方，输入框立刻接近满宽 */
+  .t-dialog .t-form__item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .t-dialog .t-form__label {
+    width: auto !important;
+    max-width: none;
+    text-align: left;
+    padding-right: 0;
+    margin-bottom: 4px;
+  }
+
+  .t-dialog .t-form__controls {
+    width: 100%;
+  }
+
+  .hp-card {
+    padding: 16px 14px;
+  }
 }

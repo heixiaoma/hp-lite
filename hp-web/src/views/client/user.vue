@@ -15,7 +15,7 @@
         class="hp-table"
         row-key="id"
         :data="listData"
-        :columns="columns"
+        :columns="viewColumns"
         :loading="dataLoading"
         :pagination="pagination"
         empty="暂无数据，添加一个试试看看"
@@ -66,6 +66,7 @@ import {getUser, removeUser, saveUser} from "../../api/client/client_user";
 import {onMounted, reactive, ref} from "vue";
 import {MessagePlugin} from "tdesign-vue-next";
 import {AddIcon, RefreshIcon} from 'tdesign-icons-vue-next';
+import {useResponsiveColumns} from '../../utils/responsive';
 
 const formTable = ref();
 const listData = ref([]);
@@ -125,14 +126,16 @@ const edit = (item) => {
   addVisible.value = true
 }
 
+/* 窄屏留用户名 + 备注 + 操作：编号/密码/创建时间属于次要信息 */
 const columns = [
-  {colKey: 'id', title: '编号', width: 90},
+  {colKey: 'id', title: '编号', width: 90, mobile: false},
   {colKey: 'username', title: '用户名'},
-  {colKey: 'password', title: '密码'},
+  {colKey: 'password', title: '密码', mobile: false},
   {colKey: 'desc', title: '备注'},
-  {colKey: 'createTime', title: '创建时间', width: 200},
+  {colKey: 'createTime', title: '创建时间', width: 200, mobile: false},
   {colKey: 'action', title: '操作', width: 150},
 ];
+const viewColumns = useResponsiveColumns(columns);
 
 const onPageChange = (pageInfo) => {
   pagination.current = pageInfo.current

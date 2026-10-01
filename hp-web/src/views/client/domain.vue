@@ -26,7 +26,7 @@
         class="hp-table"
         row-key="id"
         :data="listData"
-        :columns="columns"
+        :columns="viewColumns"
         :loading="dataLoading"
         :pagination="pagination"
         empty="暂无数据，添加一个试试看看"
@@ -124,6 +124,7 @@ import {addDomain, genSSL, getDomain, removeDomain} from "../../api/client/domai
 import {onMounted, reactive, ref} from "vue";
 import {MessagePlugin} from "tdesign-vue-next";
 import {AddIcon, RefreshIcon, SearchIcon} from 'tdesign-icons-vue-next';
+import {useResponsiveColumns} from '../../utils/responsive';
 
 const formTable = ref();
 const listData = ref([]);
@@ -205,17 +206,19 @@ const showText = (title, content) => {
   textVisible.value = true
 }
 
+/* 窄屏留域名/状态/操作：证书两列和归属都是次要信息 */
 const columns = [
-  {colKey: 'id', title: '编号', width: 90},
+  {colKey: 'id', title: '编号', width: 90, mobile: false},
   {colKey: 'domain', title: '域名'},
-  {colKey: 'desc', title: '备注'},
-  {colKey: 'certificateKey', title: '证书密钥', width: 100, align: 'center'},
-  {colKey: 'certificateContent', title: '证书内容', width: 100, align: 'center'},
+  {colKey: 'desc', title: '备注', mobile: false},
+  {colKey: 'certificateKey', title: '证书密钥', width: 100, align: 'center', mobile: false},
+  {colKey: 'certificateContent', title: '证书内容', width: 100, align: 'center', mobile: false},
   {colKey: 'status', title: '状态', width: 120},
-  {colKey: 'tips', title: '提示'},
-  {colKey: 'user', title: '归属'},
+  {colKey: 'tips', title: '提示', mobile: false},
+  {colKey: 'user', title: '归属', mobile: false},
   {colKey: 'action', title: '操作', width: 250},
 ];
+const viewColumns = useResponsiveColumns(columns);
 
 const onPageChange = (pageInfo) => {
   pagination.current = pageInfo.current

@@ -46,10 +46,11 @@ func StartHttpsServer() {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		Handler(w, r)
 	})
-	// 创建 HTTPS 服务器
+	// 证书通过 GetCertificate 动态选择，不在这里做 SNI 统计；
+	// 统计统一交给 StatsInterceptor：有大屏 WebSocket 在线时才统计并实时推送
 	httpsProxyServer = &http.Server{
 		Addr:      ":443",
-		Handler:   mux,
+		Handler:   StatsInterceptor(mux),
 		TLSConfig: tlsConfig,
 	}
 	// 启动 HTTPS 服务

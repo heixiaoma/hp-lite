@@ -29,7 +29,9 @@ func StartHttpServer() {
 		Handler(w, r)
 	})
 	log.Info("HTTP代理服务启动")
-	httpProxyServer = &http.Server{Addr: ":80", Handler: mux}
+	// StatsInterceptor：存在大屏 WebSocket 连接时统计请求全维度数据并实时推送，
+	// 无人观看时零开销直通
+	httpProxyServer = &http.Server{Addr: ":80", Handler: StatsInterceptor(mux)}
 	err := httpProxyServer.ListenAndServe()
 	if err != nil {
 		// 不要 os.Exit(1)：一个端口冲突会顺手把 DB、QUIC、TCP、Web 后台全带走。

@@ -15,7 +15,7 @@
         class="hp-table"
         row-key="id"
         :data="listData || []"
-        :columns="columns"
+        :columns="viewColumns"
         :loading="dataLoading"
         :pagination="pagination"
         empty="暂无数据，添加一个试试看看"
@@ -95,6 +95,7 @@ import {getSafe, removeSafe, saveSafe} from "../../api/client/safe";
 import {nextTick, onMounted, reactive, ref, watch} from "vue";
 import {MessagePlugin} from "tdesign-vue-next";
 import {AddIcon, RefreshIcon} from 'tdesign-icons-vue-next';
+import {useResponsiveColumns} from '../../utils/responsive';
 
 import MonacoEditor from 'monaco-editor-vue3'
 import * as monaco from 'monaco-editor'
@@ -320,13 +321,15 @@ const edit = (itemOld) => {
   addVisible.value = true
 }
 
+/* 窄屏留规则名 + 内容 + 操作：编号和归属让位 */
 const columns = [
-  {colKey: 'id', title: '编号', width: 90},
+  {colKey: 'id', title: '编号', width: 90, mobile: false},
   {colKey: 'ruleName', title: '规则名字', width: 200},
   {colKey: 'rule', title: '规则内容', ellipsis: true},
-  {colKey: 'user', title: '归属', width: 220},
+  {colKey: 'user', title: '归属', width: 220, mobile: false},
   {colKey: 'action', title: '操作', width: 150},
 ];
+const viewColumns = useResponsiveColumns(columns);
 
 const onPageChange = (pageInfo) => {
   pagination.current = pageInfo.current

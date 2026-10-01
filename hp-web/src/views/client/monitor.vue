@@ -11,7 +11,7 @@
         class="hp-table"
         row-key="id"
         :data="monitorData"
-        :columns="columns"
+        :columns="viewColumns"
         :loading="dataLoading"
         empty="暂无数据"
         table-layout="auto"
@@ -53,6 +53,7 @@ import {monitorDetail, monitorList} from "../../api/client/monitor.js";
 import {MessagePlugin} from "tdesign-vue-next";
 import MonitorChart from "./monitor_chart.vue";
 import {RefreshIcon} from 'tdesign-icons-vue-next';
+import {useResponsiveColumns} from '../../utils/responsive';
 
 const monitorData = ref([]);
 const dataLoading = ref(false);
@@ -64,14 +65,16 @@ const loadData = async () => {
   dataLoading.value = false
 }
 
+/* 窄屏留备注/域名/操作：内外网地址和隧道类型让位 */
 const columns = [
   {colKey: 'remarks', title: '备注'},
   {colKey: 'domain', title: '域名'},
-  {colKey: 'localAddress', title: '内网'},
-  {colKey: 'server', title: '外网'},
-  {colKey: 'tunType', title: '隧道类型', width: 140},
+  {colKey: 'localAddress', title: '内网', mobile: false},
+  {colKey: 'server', title: '外网', mobile: false},
+  {colKey: 'tunType', title: '隧道类型', width: 140, mobile: false},
   {colKey: 'action', title: '操作', width: 120},
 ];
+const viewColumns = useResponsiveColumns(columns);
 
 const open = ref(false)
 const currentData = reactive({

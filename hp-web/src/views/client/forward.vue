@@ -15,7 +15,7 @@
         class="hp-table"
         row-key="id"
         :data="listData || []"
-        :columns="columns"
+        :columns="viewColumns"
         :loading="dataLoading"
         :pagination="pagination"
         empty="暂无数据，添加一个试试看看"
@@ -99,6 +99,7 @@ import {getForward, removeForward, saveForward} from "../../api/client/forward.j
 import {onMounted, reactive, ref} from "vue";
 import {MessagePlugin} from "tdesign-vue-next";
 import {AddIcon, RefreshIcon} from 'tdesign-icons-vue-next';
+import {useResponsiveColumns} from '../../utils/responsive';
 
 const formTable = ref();
 const listData = ref([]);
@@ -173,16 +174,18 @@ const edit = (item) => {
   addVisible.value = true
 }
 
+/* 窄屏留端口/类型/启用/操作：认证信息是长串、归属是次要信息 */
 const columns = [
-  {colKey: 'id', title: '编号', width: 90},
+  {colKey: 'id', title: '编号', width: 90, mobile: false},
   {colKey: 'port', title: '端口', width: 110},
-  {colKey: 'auth', title: '认证信息', width: 200},
+  {colKey: 'auth', title: '认证信息', width: 200, mobile: false},
   {colKey: 'type', title: '类型', width: 120},
   {colKey: 'status', title: '启用', width: 100},
-  {colKey: 'tips', title: '服务状态'},
-  {colKey: 'user', title: '归属', width: 200},
+  {colKey: 'tips', title: '服务状态', mobile: false},
+  {colKey: 'user', title: '归属', width: 200, mobile: false},
   {colKey: 'action', title: '操作', width: 150},
 ];
+const viewColumns = useResponsiveColumns(columns);
 
 const onPageChange = (pageInfo) => {
   pagination.current = pageInfo.current

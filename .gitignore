@@ -9,3 +9,4 @@ node_modules
 /dist
 /*.db
 /queue
+/hp-server-golang/web/static/assets/

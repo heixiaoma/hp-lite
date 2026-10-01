@@ -15,7 +15,7 @@
         class="hp-table"
         row-key="id"
         :data="listData || []"
-        :columns="columns"
+        :columns="viewColumns"
         :loading="dataLoading"
         :pagination="pagination"
         empty="暂无数据，添加一个试试看看"
@@ -81,6 +81,7 @@ import {MessagePlugin} from "tdesign-vue-next";
 import {queryDomain} from "../../api/client/domain.js";
 import {querySafe} from "../../api/client/safe.js";
 import {AddIcon, RefreshIcon} from 'tdesign-icons-vue-next';
+import {useResponsiveColumns} from '../../utils/responsive';
 
 const formTable = ref();
 const listData = ref([]);
@@ -158,14 +159,16 @@ const edit = (item) => {
   addVisible.value = true
 }
 
+/* 窄屏留域名/地址/操作：备注和归属让位 */
 const columns = [
-  {colKey: 'id', title: '编号', width: 90},
+  {colKey: 'id', title: '编号', width: 90, mobile: false},
   {colKey: 'domain', title: '域名'},
   {colKey: 'address', title: '地址'},
-  {colKey: 'desc', title: '备注'},
-  {colKey: 'user', title: '归属', width: 200},
+  {colKey: 'desc', title: '备注', mobile: false},
+  {colKey: 'user', title: '归属', width: 200, mobile: false},
   {colKey: 'action', title: '操作', width: 150},
 ];
+const viewColumns = useResponsiveColumns(columns);
 
 const onPageChange = (pageInfo) => {
   pagination.current = pageInfo.current

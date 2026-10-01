@@ -100,6 +100,13 @@ func StartWebServer(port int) {
 	giscusController := controller.GiscusController{}
 	mux.HandleFunc("/client/giscus/token", middleware.Auth(giscusController.Token))
 
+	// 实时流量大屏：WebSocket 推送入口 ws://ip:port/client/ws/stats?token=xxx
+	// 浏览器 WebSocket 不能自定义请求头，所以 token 走 query 参数，鉴权在 controller 内部完成
+	wsStatsController := controller.WsStatsController{}
+	mux.HandleFunc("/client/ws/stats", wsStatsController.Stats)
+	// 不想用 ws 的前端可以直接轮询汇总数据
+	mux.HandleFunc("/client/ws/stats/summary", middleware.Auth(wsStatsController.Summary))
+
 	muxWithRecovery := recoveryMiddleware(mux)
 	webServer = &http.Server{Addr: ":" + strconv.Itoa(port), Handler: muxWithRecovery}
 	log.Error(webServer.ListenAndServe())

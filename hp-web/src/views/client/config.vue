@@ -26,7 +26,7 @@
         class="hp-table"
         row-key="id"
         :data="currentConfigList || []"
-        :columns="columns"
+        :columns="viewColumns"
         :loading="configLoading"
         :pagination="pagination"
         empty="暂无配置，添加一个试试看看"
@@ -197,6 +197,7 @@ import userInfo from "../../data/userInfo";
 import {queryDomain} from "../../api/client/domain.js";
 import {querySafe} from "../../api/client/safe.js";
 import {AddIcon, RefreshIcon, SearchIcon} from 'tdesign-icons-vue-next';
+import {useResponsiveColumns} from '../../utils/responsive';
 
 const route = useRoute()
 
@@ -313,16 +314,18 @@ const tunTypeOptions = [
   {label: 'QUIC多路复用模式', value: 'QUIC'},
 ];
 
+/* 窄屏留备注/内外网地址/操作：配置ID、隧道模式、部署设备让位 */
 const columns = [
-  {colKey: 'id', title: '配置ID', width: 90},
+  {colKey: 'id', title: '配置ID', width: 90, mobile: false},
   {colKey: 'remarks', title: '备注'},
-  {colKey: 'tunType', title: '隧道模式', width: 140},
+  {colKey: 'tunType', title: '隧道模式', width: 140, mobile: false},
   {colKey: 'localAddress', title: '内网服务'},
   {colKey: 'server', title: '外网服务'},
-  {colKey: 'status', title: '配置有效', width: 90, align: 'center'},
-  {colKey: 'deviceKey', title: '部署设备'},
+  {colKey: 'status', title: '配置有效', width: 90, align: 'center', mobile: false},
+  {colKey: 'deviceKey', title: '部署设备', mobile: false},
   {colKey: 'action', title: '操作', width: 250},
 ];
+const viewColumns = useResponsiveColumns(columns);
 
 const showInput = reactive({
   proxyVersion: false,

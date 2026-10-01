@@ -66,7 +66,7 @@
     <section class="section" id="features">
       <div class="container">
         <!-- 站点数据统计：无数据时组件整块不渲染（含描述） -->
-        <LaStats class="stats-band" title="全网访问数据汇总"/>
+        <LaStats class="stats-band" title="全网使用数据汇总"/>
 
         <div class="section__head">
           <span class="section__eyebrow">CORE FEATURES</span>

@@ -3,10 +3,18 @@ import {NotifyPlugin} from 'tdesign-vue-next';
 import userInfo from './userInfo.js'
 
 
+/* 后端地址。
+   指定了就用指定的（环境变量 VITE_API_BASE_URL，方便本地调试时连线上后端）；
+   没指定就是空串，此时按浏览器地址栏推导 —— 前后端同机部署不用改代码也不用重新打包。
+   导出是为了让 WebSocket 能按同一套地址推导 ws:// / wss:// */
+const CONFIGURED_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '')
+
+// 只取协议 + 域名 + 端口：接口都是 /client/... 这种绝对路径，带上 path 会拼错
+export const baseURL = CONFIGURED_BASE_URL || window.location.origin
+
 // create an axios instance
 const service = axios.create({
-    // baseURL: "http://127.0.0.1:9090", // url = base url + request url
-    // baseURL: "", // url = base url + request url
+    baseURL, // url = base url + request url
     // withCredentials: true, // send cookies when cross-domain requests
     timeout: 500000 // request timeout
 })
