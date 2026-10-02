@@ -152,7 +152,7 @@
         width="560px"
         @confirm="addDeviceOk"
     >
-      <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical">
+      <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical" label-align="top">
         <t-form-item label="设备编号" name="deviceId">
           <t-input v-model="formState.deviceId" clearable placeholder="设备ID：32位">
             <template #suffix>
@@ -175,7 +175,7 @@
         width="560px"
         @confirm="updateDeviceOk"
     >
-      <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical">
+      <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical" label-align="top">
         <t-form-item label="设备编号" name="deviceId">
           <t-input v-model="formState.deviceId" disabled placeholder="设备ID：32位"/>
         </t-form-item>

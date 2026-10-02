@@ -46,7 +46,7 @@
         width="560px"
         @confirm="addOk"
     >
-      <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical">
+      <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical" label-align="top">
         <t-form-item label="用户名" name="username">
           <t-input v-model="formState.username" clearable placeholder="用户名"/>
         </t-form-item>

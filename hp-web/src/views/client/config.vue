@@ -91,7 +91,7 @@
         @confirm="addConfigOk"
     >
       <div class="hp-dialog-body">
-        <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical">
+        <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical" label-align="top">
           <t-form-item label="穿透设备" name="deviceKey">
             <t-select v-model="formState.deviceKey" :options="currentUserKeyList" placeholder="请选择穿透设备"/>
           </t-form-item>

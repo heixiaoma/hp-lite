@@ -87,7 +87,7 @@
         @confirm="addOk"
     >
       <div class="hp-dialog-body">
-        <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical">
+        <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical" label-align="top">
           <t-form-item label="域名" name="domain">
             <t-input v-model="formState.domain" :disabled="!isAdd" clearable placeholder="域名"/>
           </t-form-item>

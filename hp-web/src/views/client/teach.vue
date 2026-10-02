@@ -449,7 +449,7 @@ const showDis = (item) => {
             width="560px"
             @confirm="addOk"
         >
-          <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical">
+          <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical" label-align="top">
             <t-form-item label="话题内容" name="title">
               <t-textarea
                   v-model="formState.title"

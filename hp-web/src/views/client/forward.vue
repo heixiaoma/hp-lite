@@ -70,7 +70,7 @@
         width="560px"
         @confirm="addOk"
     >
-      <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical">
+      <t-form :data="formState" ref="formTable" :rules="formRules" layout="vertical" label-align="top">
         <t-form-item label="端口" name="port">
           <t-input v-model="formState.port" clearable placeholder="端口"/>
         </t-form-item>
