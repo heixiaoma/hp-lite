@@ -402,13 +402,6 @@ onMounted(() => {
   }
 }
 
-/* label 在 top 模式下的 min-height 是 32px，比文字本身（22px 行高）高出一截，
-   纯白占垂直空间。压到和文字一致，整个弹窗能矮 40px 左右 */
-.hp-dialog-body :deep(.t-form__label--top) {
-  min-height: 0;
-  line-height: 22px;
-}
-
 /* 限制值的单位说明。原来塞在 placeholder 里，列一窄就被截断了。
    -8px 是抵消网格里 form-item 的 24px 底边距，收成 16px 贴着自己的字段组；
    底部留 24px，否则会和下面的「IP 规则」贴死 */

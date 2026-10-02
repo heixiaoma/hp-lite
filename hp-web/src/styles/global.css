@@ -351,6 +351,13 @@ a {
   padding-right: 4px;
 }
 
+/* label-align="top"（标签在上）模式下 TDesign 给 label 留了 32px 的 min-height，
+   标签只有一行文字时白占一截，表单越长越明显 */
+.t-form__label.t-form__label--top {
+  min-height: 0;
+  line-height: 22px;
+}
+
 .t-dialog__header {
   font-weight: 600;
 }
@@ -493,6 +500,19 @@ a {
 
   .t-dialog .t-form__controls {
     width: 100%;
+  }
+
+  /* 标签换到控件上方后表单变高：390×780 下「创建代理服务器」弹窗高 698px，
+     确定按钮被顶到 821px，屏幕外根本点不到。给弹窗正文加滚动把它收住。
+     弹窗本身是 top:20vh 定位的，正文留 52vh 才能连头带尾塞进一屏 */
+  .t-dialog__body {
+    max-height: 52vh;
+    overflow-y: auto;
+  }
+
+  /* 内层已经有 .t-dialog__body 在滚了，再留一层 max-height 会出现两条滚动条 */
+  .hp-dialog-body {
+    max-height: none;
   }
 
   .hp-card {
