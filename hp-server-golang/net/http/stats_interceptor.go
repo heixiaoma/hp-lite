@@ -23,16 +23,11 @@ import (
 
 // StatsInterceptor HTTP 请求统计拦截器。
 // 设计要点：
-//  1. 只有存在大屏 WebSocket 连接时才开启统计，无人观看时零额外开销直接透传；
-//  2. 统计完成后由 controller 广播给大屏，推送链路全程非阻塞，不会拖慢代理主流程；
+//  1. 无论有没有大屏 WebSocket 在线都统计，大屏连上时能立刻看到断连期间的累计数据；
+//  2. 统计完成后交给 controller：累计总是执行，推送只在大屏在线时发生，且全程非阻塞；
 //  3. 包装 writer 时保留 Flusher / Hijacker 能力，避免影响 SSE、WebSocket 隧道等场景。
 func StatsInterceptor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !controller.HasWsClients() {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		start := time.Now()
 		rec := &controller.HttpStatRecord{
 			Id:       nextStatId(),
@@ -114,7 +109,7 @@ func StatsInterceptor(next http.Handler) http.Handler {
 		rec.StatusClass = statusClass(rw.status)
 		rec.ContentType = rw.Header().Get("Content-Type")
 
-		controller.BroadcastHttpStat(rec)
+		controller.RecordHttpStat(rec)
 	})
 }
 

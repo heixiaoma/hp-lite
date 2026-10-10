@@ -29,8 +29,16 @@ const (
 	wsMaxMessageSize = 4096
 	// wsTopN 大屏 Top 榜单条数
 	wsTopN = 10
-	// wsMaxTrackKeys IP / 域名等维度最多跟踪多少个 key，防止高并发下 map 无限膨胀
-	wsMaxTrackKeys = 5000
+	// wsTrackBucketSec 滑动窗口单个分桶的时间跨度（秒）
+	wsTrackBucketSec = 10
+	// wsTrackBuckets 分桶数量：30 × 10s ≈ 最近 5 分钟滑动窗口
+	wsTrackBuckets = 30
+	// wsMaxTrackKeys 单个维度窗口内 key 数的硬上限（兜底）。
+	// 正常情况靠分桶滑出窗口自动淘汰，只有窗口内基数异常膨胀时才触发采样淘汰。
+	wsMaxTrackKeys = 20000
+	// wsEvictSamples 兜底淘汰时的随机采样个数：Go map 迭代起点随机，
+	// 取前 N 个即近似随机采样，避免每次扫全表。
+	wsEvictSamples = 8
 )
 
 // wsUpgrader WebSocket 升级器。
@@ -273,17 +281,22 @@ func removeWsClient(c *WsClient) {
 	log.Infof("大屏WebSocket已断开 id:%s 当前在线:%d", c.Id, WsClientCount())
 }
 
-// BroadcastHttpStat 把一条请求统计推送给所有匹配订阅条件的大屏连接。
-// 全程非阻塞：前端消费慢就丢弃，绝不能拖慢代理主流程。
-func BroadcastHttpStat(rec *HttpStatRecord) {
-	if rec == nil || !HasWsClients() {
+// RecordHttpStat 记录一条请求统计，并在有大屏在线时广播出去。
+// 与在线状态解耦：无论有没有人看都会累计（大屏连上来就能看到断连期间的累计数据）；
+// 只有存在在线连接时才做 JSON 序列化与推送，无人观看时省掉这部分开销。
+// 推送全程非阻塞：前端消费慢就丢弃，绝不能拖慢代理主流程。
+func RecordHttpStat(rec *HttpStatRecord) {
+	if rec == nil {
+		return
+	}
+	aggregate(rec)
+	if !HasWsClients() {
 		return
 	}
 	data, err := json.Marshal(WsMessage{Type: "stat", Ts: time.Now().UnixMilli(), Data: rec})
 	if err != nil {
 		return
 	}
-	aggregate(rec)
 	dispatch(data)
 }
 
@@ -465,19 +478,168 @@ var (
 	aggTotalRespSize int64
 	aggTotalDuration int64
 
-	aggMu            sync.Mutex
-	aggStatusCounts  = map[string]int64{}
-	aggCountryCounts = map[string]int64{}
-	aggDomainCounts  = map[string]int64{}
-	aggIpCounts      = map[string]int64{}
-	aggPathCounts    = map[string]int64{}
-	// aggIpGeo IP -> 归属地，给 Top IP 榜补充来源信息
+	aggMu           sync.Mutex
+	aggStatusCounts = map[string]int64{}
+	// 以下四个维度基数不可控（path 尤其容易被带 ID 的 URL 打爆），
+	// 统一走滑动窗口：窗口外的 key 自动淘汰，新热点永远进得了榜。
+	aggCountryCounts = newSlidingCounts()
+	aggDomainCounts  = newSlidingCounts()
+	aggIpCounts      = newSlidingCounts()
+	aggPathCounts    = newSlidingCounts()
+	// aggIpGeo IP -> 归属地，给 Top IP 榜补充来源信息；随 IP 滑出窗口一并清理
 	aggIpGeo      = map[string]IpGeo{}
 	aggQpsBuckets [60]struct {
 		sec   int64
 		count int64
 	}
 )
+
+func init() {
+	// IP 滑出窗口时联动清理归属地缓存，避免 aggIpGeo 单方面堆积
+	aggIpCounts.onEvict = func(ip string) { delete(aggIpGeo, ip) }
+}
+
+// ---------------------------------------------------------------------------
+// 滑动窗口计数
+// ---------------------------------------------------------------------------
+
+// slidingCounts 最近 wsTrackBuckets × wsTrackBucketSec 秒的滑动窗口计数器。
+//
+// 时间被切成固定数量的桶环形复用：每推进一格，就把最老那个桶的计数从 total 里扣掉，
+// 扣到 0 即自动删除——淘汰是窗口滑出的自然结果，key 不会永久堆积，也不会出现
+// "撞到上限后新 key 永远进不来" 的情况。
+//
+// total 恒等于窗口内各 key 的计数，Top 榜直接读它即可，无需遍历所有桶。
+// 注意：所有方法都要求调用方持有 aggMu。
+type slidingCounts struct {
+	buckets [wsTrackBuckets]map[string]int64
+	curIdx  int              // 当前桶下标
+	curEnd  int64            // 当前桶的截止时刻（unix 秒，不含）
+	total   map[string]int64 // 窗口内累计，Top 榜读这张表
+	onEvict func(key string) // key 被淘汰时的回调，用于联动清理附属表
+}
+
+func newSlidingCounts() *slidingCounts {
+	s := &slidingCounts{total: make(map[string]int64)}
+	for i := range s.buckets {
+		s.buckets[i] = make(map[string]int64)
+	}
+	s.curIdx = 0
+	s.curEnd = time.Now().Unix() + wsTrackBucketSec
+	return s
+}
+
+// rotate 推进到 now 所在的桶，并把滑出窗口的桶从 total 中扣除。
+func (s *slidingCounts) rotate(now int64) {
+	if now < s.curEnd {
+		return
+	}
+	span := int64(wsTrackBuckets) * wsTrackBucketSec
+	if now >= s.curEnd+span {
+		// 时间跳跃超过整个窗口（长时间无统计 / 时钟调整）：整表重置
+		for i := range s.buckets {
+			s.buckets[i] = make(map[string]int64)
+		}
+		s.total = make(map[string]int64)
+		s.curIdx = 0
+		s.curEnd = now + wsTrackBucketSec
+		return
+	}
+	for now >= s.curEnd {
+		s.curIdx = (s.curIdx + 1) % wsTrackBuckets
+		old := s.buckets[s.curIdx]
+		for k, v := range old {
+			if remain := s.total[k] - v; remain > 0 {
+				s.total[k] = remain
+			} else {
+				delete(s.total, k)
+				if s.onEvict != nil {
+					s.onEvict(k)
+				}
+			}
+		}
+		// 清空复用，避免每 10 秒重新分配一次 map
+		for k := range old {
+			delete(old, k)
+		}
+		s.curEnd += wsTrackBucketSec
+	}
+}
+
+// add 记录一次命中
+func (s *slidingCounts) add(now int64, key string) {
+	if key == "" {
+		return
+	}
+	s.rotate(now)
+	if _, ok := s.total[key]; !ok && len(s.total) >= wsMaxTrackKeys {
+		// 兜底：窗口内基数异常膨胀，淘汰一个低计数 key，保证新热点能进榜
+		s.evictOne(key)
+	}
+	s.buckets[s.curIdx][key]++
+	s.total[key]++
+}
+
+// evictOne 硬上限兜底：随机采样若干 key，淘汰计数最小的那个。
+// Go 的 map 迭代起点是随机的，取前 wsEvictSamples 个即近似随机采样，开销 O(1)。
+func (s *slidingCounts) evictOne(exclude string) {
+	minKey := ""
+	var minVal int64 = -1
+	n := 0
+	for k, v := range s.total {
+		if k == exclude {
+			continue
+		}
+		if minVal < 0 || v < minVal {
+			minKey, minVal = k, v
+		}
+		n++
+		if n >= wsEvictSamples {
+			break
+		}
+	}
+	if minKey == "" {
+		return
+	}
+	delete(s.total, minKey)
+	if s.onEvict != nil {
+		s.onEvict(minKey)
+	}
+}
+
+// topN 窗口内计数最高的 n 个 key
+func (s *slidingCounts) topN(n int) []TopItem {
+	items := make([]TopItem, 0, len(s.total))
+	for k, v := range s.total {
+		items = append(items, TopItem{Key: k, Count: v})
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].Count > items[j].Count })
+	if len(items) > n {
+		items = items[:n]
+	}
+	return items
+}
+
+// topIps 窗口内计数最高的 n 个 IP，并附上归属地
+func (s *slidingCounts) topIps(geo map[string]IpGeo, n int) []TopIpItem {
+	items := make([]TopIpItem, 0, len(s.total))
+	for k, v := range s.total {
+		item := TopIpItem{Key: k, Count: v}
+		if g, ok := geo[k]; ok {
+			item.Country = g.Country
+			item.CountryCode = g.CountryCode
+			item.Province = g.Province
+			item.City = g.City
+			item.Isp = g.Isp
+		}
+		items = append(items, item)
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].Count > items[j].Count })
+	if len(items) > n {
+		items = items[:n]
+	}
+	return items
+}
 
 func aggregate(rec *HttpStatRecord) {
 	atomic.AddInt64(&aggTotalRequests, 1)
@@ -494,30 +656,22 @@ func aggregate(rec *HttpStatRecord) {
 	}
 	bucket.count++
 
+	// 状态码只有 5 种取值，基数可控，直接全量累计
 	incCount(aggStatusCounts, rec.StatusClass)
-	if rec.SourceCountry != "" && len(aggCountryCounts) < wsMaxTrackKeys {
-		incCount(aggCountryCounts, rec.SourceCountry)
-	}
-	if rec.Domain != "" && len(aggDomainCounts) < wsMaxTrackKeys {
-		incCount(aggDomainCounts, rec.Domain)
-	}
+	// 其余维度走滑动窗口：窗口外的 key 自动淘汰，新热点永远能进榜
+	aggCountryCounts.add(sec, rec.SourceCountry)
+	aggDomainCounts.add(sec, rec.Domain)
+	aggIpCounts.add(sec, rec.SourceIp)
+	aggPathCounts.add(sec, normalizePath(rec.Path))
 	if rec.SourceIp != "" {
-		_, tracked := aggIpCounts[rec.SourceIp]
-		// 已跟踪过的 IP 继续累加；新 IP 受 wsMaxTrackKeys 限制，防止高并发下 map 无限膨胀
-		if tracked || len(aggIpCounts) < wsMaxTrackKeys {
-			incCount(aggIpCounts, rec.SourceIp)
-			// 归属地每次刷新：同一个 IP 换出口/库更新后展示的是最新结果
-			aggIpGeo[rec.SourceIp] = IpGeo{
-				Country:     rec.SourceCountry,
-				CountryCode: rec.SourceCountryCode,
-				Province:    rec.SourceProvince,
-				City:        rec.SourceCity,
-				Isp:         rec.SourceIsp,
-			}
+		// 归属地每次刷新：同一个 IP 换出口/库更新后展示的是最新结果
+		aggIpGeo[rec.SourceIp] = IpGeo{
+			Country:     rec.SourceCountry,
+			CountryCode: rec.SourceCountryCode,
+			Province:    rec.SourceProvince,
+			City:        rec.SourceCity,
+			Isp:         rec.SourceIsp,
 		}
-	}
-	if rec.Path != "" && len(aggPathCounts) < wsMaxTrackKeys {
-		incCount(aggPathCounts, rec.Path)
 	}
 	aggMu.Unlock()
 }
@@ -527,6 +681,76 @@ func incCount(m map[string]int64, key string) {
 		return
 	}
 	m[key]++
+}
+
+// ---------------------------------------------------------------------------
+// 路径归一化
+// ---------------------------------------------------------------------------
+
+// normalizePath 把路径里的动态段（ID / UUID / 哈希）替换成 *，
+// 避免 /api/user/12345 这类 URL 每换一个 ID 就产生一个新 key，把 Top 榜打爆。
+// 只作用于聚合维度；推送给前端的 stat 明细仍然是原始完整路径。
+func normalizePath(p string) string {
+	if p == "" {
+		return ""
+	}
+	if i := strings.IndexByte(p, '?'); i >= 0 {
+		p = p[:i]
+	}
+	if p == "" || p == "/" {
+		return p
+	}
+	segs := strings.Split(p, "/")
+	for i, seg := range segs {
+		if isDynamicSeg(seg) {
+			segs[i] = "*"
+		}
+	}
+	return strings.Join(segs, "/")
+}
+
+// isDynamicSeg 判断路径段是否为动态值
+func isDynamicSeg(s string) bool {
+	switch {
+	case s == "":
+		return false
+	case isAllDigits(s):
+		// 纯数字：/api/user/12345 中的 12345
+		return true
+	case len(s) == 36 && strings.Count(s, "-") == 4:
+		// UUID
+		return true
+	case len(s) >= 20 && isHex(s):
+		// 长十六进制串：ObjectId / MD5 / SHA1 / SHA256 / 各类随机 ID
+		return true
+	}
+	return false
+}
+
+func isAllDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func isHex(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 // BuildSummary 生成大屏汇总数据
@@ -549,6 +773,12 @@ func BuildSummary() SummaryData {
 		}
 	}
 
+	// 推进所有滑动窗口：即使当前没有流量，榜单也会随时间自然衰减
+	aggCountryCounts.rotate(now)
+	aggDomainCounts.rotate(now)
+	aggIpCounts.rotate(now)
+	aggPathCounts.rotate(now)
+
 	var avg int64
 	if totalRequests > 0 {
 		avg = totalDuration / totalRequests
@@ -563,10 +793,10 @@ func BuildSummary() SummaryData {
 		Qps:               sum / 60,
 		AvgDurationMs:     avg,
 		StatusCounts:      copyCounts(aggStatusCounts),
-		TopCountries:      topN(aggCountryCounts, wsTopN),
-		TopDomains:        topN(aggDomainCounts, wsTopN),
-		TopIps:            topNIps(aggIpCounts, aggIpGeo, wsTopN),
-		TopPaths:          topN(aggPathCounts, wsTopN),
+		TopCountries:      aggCountryCounts.topN(wsTopN),
+		TopDomains:        aggDomainCounts.topN(wsTopN),
+		TopIps:            aggIpCounts.topIps(aggIpGeo, wsTopN),
+		TopPaths:          aggPathCounts.topN(wsTopN),
 		UptimeSec:         int64(time.Since(wsStartAt).Seconds()),
 	}
 }
@@ -580,34 +810,3 @@ func copyCounts(m map[string]int64) map[string]int64 {
 }
 
 // topNIps 生成 Top IP 榜，并附上每个 IP 的归属地
-func topNIps(m map[string]int64, geo map[string]IpGeo, n int) []TopIpItem {
-	items := make([]TopIpItem, 0, len(m))
-	for k, v := range m {
-		item := TopIpItem{Key: k, Count: v}
-		if g, ok := geo[k]; ok {
-			item.Country = g.Country
-			item.CountryCode = g.CountryCode
-			item.Province = g.Province
-			item.City = g.City
-			item.Isp = g.Isp
-		}
-		items = append(items, item)
-	}
-	sort.Slice(items, func(i, j int) bool { return items[i].Count > items[j].Count })
-	if len(items) > n {
-		items = items[:n]
-	}
-	return items
-}
-
-func topN(m map[string]int64, n int) []TopItem {
-	items := make([]TopItem, 0, len(m))
-	for k, v := range m {
-		items = append(items, TopItem{Key: k, Count: v})
-	}
-	sort.Slice(items, func(i, j int) bool { return items[i].Count > items[j].Count })
-	if len(items) > n {
-		items = items[:n]
-	}
-	return items
-}

@@ -155,7 +155,7 @@
       </div>
 
       <div class="panel panel--top">
-        <h2>TOP 来源国家<em>累计</em></h2>
+        <h2>TOP 来源国家<em>近 5 分钟</em></h2>
         <ul class="rank">
           <li v-for="(it, i) in topCountries" :key="it.key">
             <span class="rank__no">{{ i + 1 }}</span>
@@ -170,7 +170,7 @@
       </div>
 
       <div class="panel panel--top">
-        <h2>TOP 域名</h2>
+        <h2>TOP 域名<em>近 5 分钟</em></h2>
         <ul class="rank">
           <li v-for="(it, i) in topDomains" :key="it.key">
             <span class="rank__no">{{ i + 1 }}</span>
@@ -216,7 +216,7 @@
       </div>
 
       <div class="panel panel--top">
-        <h2>TOP 来源 IP<em>带归属地</em></h2>
+        <h2>TOP 来源 IP<em>近 5 分钟 · 带归属地</em></h2>
         <ul class="rank">
           <li v-for="(it, i) in topIps" :key="it.key">
             <span class="rank__no">{{ i + 1 }}</span>
@@ -232,7 +232,7 @@
       </div>
 
       <div class="panel panel--top">
-        <h2>TOP 路径</h2>
+        <h2>TOP 路径<em>近 5 分钟</em></h2>
         <ul class="rank">
           <li v-for="(it, i) in topPaths" :key="it.key">
             <span class="rank__no">{{ i + 1 }}</span>
@@ -461,7 +461,7 @@ const kpis = computed(() => [
   {
     label: '累计请求',
     text: fmtNum(tTotal.value),
-    sub: '自首个大屏接入',
+    sub: '自服务启动',
     color: '#10b981',
   },
   {
@@ -487,7 +487,7 @@ const kpis = computed(() => [
 const topDomains = computed(() => summary.value.topDomains || [])
 const topIps = computed(() => rankSorted(summary.value.topIps))
 const topPaths = computed(() => rankSorted(summary.value.topPaths))
-/* 服务端 topCountries 是全量累计的国家榜，直接整榜用（面板里放不下就滚动），
+/* 服务端 topCountries 是近 5 分钟窗口的国家榜，直接整榜用（面板里放不下就滚动），
    不截断成 TOP3 —— 截断后大半国家根本看不见，等于没用这份数据 */
 const topCountries = computed(() => rankSorted(rankPct(summary.value.topCountries, 20)))
 
@@ -523,7 +523,7 @@ const profileGroups = computed(() => [
 
 /* TOP 来源 IP 的归属地直接读服务端 topIps 里带的 country/province/city/isp。
    之前靠本地池子反查，样本只有 500 条且要等对应请求进来才有数据；
-   服务端是累计统计，既准又不用等 */
+   服务端随窗口维护，既准又不用等 */
 const ipGeoText = (it) => geoFullText(it)
 
 /* 榜单排序：先按次数降序，次数并列时再按名字升序。
@@ -538,7 +538,8 @@ const rankSorted = (list) => (list || []).slice().sort((a, b) => {
   return diff || String(a && a.key).localeCompare(String(b && b.key), 'zh-Hans-CN', NAME_OPT)
 })
 
-/* 服务端 TOP 榜 -> 面板用的 {key, count, pct}。国家榜按全量累计，不是抽样 */
+/* 服务端 TOP 榜 -> 面板用的 {key, count, pct}。
+   榜单都是近 5 分钟窗口，不是抽样，占比的分母就是榜内 count 之和 */
 const rankPct = (list, n) => {
   const src = list || []
   const total = src.reduce((a, b) => a + (Number(b.count) || 0), 0)
@@ -1575,8 +1576,8 @@ onUnmounted(() => {
 }
 
 /* ---------- 访客画像 ----------
-   设备 / 系统 / 浏览器 / 运营商四组（sourceCountry 不在服务端 summary 里，
-   来源国家走独立的 TOP 榜），每组取 TOP3。2×2 排布，竖着一列会顶出面板 */
+   设备 / 系统 / 浏览器 / 运营商四组，每组取 TOP3。2×2 排布，竖着一列会顶出面板。
+   来源国家不在这里统计：服务端 topCountries 已经是全站口径，单独成榜 */
 .profile {
   flex: 1;
   min-height: 0;

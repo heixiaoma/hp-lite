@@ -47,7 +47,7 @@ func StartHttpsServer() {
 		Handler(w, r)
 	})
 	// 证书通过 GetCertificate 动态选择，不在这里做 SNI 统计；
-	// 统计统一交给 StatsInterceptor：有大屏 WebSocket 在线时才统计并实时推送
+	// 统计统一交给 StatsInterceptor：持续统计，有大屏 WebSocket 在线时实时推送
 	httpsProxyServer = &http.Server{
 		Addr:      ":443",
 		Handler:   StatsInterceptor(mux),

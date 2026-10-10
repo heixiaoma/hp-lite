@@ -29,8 +29,7 @@ func StartHttpServer() {
 		Handler(w, r)
 	})
 	log.Info("HTTP代理服务启动")
-	// StatsInterceptor：存在大屏 WebSocket 连接时统计请求全维度数据并实时推送，
-	// 无人观看时零开销直通
+	// StatsInterceptor：持续统计请求全维度数据，有大屏 WebSocket 在线时实时推送
 	httpProxyServer = &http.Server{Addr: ":80", Handler: StatsInterceptor(mux)}
 	err := httpProxyServer.ListenAndServe()
 	if err != nil {
