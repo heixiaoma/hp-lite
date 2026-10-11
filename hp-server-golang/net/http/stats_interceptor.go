@@ -49,13 +49,15 @@ func StatsInterceptor(next http.Handler) http.Handler {
 		rec.SourcePort = remotePort
 		rec.IpVersion = ipVersion(rec.SourceIp)
 
-		// 来源归属地（ip2region，未启用/未命中时字段留空）
+		// 来源归属地（GeoLite2，未启用/未命中时字段留空）
 		if region, ok := util.LookupIpRegion(rec.SourceIp); ok {
 			rec.SourceCountry = region.Country
 			rec.SourceCountryCode = region.CountryCode
 			rec.SourceProvince = region.Province
 			rec.SourceCity = region.City
 			rec.SourceIsp = region.Isp
+			rec.SourceLatitude = region.Latitude
+			rec.SourceLongitude = region.Longitude
 		}
 
 		// 域名与入口端口

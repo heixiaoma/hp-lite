@@ -11,14 +11,18 @@
   "dependencies": {
     "@giscus/vue": "^3.1.1",
     "axios": "^1.4.0",
+    "d3-geo": "^3.1.1",
+    "d3-zoom": "^3.0.0",
     "echarts": "^5.4.2",
     "monaco-editor": "^0.55.1",
     "monaco-editor-vue3": "^1.0.5",
     "qrcode": "^1.5.3",
     "tdesign-icons-vue-next": "^0.4.11",
     "tdesign-vue-next": "^1.20.9",
+    "topojson-client": "^3.1.0",
     "vue": "^3.2.47",
-    "vue-router": "4"
+    "vue-router": "4",
+    "world-atlas": "^2.0.2"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.1.0",

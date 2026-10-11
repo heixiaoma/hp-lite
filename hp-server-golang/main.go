@@ -129,9 +129,10 @@ func (p *program) run() {
 	logger.Info("配置文件加载成功")
 
 	// 1.1 加载 IP 归属地库（内嵌在 web/static/data 下，失败不影响主流程）
-	if err := util.InitIp2RegionFromFS(web.StaticFS(),
-		"static/data/ip2region_v4.xdb",
-		"static/data/ip2region_v6.xdb"); err != nil {
+	//     City 库必填（国家/省/城市/经纬度），ASN 库可选（运营商，配了才有）
+	if err := util.InitIpGeoFromFS(web.StaticFS(),
+		"static/data/GeoLite2-City.mmdb",
+		"static/data/GeoLite2-ASN.mmdb"); err != nil {
 		logger.Error(fmt.Sprintf("IP归属地库加载失败，归属地字段将为空：%v", err))
 	}
 

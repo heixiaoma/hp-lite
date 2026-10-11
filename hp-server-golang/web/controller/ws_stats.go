@@ -30,9 +30,11 @@ const (
 	// wsTopN 大屏 Top 榜单条数
 	wsTopN = 10
 	// wsTrackBucketSec 滑动窗口单个分桶的时间跨度（秒）
-	wsTrackBucketSec = 10
-	// wsTrackBuckets 分桶数量：30 × 10s ≈ 最近 5 分钟滑动窗口
-	wsTrackBuckets = 30
+	wsTrackBucketSec = 300
+	// wsTrackBuckets 分桶数量：60 × 300s = 最近 5 小时滑动窗口。
+	// 桶粒度取 5 分钟：请求/攻击统计关心的是"这段时间谁在活跃"，不需要秒级精度，
+	// 而 5 小时 × 10 秒要 1800 个桶，绝大多数时刻空着，纯属浪费
+	wsTrackBuckets = 60
 	// wsMaxTrackKeys 单个维度窗口内 key 数的硬上限（兜底）。
 	// 正常情况靠分桶滑出窗口自动淘汰，只有窗口内基数异常膨胀时才触发采样淘汰。
 	wsMaxTrackKeys = 20000
@@ -62,12 +64,15 @@ type HttpStatRecord struct {
 	SourcePort string `json:"sourcePort"` // 来源端口
 	IpVersion  string `json:"ipVersion"`  // IPv4 / IPv6
 
-	// 来源归属地维度（ip2region，未加载库时为空）
+	// 来源归属地维度（GeoLite2，未加载库时为空）
 	SourceCountry     string `json:"sourceCountry"`     // 国家，如：中国
 	SourceCountryCode string `json:"sourceCountryCode"` // 国家代码，如 CN / US
 	SourceProvince    string `json:"sourceProvince"`    // 省份
 	SourceCity        string `json:"sourceCity"`        // 城市
-	SourceIsp         string `json:"sourceIsp"`         // 运营商
+	SourceIsp         string `json:"sourceIsp"`         // 运营商（需额外配 GeoLite2-ASN 库才有值）
+	// 经纬度（地图打点用）。前端注意：0 表示这跳没定位到，别在 0,0 打点
+	SourceLatitude  float64 `json:"sourceLatitude"`  // 纬度
+	SourceLongitude float64 `json:"sourceLongitude"` // 经度
 
 	// 目的维度
 	TargetIp   string `json:"targetIp"`   // 目的（后端）IP
@@ -132,7 +137,12 @@ type SummaryData struct {
 	TopCountries      []TopItem        `json:"topCountries"`      // 来源国家/地区 Top10
 	TopDomains        []TopItem        `json:"topDomains"`        // 域名 Top10
 	TopIps            []TopIpItem      `json:"topIps"`            // 来源 IP Top10（含归属地）
-	TopPaths          []TopItem        `json:"topPaths"`          // 路径 Top10
+	TopPaths          []TopItem        `json:"topPaths"`          // 路径 Top10（聚合 key 已归一化）
+	TopDevices        []TopItem        `json:"topDevices"`        // 设备类型 Top10
+	TopSystems        []TopItem        `json:"topSystems"`        // 操作系统 Top10
+	TopBrowsers       []TopItem        `json:"topBrowsers"`       // 浏览器 Top10
+	TopIsps           []TopItem        `json:"topIsps"`           // 运营商 / 组织 Top10
+	WafBlocks         WafStat          `json:"wafBlocks"`         // 防火墙（coraza）拦截统计，含反向代理与穿透代理
 	UptimeSec         int64            `json:"uptimeSec"`         // 服务运行时长
 }
 
@@ -146,11 +156,14 @@ type TopItem struct {
 type TopIpItem struct {
 	Key         string `json:"key"`
 	Count       int64  `json:"count"`
-	Country     string `json:"country"`     // 国家，未启用 ip2region 时为空
+	Country     string `json:"country"`     // 国家，未启用 GeoLite2 时为空
 	CountryCode string `json:"countryCode"` // 国家代码，如 CN / US
 	Province    string `json:"province"`    // 省份 / 州
 	City        string `json:"city"`        // 城市
-	Isp         string `json:"isp"`         // 运营商 / 组织
+	Isp         string `json:"isp"`         // 运营商 / 自治域组织
+	// 经纬度（地图打点用），0 表示该 IP 没定位到
+	Latitude  float64 `json:"latitude"`  // 纬度
+	Longitude float64 `json:"longitude"` // 经度
 }
 
 // IpGeo 来源 IP 的归属地快照（不落库，仅用于 Top IP 榜展示）
@@ -160,6 +173,8 @@ type IpGeo struct {
 	Province    string
 	City        string
 	Isp         string
+	Latitude    float64
+	Longitude   float64
 }
 
 // WsClient 一个 WebSocket 大屏连接句柄
@@ -173,36 +188,8 @@ type WsClient struct {
 	Send       chan []byte     // 待发送队列
 
 	mu        sync.Mutex
-	Filter    WsFilter // 订阅过滤条件，前端可按需订阅
 	closed    bool
 	onceClose sync.Once
-}
-
-// WsFilter 前端可通过上传 {"type":"subscribe","filter":{...}} 做服务端侧过滤，降低数据量
-type WsFilter struct {
-	Domain      string `json:"domain"`      // 只推送该域名（包含匹配，空=全部）
-	SourceIp    string `json:"sourceIp"`    // 只推送该来源IP
-	StatusClass string `json:"statusClass"` // 只推送该状态码分类，如 4xx
-	ProxyType   string `json:"proxyType"`   // 只推送该链路类型
-}
-
-func (f WsFilter) match(rec *HttpStatRecord) bool {
-	if rec == nil {
-		return false
-	}
-	if f.Domain != "" && !strings.Contains(rec.Domain, f.Domain) {
-		return false
-	}
-	if f.SourceIp != "" && !strings.Contains(rec.SourceIp, f.SourceIp) {
-		return false
-	}
-	if f.StatusClass != "" && rec.StatusClass != f.StatusClass {
-		return false
-	}
-	if f.ProxyType != "" && rec.ProxyType != f.ProxyType {
-		return false
-	}
-	return true
 }
 
 // ---------------------------------------------------------------------------
@@ -378,11 +365,10 @@ func (c *WsClient) readPump() {
 	}
 }
 
-// handleMessage 处理前端上行控制消息：ping / subscribe
+// handleMessage 处理前端上行控制消息：ping
 func (c *WsClient) handleMessage(msg []byte) {
 	var payload struct {
-		Type   string   `json:"type"`
-		Filter WsFilter `json:"filter"`
+		Type string `json:"type"`
 	}
 	if err := json.Unmarshal(msg, &payload); err != nil {
 		return
@@ -390,11 +376,6 @@ func (c *WsClient) handleMessage(msg []byte) {
 	switch payload.Type {
 	case "ping":
 		c.send(WsMessage{Type: "pong", Ts: time.Now().UnixMilli(), Data: nil})
-	case "subscribe":
-		c.mu.Lock()
-		c.Filter = payload.Filter
-		c.mu.Unlock()
-		c.send(WsMessage{Type: "subscribe", Ts: time.Now().UnixMilli(), Data: payload.Filter})
 	}
 }
 
@@ -480,12 +461,17 @@ var (
 
 	aggMu           sync.Mutex
 	aggStatusCounts = map[string]int64{}
-	// 以下四个维度基数不可控（path 尤其容易被带 ID 的 URL 打爆），
-	// 统一走滑动窗口：窗口外的 key 自动淘汰，新热点永远进得了榜。
+	// 以下维度走滑动窗口：窗口外的 key 自动淘汰，新热点永远进得了榜。
+	// path 尤其容易被带 ID 的 URL 打爆，其余维度则是基数天然不可控
 	aggCountryCounts = newSlidingCounts()
 	aggDomainCounts  = newSlidingCounts()
 	aggIpCounts      = newSlidingCounts()
 	aggPathCounts    = newSlidingCounts()
+	// 客户端画像：UA 解析结果与运营商，同样五分钟窗口
+	aggDeviceCounts  = newSlidingCounts()
+	aggOsCounts      = newSlidingCounts()
+	aggBrowserCounts = newSlidingCounts()
+	aggIspCounts     = newSlidingCounts()
 	// aggIpGeo IP -> 归属地，给 Top IP 榜补充来源信息；随 IP 滑出窗口一并清理
 	aggIpGeo      = map[string]IpGeo{}
 	aggQpsBuckets [60]struct {
@@ -504,13 +490,14 @@ func init() {
 // ---------------------------------------------------------------------------
 
 // slidingCounts 最近 wsTrackBuckets × wsTrackBucketSec 秒的滑动窗口计数器。
+// 请求统计与防火墙统计共用这一个窗口长度（当前 5 小时）。
 //
 // 时间被切成固定数量的桶环形复用：每推进一格，就把最老那个桶的计数从 total 里扣掉，
 // 扣到 0 即自动删除——淘汰是窗口滑出的自然结果，key 不会永久堆积，也不会出现
 // "撞到上限后新 key 永远进不来" 的情况。
 //
 // total 恒等于窗口内各 key 的计数，Top 榜直接读它即可，无需遍历所有桶。
-// 注意：所有方法都要求调用方持有 aggMu。
+// 注意：所有方法都要求调用方持有各自的锁（请求统计 aggMu、防火墙 wafMu）。
 type slidingCounts struct {
 	buckets [wsTrackBuckets]map[string]int64
 	curIdx  int              // 当前桶下标
@@ -558,7 +545,7 @@ func (s *slidingCounts) rotate(now int64) {
 				}
 			}
 		}
-		// 清空复用，避免每 10 秒重新分配一次 map
+		// 清空复用，避免每次 rotate 都重新分配一次 map
 		for k := range old {
 			delete(old, k)
 		}
@@ -631,6 +618,8 @@ func (s *slidingCounts) topIps(geo map[string]IpGeo, n int) []TopIpItem {
 			item.Province = g.Province
 			item.City = g.City
 			item.Isp = g.Isp
+			item.Latitude = g.Latitude
+			item.Longitude = g.Longitude
 		}
 		items = append(items, item)
 	}
@@ -663,6 +652,11 @@ func aggregate(rec *HttpStatRecord) {
 	aggDomainCounts.add(sec, rec.Domain)
 	aggIpCounts.add(sec, rec.SourceIp)
 	aggPathCounts.add(sec, normalizePath(rec.Path))
+	// 客户端画像：挪到服务端统计，前端不用再从明细里抽样
+	aggDeviceCounts.add(sec, rec.Device)
+	aggOsCounts.add(sec, rec.Os)
+	aggBrowserCounts.add(sec, rec.Browser)
+	aggIspCounts.add(sec, rec.SourceIsp)
 	if rec.SourceIp != "" {
 		// 归属地每次刷新：同一个 IP 换出口/库更新后展示的是最新结果
 		aggIpGeo[rec.SourceIp] = IpGeo{
@@ -671,6 +665,8 @@ func aggregate(rec *HttpStatRecord) {
 			Province:    rec.SourceProvince,
 			City:        rec.SourceCity,
 			Isp:         rec.SourceIsp,
+			Latitude:    rec.SourceLatitude,
+			Longitude:   rec.SourceLongitude,
 		}
 	}
 	aggMu.Unlock()
@@ -778,6 +774,10 @@ func BuildSummary() SummaryData {
 	aggDomainCounts.rotate(now)
 	aggIpCounts.rotate(now)
 	aggPathCounts.rotate(now)
+	aggDeviceCounts.rotate(now)
+	aggOsCounts.rotate(now)
+	aggBrowserCounts.rotate(now)
+	aggIspCounts.rotate(now)
 
 	var avg int64
 	if totalRequests > 0 {
@@ -797,6 +797,11 @@ func BuildSummary() SummaryData {
 		TopDomains:        aggDomainCounts.topN(wsTopN),
 		TopIps:            aggIpCounts.topIps(aggIpGeo, wsTopN),
 		TopPaths:          aggPathCounts.topN(wsTopN),
+		TopDevices:        aggDeviceCounts.topN(wsTopN),
+		TopSystems:        aggOsCounts.topN(wsTopN),
+		TopBrowsers:       aggBrowserCounts.topN(wsTopN),
+		TopIsps:           aggIspCounts.topN(wsTopN),
+		WafBlocks:         BuildWafStat(),
 		UptimeSec:         int64(time.Since(wsStartAt).Seconds()),
 	}
 }

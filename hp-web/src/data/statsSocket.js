@@ -13,11 +13,11 @@ const WS_PATH = '/client/ws/stats'
 const FLUSH_MS = 200
 const MAX_ROWS = 2000
 
-// 指数退避：1s / 2s / 4s ... 上限 30s（文档 §6.3）
+// 指数退避：1s / 2s / 4s ... 上限 30s（文档 §5.3）
 const RETRY_MIN = 1000
 const RETRY_MAX = 30000
 
-// ws 断开期间的 HTTP 兜底轮询，间隔与 summary 推送频率一致（文档 §5）
+// ws 断开期间的 HTTP 兜底轮询，间隔与 summary 推送频率一致（文档 §4）
 const POLL_MS = 1000
 
 /**
@@ -27,7 +27,7 @@ const POLL_MS = 1000
  * @param {Function} opts.onSummary 每秒汇总，或握手后的首帧快照
  * @param {Function} opts.onStats   节流后的 stat 明细批次（数组）
  * @param {Function} opts.onStatus  'connecting' | 'open' | 'closed' | 'error'
- * @returns {{ setFilter, dispose }}
+ * @returns {{ dispose }}
  */
 export const createStatsSocket = ({onSummary, onStats, onStatus} = {}) => {
   let ws = null
@@ -37,7 +37,6 @@ export const createStatsSocket = ({onSummary, onStats, onStatus} = {}) => {
   let flushTimer = null
   let pollTimer = null
   let reconnectTimer = null
-  let filter = {}
 
   const setStatus = (s, detail) => onStatus && onStatus(s, detail)
 
@@ -87,12 +86,6 @@ export const createStatsSocket = ({onSummary, onStats, onStatus} = {}) => {
     pollTimer = null
   }
 
-  const sendFilter = () => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({type: 'subscribe', filter}))
-    }
-  }
-
   const connect = () => {
     if (disposed) return
     const info = userInfo.getUserInfo()
@@ -119,7 +112,6 @@ export const createStatsSocket = ({onSummary, onStats, onStatus} = {}) => {
       setStatus('open')
       stopPolling()
       startFlush()
-      sendFilter()
     }
 
     sock.onmessage = (e) => {
@@ -158,7 +150,7 @@ export const createStatsSocket = ({onSummary, onStats, onStatus} = {}) => {
           setStatus('error', msg.data)
           break
         default:
-          break // pong / subscribe 回执，无需处理
+          break // pong 回执，无需处理
       }
     }
 
@@ -188,11 +180,6 @@ export const createStatsSocket = ({onSummary, onStats, onStatus} = {}) => {
   connect()
 
   return {
-    /** 订阅过滤，只作用于 stat 明细；summary 是全量大盘不受影响（文档 §4） */
-    setFilter(next) {
-      filter = next || {}
-      sendFilter()
-    },
     dispose() {
       disposed = true
       clearTimeout(reconnectTimer)

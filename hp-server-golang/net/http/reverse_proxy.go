@@ -10,6 +10,7 @@ import (
 	"hp-server-lib/net/base"
 	"hp-server-lib/service"
 	"hp-server-lib/util"
+	"hp-server-lib/web/controller"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -26,6 +27,8 @@ import (
 func Handler(w http.ResponseWriter, r *http.Request) {
 	host := r.Host
 	clientIP := getClientIP(r)
+	// 防火墙统计按域名聚合，提前去掉端口，别在每条命中里重复拆一遍
+	blockDomain, _ := splitHostPort(host)
 	//检查是否是证书挑战
 	if strings.Contains(r.URL.String(), "/.well-known/acme-challenge/") {
 		target, err := url.Parse("http://127.0.0.1:" + config.ConfigData.Acme.HttpPort)
@@ -65,6 +68,15 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				wafConfig := coraza.NewWAFConfig().WithDebugLogger(debuglog.Default()).WithErrorCallback(func(rule types.MatchedRule) {
 					msg := rule.ErrorLog()
 					log.Errorf("[反向代理防火墙拦截][%s] %s\n", rule.Rule().Severity(), msg)
+					// 只做内存计数（总量 + 窗口榜单），不落单条明细
+					controller.RecordWafBlock(
+						controller.WafSourceReverse,
+						blockDomain,
+						rule.Rule().Severity().String(),
+						rule.ClientIPAddress(),
+						rule.Message(),
+						rule.Rule().ID(),
+					)
 				}).WithDirectives(rule)
 				waf, err := coraza.NewWAF(wafConfig)
 				if err != nil {
@@ -152,6 +164,15 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				wafConfig := coraza.NewWAFConfig().WithDebugLogger(debuglog.Default()).WithErrorCallback(func(rule types.MatchedRule) {
 					msg := rule.ErrorLog()
 					log.Errorf("[穿透代理防火墙拦截][%s] %s\n", rule.Rule().Severity(), msg)
+					// 只做内存计数（总量 + 窗口榜单），不落单条明细
+					controller.RecordWafBlock(
+						controller.WafSourceTunnel,
+						blockDomain,
+						rule.Rule().Severity().String(),
+						rule.ClientIPAddress(),
+						rule.Message(),
+						rule.Rule().ID(),
+					)
 				}).WithDirectives(rule)
 				waf, err := coraza.NewWAF(wafConfig)
 				if err != nil {

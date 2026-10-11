@@ -1,0 +1,262 @@
+/* 大屏共享样式：栅格、面板外壳、通用榜单。
+ *
+ * 为什么必须是全局而不是留在 dashboard.vue 的 <style scoped> 里：
+ * Vue 的 scoped 样式只给**子组件根节点**打上父组件的 data-v 标记，
+ * 面板内部的 h2 / ul / li 一律落不到，面板拆成子组件后外壳会整个失效。
+ * 用 .dash 前缀收一层，把影响范围限制在大屏内部，不去污染别的页面。
+ */
+
+/* ---------- 面板栅格 ---------- */
+/* 12 列，行数自动增长，每行固定高。
+ * 高度不再按视口反推：之前 .dash 锁死 height: calc(100vh - 96px)、
+ * 行高写成 1fr，多加一行面板就得从上两行的手里抢高度，趋势图和请求流最先被压变形。
+ * 现在行高是固定值、行数随面板数量往下堆，多出来的交给页面滚动（见 manage.vue 的 .console__main）。
+ *
+ * 以后新增面板只要给一个 grid-column span，不用再回来改行数。
+ * 整体调高/调矮改 .dash 上的 --dash-row 一处即可。
+ *
+ * 用 12 而不是 6，是因为各面板需要的宽度差得比较多：
+ * 6 列时状态码只能给 1/6（太窄，环和图例挤不下）或 2/6（太宽，内容撑不满、留白一堆）。
+ *   一行：吞吐 4 / 状态码 3 / 访客画像 3 / 来源国家 2；
+ *   二行：请求流 6（半宽，两行信息才排得开）+ 域名 / IP / 路径 各 2；
+ *   三行：防火墙整行
+ *
+ * 注意：全球地图不在这个栅格里。它铺满整屏宽、高度跟着投影比例走，
+ * 塞进写死的 380px 行高会被压扁，所以放在 board 外面（见 dashboard.vue） */
+.dash .board {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: var(--dash-row);
+  gap: 12px;
+}
+
+/* ---------- 面板外壳 ---------- */
+.dash .panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* 面板高度由 grid 决定，内容超了就地裁掉。
+     不加这句时环形图的图例会溢出面板，压到相邻面板上 */
+  overflow: hidden;
+  padding: 10px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  background: var(--c-card);
+  box-shadow: 0 2px 10px rgba(31, 45, 61, .05);
+}
+
+/* 四角装饰角标 */
+.dash .panel::before,
+.dash .panel::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--c-brand);
+  opacity: .28;
+}
+
+.dash .panel::before {
+  left: -1px;
+  top: -1px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.dash .panel::after {
+  right: -1px;
+  bottom: -1px;
+  border-left: none;
+  border-top: none;
+}
+
+.dash .panel h2 {
+  margin: 0 0 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--c-text);
+}
+
+.dash .panel h2 em {
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--c-faint);
+}
+
+/* 地图是 .dash 的直接子元素，不在 board 栅格里 —— 见 dashboard.vue 的注释。
+   它比一整行还宽（铺满）、高度按投影比例自适应，锁在 12 列 × 380px 的栅格里
+   只会被行高压成一条 */
+
+.dash .panel--chart {
+  grid-column: span 4;
+}
+
+.dash .panel--ring {
+  grid-column: span 3;
+}
+
+/* 画像只剩 4 组（国家单独成榜了），3 列即可；省下的 2 列给 TOP 来源国家 */
+.dash .panel--profile {
+  grid-column: span 3;
+}
+
+.dash .panel--stream {
+  grid-column: span 6;
+}
+
+.dash .panel--top {
+  grid-column: span 2;
+}
+
+.dash .panel--waf {
+  grid-column: span 12;
+}
+
+/* ---------- 通用排行榜 ----------
+   来源国家 / 域名 / IP / 路径，以及防火墙面板里的 TOP 榜共用 */
+.dash .rank {
+  margin: 0;
+  padding: 0 2px 0 0;
+  list-style: none;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.dash .rank li {
+  display: grid;
+  grid-template-columns: 17px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 3px 8px;
+}
+
+.dash .rank__no {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--c-sub);
+  background: #eef2f7;
+  border-radius: 3px;
+}
+
+.dash .rank li:nth-child(1) .rank__no {
+  color: #fff;
+  background: var(--c-brand);
+}
+
+.dash .rank li:nth-child(2) .rank__no {
+  color: #fff;
+  background: #10b981;
+}
+
+.dash .rank li:nth-child(3) .rank__no {
+  color: #fff;
+  background: #f59e0b;
+}
+
+.dash .rank__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--c-text);
+}
+
+.dash .rank__num {
+  color: var(--c-sub);
+}
+
+/* 副标题占第二行，和进度条一起排在名称列下面 */
+.dash .rank__sub {
+  grid-column: 2 / -1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  color: var(--c-faint);
+}
+
+.dash .rank__bar {
+  grid-column: 1 / -1;
+  height: 3px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #eef2f7;
+}
+
+.dash .rank__bar i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #0052d9, #21b7e8);
+  transition: width .5s ease;
+}
+
+.dash .rank__empty {
+  display: block;
+  color: var(--c-faint);
+  font-size: 11px;
+}
+
+.dash .rank::-webkit-scrollbar {
+  width: 5px;
+}
+
+.dash .rank::-webkit-scrollbar-thumb {
+  background: #d8e0ea;
+  border-radius: 3px;
+}
+
+/* ---------- 自适应 ---------- */
+/* 12 列要排得开得 1500px 起步：再窄下去，「TOP 来源 IP」这类只占 2/12 的面板
+   连一条 IPv4 + 归属地都放不下（1500px 时 2/12 ≈ 195px，刚好够）。
+   1500px 以下换成 2 列，行数相应翻倍 */
+@media (max-width: 1500px) {
+  /* 行高沿用 --dash-row，只是列数减半，行数相应翻倍 */
+  .dash .board {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* 只有图、数据流和防火墙需要整行；环形图/画像/三个 TOP 榜在半宽里排得下，
+     全部拉成整行会让页面长出一倍 */
+  .dash .panel--chart,
+  .dash .panel--stream,
+  .dash .panel--waf {
+    grid-column: span 2;
+  }
+
+  .dash .panel--ring,
+  .dash .panel--profile,
+  .dash .panel--top {
+    grid-column: span 1;
+  }
+}
+
+/* 手机上 2 列会把面板压到 160px 左右：状态码面板是「环 + 图例」横排，
+   这个宽度装不下，会被面板的 overflow: hidden 裁掉。这里直接单列铺满 */
+@media (max-width: 768px) {
+  .dash .board {
+    grid-template-columns: 1fr;
+  }
+
+  .dash .panel--chart,
+  .dash .panel--ring,
+  .dash .panel--profile,
+  .dash .panel--stream,
+  .dash .panel--top,
+  .dash .panel--waf {
+    grid-column: span 1;
+  }
+}
