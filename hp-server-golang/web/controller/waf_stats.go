@@ -8,17 +8,19 @@ import (
 	"time"
 )
 
-// WafSource 防火墙挂载位置。反向代理和穿透代理各挂一份 WAF，
+// WafSource 防火墙挂载位置。全局入口、反向代理、穿透代理各挂一份 WAF，
 // 统计合并在一处，靠这个字段区分是链路上的哪一段拦下的。
 const (
-	WafSourceReverse = "reverse" // 反向代理
-	WafSourceTunnel  = "tunnel"  // 穿透代理
+	WafSourceReverse = "reverse" // 反向代理（绑在域名上）
+	WafSourceTunnel  = "tunnel"  // 穿透代理（绑在穿透配置上）
+	WafSourceGlobal  = "global"  // 全局（HTTP/HTTPS 入口统一挂载，不区分域名）
 )
 
 // wafSourceLabel 来源的展示名
 var wafSourceLabel = map[string]string{
 	WafSourceReverse: "反向代理",
 	WafSourceTunnel:  "穿透代理",
+	WafSourceGlobal:  "全局防护",
 }
 
 // WafStat 防火墙（coraza）实时拦截统计。
@@ -43,7 +45,7 @@ type WafStat struct {
 
 var (
 	wafTotal int64
-	// 严重级别 8 种、挂载位置 2 种，基数固定，直接全量累计
+	// 严重级别 8 种、挂载位置 3 种，基数固定，直接全量累计
 	wafSeverity = map[string]int64{}
 	wafSource   = map[string]int64{}
 	// 域名 / IP / 规则三个维度基数不可控，走滑动窗口，和请求统计同一套 5 小时窗口。
@@ -78,7 +80,11 @@ func RecordWafBlock(source, domain, severity, clientIp, msg string, ruleId int) 
 	wafSource[source]++
 	wafSeverity[severity]++
 	sec := nowMs / 1000
-	wafDomains.add(sec, domain)
+	// 挂在入口上的那份全局 WAF 拿不到域名（见 net/http/global_waf.go），
+	// 空域名不进域名榜，免得榜单上多一个空 key
+	if domain != "" {
+		wafDomains.add(sec, domain)
+	}
 	wafIps.add(sec, clientIp)
 	wafRules.add(sec, strconv.Itoa(ruleId))
 	wafLastAt = nowMs

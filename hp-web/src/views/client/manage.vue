@@ -102,6 +102,11 @@
               <template #icon><filter-icon/></template>
               穿透限制
             </t-menu-item>
+            <!-- Web 安全：系统级全局规则，对所有进站流量生效，只有管理员能改 -->
+            <t-menu-item v-if="userInfo && userInfo.role === 'ADMIN'" value="/client/globalWaf">
+              <template #icon><shield-error-icon/></template>
+              Web全局安全
+            </t-menu-item>
           </t-submenu>
 
           <t-submenu value="monitor" title="穿透监控">
@@ -169,6 +174,7 @@ import {
   PoweroffIcon,
   SecuredIcon,
   SettingIcon,
+  ShieldErrorIcon,
   UserIcon
 } from 'tdesign-icons-vue-next';
 
@@ -183,6 +189,7 @@ const expanded = ref(['safe', 'monitor', 'ext']);
 const groupOf = {
   '/client/safe': 'safe',
   '/client/waf': 'safe',
+  '/client/globalWaf': 'safe',
   '/client/monitor': 'monitor',
   '/client/dashboard': 'monitor',
   '/client/forward': 'ext',

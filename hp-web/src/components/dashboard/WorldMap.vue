@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onMounted, onUnmounted, ref, watch} from 'vue'
+import {computed, onMounted, onUnmounted, ref, shallowRef, watch} from 'vue'
 import {geoEquirectangular, geoGraticule10, geoPath} from 'd3-geo'
 import {zoom, zoomIdentity} from 'd3-zoom'
 import {select} from 'd3-selection'
@@ -49,8 +49,19 @@ const BATCH_TAKE = 6
 // 一条链路在 DOM 里留多久。必须 ≥ 最长的一发（3.4s）+ 落地后的收尾，
 // 否则会出现「还没飞到目的地就被 prune 掉」的半截效果
 const FLIGHT_TTL = 4200
-// 累计来源地的上限：地图上一个百来个点已经够密，再多只是互相盖住
-const MAX_DOTS = 200
+/* 累计来源地的上限：一个点约等于一个 ~11km 网格，1w 个已经足够密。
+   满了淘汰最早出现的那批（新地区还能上地图），但下面的统计不跟着回落 */
+const MAX_DOTS = 10000
+/* 模板渲染的那一批点按这个间隔整体换一次引用。
+   1w 个点每次命中都重渲，光 diff 就是 3w 个 vnode，画面会一卡一卡的；
+   改成计数照常累加、画面按秒刷新 —— 点的大小迟到 1 秒看不出来 */
+const DOT_FLUSH_MS = 1000
+/* 点还少的时候不走节流：刚开页面时「新地区立刻冒出来」比省那次 diff 重要，
+   过了这个量级才交给定时器按秒批量刷 */
+const DOT_LIVE = 300
+/* 放大后最多给最近的这几千个点贴地名。
+   1w 个全贴上既糊成一片，又多出 1w 个带描边的 text，拖动时会明显掉帧 */
+const DOT_LABEL_MAX = 2000
 /* 只有最新的这几条链路带飞行光点和线上信息。
    几十条线同时带字会互相压住，最后什么都读不出来，只给最近几条挂标签 */
 const LABEL_TAKE = 8
@@ -74,15 +85,24 @@ const IMPACT_X = SRV_X - 34
 const IMPACT_Y = SRV_Y
 
 const flights = ref([])
-// 累计来源地：按 ~11km 网格（经纬度各留 1 位小数）聚合计数
-const dots = ref([])
+/* 累计来源地：按 ~11km 网格（经纬度各留 1 位小数）聚合计数。
+   dotList 刻意不进响应式 —— 每秒几十条记录，进去了就是每次命中都触发
+   1w 个点整体 diff。模板读的是 dots（dotList 的快照），由 flushDots 按秒换引用 */
+const dotList = []
+// key → dot：命中走 Map，别在 1w 条里 find
+const dotIndex = new Map()
+const dots = shallowRef([])
+let dotDirty = false
 const locatedTotal = ref(0)  // 累计拿到经纬度的请求
 const geoMissTotal = ref(0)  // 累计没有经纬度的请求（内网 IP、未收录网段）
 const errTotal = ref(0)      // 累计 4xx / 5xx
-// 覆盖了多少个国家 / 地区。Set 不做响应式（数量单独用 ref 跟踪），
-// 免得每次命中都触发整个面板重算
+/* 覆盖了多少个国家 / 地区、出现过多少个来源网格。
+   Set 不做响应式（数量单独用 ref 跟踪），免得每次命中都触发整个面板重算。
+   两者都只增不减：地图上的点会被 MAX_DOTS 淘汰，统计不能跟着回落 */
 const countryKeys = new Set()
 const countryCount = ref(0)
+const regionKeys = new Set()
+const regionTotal = ref(0)
 let seq = 0
 
 /* 一条链路的路径：从来源点打到命中点，全程在画布坐标里算。
@@ -154,28 +174,52 @@ const labelOf = (r) => [
 
 const dotRadius = (count) => 2.2 + Math.min(2.6, Math.log10(Number(count) + 1))
 
-const bumpDot = (lat, lon, r) => {
-  const key = `${lat.toFixed(1)}_${lon.toFixed(1)}`
-  const hit = dots.value.find((d) => d.key === key)
+/* 把 dotList 的当前状态拍一份给模板。
+   计数是每次命中都加的，但半径和标签只在这里算一次 ——
+   1w 个点每次都重渲，光 diff 就是几万个 vnode，画面会一卡一卡的 */
+const flushDots = () => {
+  if (!dotDirty) return
+  dotDirty = false
+  for (let i = 0; i < dotList.length; i++) {
+    const d = dotList[i]
+    d.r = dotRadius(d.count)
+    // 只给最近的这批点留标签，见 DOT_LABEL_MAX
+    d.lab = i >= dotList.length - DOT_LABEL_MAX
+  }
+  // 换一个新数组，shallowRef 才会通知模板重渲
+  dots.value = dotList.slice()
+}
+const dotTimer = setInterval(flushDots, DOT_FLUSH_MS)
+
+const bumpDot = (key, lat, lon, r) => {
+  const hit = dotIndex.get(key)
   if (hit) {
     hit.count++
-    hit.r = dotRadius(hit.count)
+    dotDirty = true
     return
   }
   const p = projection([lon, lat])
   if (!p) return
-  dots.value.push({
+  const dot = {
     key,
     x: p[0],
     y: p[1],
     count: 1,
     r: dotRadius(1),
+    lab: true,
     label: geoFullText(r) || '归属地未知',
     // 放大后贴在点旁边的短名：带运营商的长串在地图上放不下
     short: placeText(r),
-  })
+  }
+  dotList.push(dot)
+  dotIndex.set(key, dot)
   // 满了砍最早那批，保证新出现的地区还能上地图
-  if (dots.value.length > MAX_DOTS) dots.value.splice(0, dots.value.length - MAX_DOTS)
+  if (dotList.length > MAX_DOTS) {
+    for (const gone of dotList.splice(0, dotList.length - MAX_DOTS)) dotIndex.delete(gone.key)
+  }
+  dotDirty = true
+  // 点还少的时候立刻刷新：这时候「新地区冒出来」比省那次 diff 重要
+  if (dotList.length <= DOT_LIVE) flushDots()
 }
 
 const addBatch = (batch) => {
@@ -199,9 +243,15 @@ const addBatch = (batch) => {
       countryKeys.add(country)
       countryCount.value = countryKeys.size
     }
-    bumpDot(lat, lon, r)
 
+    // 网格 key 在这里算一次：地图聚合、累计计数、本批去重三处共用
     const cell = `${lat.toFixed(1)}_${lon.toFixed(1)}`
+    if (!regionKeys.has(cell)) {
+      regionKeys.add(cell)
+      regionTotal.value = regionKeys.size
+    }
+    bumpDot(cell, lat, lon, r)
+
     if (taken >= BATCH_TAKE || cells.has(cell)) continue
     const p = projection([lon, lat])
     if (!p) continue
@@ -239,7 +289,10 @@ const prune = () => {
   if (alive.length !== flights.value.length) flights.value = alive
 }
 const pruneTimer = setInterval(prune, 600)
-onUnmounted(() => clearInterval(pruneTimer))
+onUnmounted(() => {
+  clearInterval(pruneTimer)
+  clearInterval(dotTimer)
+})
 
 /* 最近几条链路才有资格挂线上信息；这里顺带标出来传给模板 */
 const labelledFrom = computed(() => Math.max(0, flights.value.length - LABEL_TAKE))
@@ -249,10 +302,13 @@ const errRate = computed(() => {
   return (errTotal.value / locatedTotal.value * 100).toFixed(1)
 })
 
-/* 服务器图形下面那几行数字，跟着溯源累计值一起刷新 */
+/* 服务器图形下面那几行数字。
+   五项全是累计值，只增不减：抵达请求 / 内网跳过 / 异常占比累加自每条 stat；
+   覆盖国家、来源地区记的是「出现过多少个」，用 Set 去重 —— 地图上的点被
+   MAX_DOTS 淘汰后不会让这两个数往回掉，所以这里读的是 regionTotal 而不是 dots.length */
 const srvStats = computed(() => [
   {k: '抵达请求', v: fmtNum(locatedTotal.value)},
-  {k: '来源地区', v: fmtNum(dots.value.length)},
+  {k: '来源地区', v: fmtNum(regionTotal.value)},
   {k: '覆盖国家', v: fmtNum(countryCount.value)},
   {k: '内网跳过', v: fmtNum(geoMissTotal.value)},
   {k: '异常占比', v: `${errRate.value}%`, warn: errRate.value !== '0.0'},
@@ -382,7 +438,7 @@ const drawnFlights = computed(() => flights.value.map((f) => {
                   <circle class="map__dot" :r="d.r">
                     <title>{{ d.label }} · {{ fmtNum(d.count) }} 次（点击定位）</title>
                   </circle>
-                  <text v-if="dotLabels" class="map__dotlabel" x="7" y="-5">{{ d.short }}</text>
+                  <text v-if="dotLabels && d.lab" class="map__dotlabel" x="7" y="-5">{{ d.short }}</text>
                 </g>
               </g>
             </g>

@@ -182,8 +182,12 @@ const onStats = (batch) => {
   const fresh = batch.slice().reverse()
   // 200ms 一批，> 12 条即 > 60 QPS：这个速度下相邻记录看不出先后，动画纯属浪费
   dense.value = fresh.length > 12
-  // 新的在前；只保留最近 STREAM_ROWS 条，超出的直接丢
-  stream.value = fresh.concat(stream.value).slice(0, STREAM_ROWS)
+  /* 滚动窗口：新的插在最前面，只从尾巴上切掉最老的，窗口里始终留着 STREAM_ROWS 条。
+     别写成「满了就清空再灌」—— 那样一到上限整屏会闪一下变空，滚动位置也跟着跳回顶部。
+     只有单批就超过窗口（200ms 内塞满 2000 条 ≈ 1w QPS）时才会整批换掉，
+     那种速度下窗口里剩下的本来也全是这一批的新数据 */
+  const merged = fresh.concat(stream.value)
+  stream.value = merged.length > STREAM_ROWS ? merged.slice(0, STREAM_ROWS) : merged
   // 换一个新数组引用，地图那边 watch 到就处理这一批
   mapBatch.value = fresh
 }

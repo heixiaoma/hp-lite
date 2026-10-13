@@ -93,6 +93,12 @@ func StartWebServer(port int) {
 	mux.HandleFunc("/client/safe/remove", middleware.Auth(safeController.Del))
 	mux.HandleFunc("/client/safe/query", middleware.Auth(safeController.Query))
 
+	// 全局 Web 安全：系统级规则，对所有进站流量生效，只能管理员改
+	globalWafController := controller.GlobalWafController{}
+	mux.HandleFunc("/client/globalWaf/save", middleware.Admin(globalWafController.Add))
+	mux.HandleFunc("/client/globalWaf/list", middleware.Admin(globalWafController.List))
+	mux.HandleFunc("/client/globalWaf/remove", middleware.Admin(globalWafController.Del))
+
 	reverseController := controller.ReverseController{}
 	mux.HandleFunc("/client/reverse/save", middleware.Auth(reverseController.Add))
 	mux.HandleFunc("/client/reverse/list", middleware.Auth(reverseController.List))

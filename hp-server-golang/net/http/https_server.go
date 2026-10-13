@@ -46,11 +46,12 @@ func StartHttpsServer() {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		Handler(w, r)
 	})
-	// 证书通过 GetCertificate 动态选择，不在这里做 SNI 统计；
-	// 统计统一交给 StatsInterceptor：持续统计，有大屏 WebSocket 在线时实时推送
+	// 证书通过 GetCertificate 动态选择，不在这里做 SNI 统计。
+	// 中间件的层次和 HTTP 入口保持一致：统计在外、全局 WAF 在内，
+	// 被拦下的请求一样进统计，大屏上看得到拦截量
 	httpsProxyServer = &http.Server{
 		Addr:      ":443",
-		Handler:   StatsInterceptor(mux),
+		Handler:   StatsInterceptor(GlobalWaf(mux)),
 		TLSConfig: tlsConfig,
 	}
 	// 启动 HTTPS 服务

@@ -44,6 +44,7 @@ func init() {
 	DB.AutoMigrate(&entity.UserFwdEntity{})
 	DB.AutoMigrate(&entity.UserSafeEntity{})
 	DB.AutoMigrate(&entity.UserReverseEntity{})
+	DB.AutoMigrate(&entity.GlobalWafEntity{})
 }
 
 func EnsureDirExists(dirPath string, perm os.FileMode, createParent bool) error {
