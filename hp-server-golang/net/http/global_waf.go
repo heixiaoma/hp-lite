@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"hp-server-lib/log"
 	"hp-server-lib/service"
 	"hp-server-lib/web/controller"
@@ -27,6 +28,42 @@ import (
 // acmeChallengePath ACME HTTP-01 的挑战路径，全局规则必须放行它，
 // 否则一条误伤的规则就能让证书续签失败，到期后整站 HTTPS 直接不可用
 const acmeChallengePath = "/.well-known/acme-challenge/"
+
+/*
+wafHostKey 把当前请求的域名带进拦截回调用的 context 键。
+
+	为什么非得绕一圈：这份 WAF 挂在入口上，一个实例服务所有域名，而
+	WithErrorCallback 注册的是「WAF 级别」的闭包，回调参数只有一个
+	types.MatchedRule —— 里面没有域名（URI 是 r.URL.String()，服务端请求
+	里只有 path+query；ServerIPAddress() 是 SERVER_ADDR，连接器传的是空串）。
+
+	能走通是因为 coraza 会把请求的 context 挂进事务：
+	txhttp.WrapHandler 里 waf.(experimental.WAFWithOptions) 成立时，会调
+	NewTransactionWithOptions(Options{Context: r.Context()})（http/middleware.go），
+	事务再把这个 context 塞进每条 MatchedRule（internal/corazawaf/transaction.go）。
+	MatchedRule 上的 Context() 是导出的，只是没进 types.MatchedRule 接口，
+	靠下面这个空接口断言取出来就行。
+*/
+type wafHostKey struct{}
+
+// ruleContexter 见 internal/corazarules/rule_match.go 里 MatchedRule.Context()
+type ruleContexter interface {
+	Context() context.Context
+}
+
+// wafDomainOf 从回调里把域名捞回来。取不到就返回空串，宁可空着也别乱猜一个域名
+func wafDomainOf(rule types.MatchedRule) string {
+	cx, ok := rule.(ruleContexter)
+	if !ok {
+		return ""
+	}
+	ctx := cx.Context()
+	if ctx == nil {
+		return ""
+	}
+	domain, _ := ctx.Value(wafHostKey{}).(string)
+	return domain
+}
 
 // GlobalWaf 把全局规则挂在 next 前面。没有启用任何规则时它就是一层直通。
 func GlobalWaf(next http.Handler) http.Handler {
@@ -65,7 +102,11 @@ func (m *globalWafMount) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		m.next.ServeHTTP(w, r)
 		return
 	}
-	snap.handler.ServeHTTP(w, r)
+	/* 把域名塞进 context 再交给 WAF：拦截回调是 WAF 级别的闭包，拿不到
+	 *http.Request，只能靠这条 context 把记录归到具体域名上。
+	 端口在这里就去掉，别在每条命中里重复拆一遍 */
+	domain, _ := splitHostPort(r.Host)
+	snap.handler.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), wafHostKey{}, domain)))
 }
 
 // current 取当前生效的那一份快照，规则版本变了就重新编译
@@ -126,14 +167,12 @@ func buildGlobalWaf() (coraza.WAF, error) {
 			msg := rule.ErrorLog()
 			log.Errorf("[全局Web安全拦截][%s] %s\n", rule.Rule().Severity(), msg)
 			/* 只做内存计数（总量 + 窗口榜单），不落单条明细。
-			   域名这里留空：这份 WAF 挂在入口上，一次编译服务所有域名，
-			   拦截回调只拿得到规则命中的信息，拿不到是被哪个域名拦的。
-			   为了拿域名去把 r.URL 改成绝对地址代价太大 ——
-			   REQUEST_URI 会跟着变成 http://host/xxx，管理员写的 ^/xxx 这类
-			   规则会全部失效。域名维度的归属看 IP 榜和请求流，那里是逐条记的 */
+			   域名来自 ServeHTTP 塞进 context 的那个值（见 wafHostKey）——
+			   没去动 r.URL：把 URI 补成绝对地址虽然也能拿到，但 REQUEST_URI
+			   会跟着变成 http://host/xxx，管理员写的 ^/xxx 这类规则会全部失效 */
 			controller.RecordWafBlock(
 				controller.WafSourceGlobal,
-				"",
+				wafDomainOf(rule),
 				rule.Rule().Severity().String(),
 				rule.ClientIPAddress(),
 				rule.Message(),

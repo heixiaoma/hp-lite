@@ -156,7 +156,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 		//检查是否开启了防火墙
-		if info.SafeType == 0 {
+		if info.SafeType == 0 || info.SafeType == 3 {
 			info.ReverseProxy = proxy
 		} else {
 			rule := service.GetRule(info.SafeId)

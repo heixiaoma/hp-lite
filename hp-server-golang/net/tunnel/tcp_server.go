@@ -75,8 +75,8 @@ func (tcpServer *TcpServer) handler(conn net.Conn) {
 
 		ip := util.GetClientIP(conn)
 
-		//检查防护模式，如果是1 就是全防，拒绝非127.0.0.1得地址
-		if tcpServer.userInfo.SafeType == 1 && !strings.EqualFold(ip, "127.0.0.1") {
+		//检查防护模式，如果是1 就是全防，拒绝非127.0.0.1得地址 、3是系统规则防护
+		if (tcpServer.userInfo.SafeType == 1 || tcpServer.userInfo.SafeType == 3) && !strings.EqualFold(ip, "127.0.0.1") {
 			return
 		}
 

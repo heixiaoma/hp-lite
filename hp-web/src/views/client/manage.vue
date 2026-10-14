@@ -105,7 +105,7 @@
             <!-- Web 安全：系统级全局规则，对所有进站流量生效，只有管理员能改 -->
             <t-menu-item v-if="userInfo && userInfo.role === 'ADMIN'" value="/client/globalWaf">
               <template #icon><shield-error-icon/></template>
-              Web全局安全
+              全局防护
             </t-menu-item>
           </t-submenu>
 

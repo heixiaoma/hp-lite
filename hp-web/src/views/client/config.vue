@@ -165,8 +165,8 @@
           </t-form-item>
 
           <t-form-item
-              v-if="showInput.domain && formState.domain && formState.safeType !== 0"
-              label="防火墙规则"
+              v-if="showInput.domain && formState.domain && (formState.safeType !== 0&&formState.safeType !== 3)"
+              label="防火墙防护规则"
               name="safeId"
           >
             <t-select v-model="formState.safeId" :options="safeOptions" placeholder="选择一个规则"/>
@@ -299,9 +299,10 @@ const proxyOptions = [
 ];
 
 const safeTypeOptions = [
-  {label: '无防护 (域名+外网端口都可访问)', value: 0},
-  {label: '全防护（域名防护+外网端口不可访问）', value: 1},
-  {label: '半防护（域名防护+外网端口可访问但无防护）', value: 2},
+  { label: '开放访问 (域名系统防护规则、ip+端口能访问)', value: 0 },
+  { label: '自定义规则+系统规则·完全防护（域名防护、ip+端口不能访问）', value: 1 },
+  { label: '自定义规则+系统规则·仅域名防护（域名防护、ip+端口能访问）', value: 2 },
+  { label: '系统规则·完全防护（系统规则域名防护、ip+端口不能访问）', value: 3 },
 ];
 
 const statusOptions = [
@@ -504,32 +505,38 @@ const addConfigOk = async () => {
 
 const openAddress = (item) => {
   const address = []
+  if (item.safeType!==1&&item.safeType!==3){
+    if (item.localAddress.startsWith("tcp") || item.localAddress.startsWith("unix") || item.localAddress.startsWith("tcp_udp")) {
+      address.push("tcp://" + item.serverIp + ":" + item.remotePort)
+    }
 
-  if (item.localAddress.startsWith("tcp") || item.localAddress.startsWith("unix") || item.localAddress.startsWith("tcp_udp")) {
-    address.push("tcp://" + item.serverIp + ":" + item.remotePort)
-  }
-
-  if (item.localAddress.startsWith("udp") || item.localAddress.startsWith("tcp_udp")) {
-    address.push("udp://" + item.serverIp + ":" + item.remotePort)
-  }
-  if (item.localAddress.startsWith("socks5")) {
-    address.push("socks5://" + item.serverIp + ":" + item.remotePort)
+    if (item.localAddress.startsWith("udp") || item.localAddress.startsWith("tcp_udp")) {
+      address.push("udp://" + item.serverIp + ":" + item.remotePort)
+    }
+    if (item.localAddress.startsWith("socks5")) {
+      address.push("socks5://" + item.serverIp + ":" + item.remotePort)
+    }
   }
 
   if (item.localAddress.startsWith("http")) {
-    address.push("http://" + item.serverIp + ":" + item.remotePort)
+    if (item.safeType!==1&&item.safeType!==3) {
+      address.push("http://" + item.serverIp + ":" + item.remotePort)
+    }
     if (item.domain) {
       address.push("http://" + item.domain)
       address.push("https://" + item.domain)
       switch (item.safeType) {
         case 0:
-          address.push("无防护")
+          address.push("开放访问")
           break;
         case 1:
-          address.push("全防护")
+          address.push("自定义+系统·完全防护")
           break;
         case 2:
-          address.push("半防护")
+          address.push("自定义+系统·仅域名防护")
+          break;
+        case 3:
+          address.push("系统规则·完全防护")
           break;
       }
     }
