@@ -74,6 +74,7 @@ acme:
   http-port: '5634' #证书验证会访问http接口，会通过80转发过来，所以这个端口不用暴露外网
 ```
 
+> ⚠️ 安全提醒：示例中的后台密码 `123456` 仅为默认值，部署前请务必修改为强密码（建议字母 + 数字 + 特殊符号组合），防止管理后台被未授权访问。
 
 ### 客户端运行方式
 ##### docker
@@ -86,7 +87,7 @@ sudo docker run --name hp-lite --restart=always -d -e  c=连接码 heixiaoma/hp-
 
 ##### Linux或者win
 ```shell
-chmod -R 777 ./hp-lite-amd64
+chmod +x ./hp-lite-amd64
 #方式1
 ./hp-lite-amd64 -server=xxx.com穿透服务:16666 -deviceId=32位的设备ID
 #方式2
